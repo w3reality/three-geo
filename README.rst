@@ -2,16 +2,16 @@ three-geo
 ===================
 
 **three-geo** is a three.js based geographic visualization library.  Using
-three-geo, now we can build satellite-textured 3D terrain models in near
-real-time by simply specifying GPS coordinates anywhere on the globe!!
+three-geo, we can build satellite-textured 3D terrain models in near
+real-time by simply specifying GPS coordinates anywhere on the globe.
 
-Credits: this library has been made possible with many OSS geographic libraries
-(such as @mapbox/*, @turf/*, d3) and the Mapbox tile API.
+Credits: this library has been made possible by many OSS geographic libraries
+(such as @mapbox/\*, @turf/\*, d3) in npm, and the Mapbox tile API.
 
 Demo
 ----
 
-As a demo application of the three-geo library, we introduce examples/geo-viewer (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
+As a demo application of the three-geo library, we introduce **examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
 
 This app supports features such as 1) on-demand 3D terrain generation, 2) camera syncing with Leaflet, 3) terrain interaction and measurement, 4) auto camera orbiting, etc.
 
@@ -53,8 +53,7 @@ Here's an example to build a terrain located at GPS coordinates (46.5763,
 7.9904) in a 5 km radius circle.  The terrain's zoom resolution is set to 12
 (where the highest value supported is 14).
 
-For standalone tests, use examples/simple-viewer (`source code <https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer>`__).
-
+For standalone tests, use **examples/simple-viewer** (`source code <https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer>`__).
 
 .. code::
 
@@ -73,7 +72,9 @@ For standalone tests, use examples/simple-viewer (`source code <https://github.c
             render(); // now render scene after dem material (satellite texture) is applifed
         },
     });
-        
+
+.. image:: https://w3reality.github.io/three-geo/examples/img/1.jpg
+
 API
 ---
 
