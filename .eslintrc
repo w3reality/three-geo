@@ -1,0 +1,6 @@
+{
+    "parser": "babel-eslint",
+    "globals": {
+        "define": false
+    }
+}

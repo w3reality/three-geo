@@ -1,0 +1,59 @@
+{
+    "name": "three-geo",
+    "version": "1.0.0",
+    "description": "Geographic visualization with three.js",
+    "main": "dist/three-geo.js",
+    "directories": {
+        "example": "examples",
+        "test": "test"
+    },
+    "scripts": {
+        "dist": "npm run build && rm -rf ./dist && cp -r ./lib ./dist",
+        "build": "webpack --env dev && webpack --env build && npm run test",
+        "dev": "webpack --progress --colors --watch --env dev",
+        "test": "mocha --require babel-core/register --colors ./test/*.spec.js",
+        "test:watch": "mocha --require babel-core/register --colors -w ./test/*.spec.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/w3reality/three-geo.git"
+    },
+    "keywords": [
+        "three",
+        "geo",
+        "dataviz"
+    ],
+    "author": "j-devel",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/w3reality/three-geo/issues"
+    },
+    "homepage": "https://github.com/w3reality/three-geo",
+    "dependencies": {},
+    "devDependencies": {
+        "@mapbox/sphericalmercator": "^1.1.0",
+        "@mapbox/tile-cover": "^3.0.2",
+        "@mapbox/vector-tile": "^1.3.1",
+        "@turf/intersect": "^6.1.2",
+        "@turf/turf": "^5.1.6",
+        "d3": "^5.4.0",
+        "get-pixels": "^3.3.0",
+        "pbf": "^3.1.0",
+        "three": "^0.92.0",
+        "uniq": "^1.0.1",
+        "xhr": "^2.5.0",
+        "babel-cli": "^6.26.0",
+        "babel-core": "^6.26.0",
+        "babel-eslint": "^8.0.3",
+        "babel-loader": "^7.1.2",
+        "babel-plugin-add-module-exports": "^0.2.1",
+        "babel-preset-env": "^1.6.1",
+        "chai": "^4.1.2",
+        "eslint": "^5.3.0",
+        "eslint-loader": "^2.1.0",
+        "mocha": "^4.0.1",
+        "webpack": "^4.16.5",
+        "webpack-cli": "^3.1.0",
+        "yargs": "^10.0.3"
+    }
+}

@@ -1,0 +1,5 @@
+{
+  "presets": [["env", {}]], // breaks tree-shaking; :(
+  //"presets": [["env", {"modules": false}]], // breaks three-es6-plugin; NG
+  "plugins": []
+}
