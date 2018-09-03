@@ -2,18 +2,20 @@ three-geo
 ===================
 
 **three-geo** is a three.js based geographic visualization library.  Using
-three-geo, we can build satellite-textured 3D terrain models in near
+three-geo, we can easily build satellite-textured 3D terrain models in near
 real-time by simply specifying GPS coordinates anywhere on the globe.
+The geometry of the terrain is based on the RGB-encoded DEM (Digital Elevation Model)
+provided by the Mapbox tileset API.
 
 Credits: this library has been made possible by many OSS geographic libraries
-(such as @mapbox/\*, @turf/\*, d3) in npm, and the Mapbox tile API.
+such as @mapbox/\*, @turf/\*, d3 in npm, and the Mapbox tileset API.
 
 Demo
 ----
 
-As a demo application of the three-geo library, we introduce **examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
+As a flagship demo application of the three-geo library, we introduce **examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
 
-This app supports features such as 1) on-demand 3D terrain generation, 2) camera syncing with Leaflet, 3) terrain interaction and measurement, 4) auto camera orbiting, etc.
+This app supports features such as 1) on-demand 3D terrain generation, 2) camera trajectory synchronization with Leaflet, 3) terrain interaction/measurement, 4) auto camera orbiting, and more.
 
 -
   .. image:: https://w3reality.github.io/three-geo/examples/img/5.jpg
@@ -69,7 +71,7 @@ For standalone tests, use **examples/simple-viewer** (`source code <https://gith
             render(); // now render scene after dem meshes are added
         },
         onSatelliteMat: (mesh) => { // your implementation when terrain's satellite texture is obtained
-            render(); // now render scene after dem material (satellite texture) is applifed
+            render(); // now render scene after dem material (satellite texture) is applied
         },
     });
 
