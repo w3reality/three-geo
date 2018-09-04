@@ -7,6 +7,11 @@ real-time by simply specifying GPS coordinates anywhere on the globe.
 The geometry of the terrain is based on the RGB-encoded DEM (Digital Elevation Model)
 provided by the Mapbox tileset API.
 
+The terrain is represented by standard `THREE.Mesh <https://threejs.org/docs/#api/en/objects/Mesh>`__ objects.
+This makes it easy for us to access underlying geometry/texture array data and
+perform original GIS (Geographic Information System) experiments in JavaScript.
+(See Usage for how to programatically obtain those mesh objects).
+
 Credits: this library has been made possible by many OSS geographic libraries
 such as @mapbox/\*, @turf/\*, d3 in npm, and the Mapbox tileset API.
 
@@ -15,12 +20,17 @@ Demo
 
 As a flagship demo application of the three-geo library, we introduce **examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
 
-This app demonstrates features such as 1) on-demand 3D terrain generation, 2) camera trajectory synchronization with Leaflet, 3) terrain interaction/measurement, 4) auto camera orbiting, and more.
+This app demonstrates features such as
 
--
+- on-demand 3D terrain building (by a mouse click on the Leaflet map),
+- real-time camera projection onto Leaflet (with oritentaion and HFoV indication),
+- terrain interaction with a VR-like laser beam,
+- measuring Euclidean distances between tettain points,
+- auto camera orbiting around the custom z-axis.
+
   .. image:: https://w3reality.github.io/three-geo/examples/img/5.jpg
      :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html
--
+
   .. image:: https://w3reality.github.io/three-geo/examples/img/2.jpg
      :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html
 
