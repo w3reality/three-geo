@@ -29,10 +29,10 @@ This app demonstrates features such as
 - auto camera orbiting around the custom z-axis.
 
   .. image:: https://w3reality.github.io/three-geo/examples/img/5.jpg
-     :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html
+     :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=46.5763&lng=7.9904&title=Eiger
 
   .. image:: https://w3reality.github.io/three-geo/examples/img/2.jpg
-     :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html
+     :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=36.2058&lng=-112.4413&title=Colorado_River
 
 Setup
 -----
