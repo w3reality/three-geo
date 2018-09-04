@@ -8,7 +8,7 @@ The geometry of the terrain is based on the RGB-encoded DEM (Digital Elevation M
 provided by the Mapbox tileset API.
 
 The terrain is represented by standard `THREE.Mesh <https://threejs.org/docs/#api/en/objects/Mesh>`__ objects.
-This makes it easy for us to access underlying geometry/texture array data and
+This makes it easy for us to access underlying geometry/texture array and
 perform original GIS (Geographic Information System) experiments in JavaScript.
 (See Usage for how to programatically obtain those mesh objects).
 
@@ -25,7 +25,7 @@ This app demonstrates features such as
 - on-demand 3D terrain building (by a mouse click on the Leaflet map),
 - real-time camera projection onto Leaflet (with oritentaion and HFoV indication),
 - terrain interaction with a VR-like laser beam,
-- measuring Euclidean distances between tettain points,
+- measuring Euclidean distances between terrain points,
 - auto camera orbiting around the custom z-axis.
 
   .. image:: https://w3reality.github.io/three-geo/examples/img/5.jpg
