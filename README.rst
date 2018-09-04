@@ -69,8 +69,7 @@ Usage
 
 Here is an example of how to build a geographic terrain located at GPS coordinates (46.5763,
 7.9904) in a 5 km radius circle.  The terrain's zoom resolution is set to 12.
-
-(where the highest value supported is 14).
+(The highest zoom value supported is 15 resulting in more number of tileset API calls.)
 
 For standalone tests, use **examples/simple-viewer** (`source code <https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer>`__).
 
@@ -112,7 +111,7 @@ API
   - ``latlng`` **Array<number>** GPS coordinates of the form: [latitude, longitude].
   - ``radius`` **number** The radius of the circle that fits the terrain.
   - ``zoom`` **number (integer)** Zoom resolution of the tiles in the terrain.
-    Select from {12, 13, 14}, where 14 is the highest value supported.
+    Select from {11, 12, 13, 14, 15}, where 15 is the highest value supported.  Higher resolution results in larger number of tileset API calls.
   - ``callbacks.onRgbDem`` **function (meshes) {}** Implement this to request the geometry of the terrain.  Called when the entire terrain's geometry is obtained.
       - ``meshes`` **Array<THREE.Mesh>** All the meshes belonging to the terrain.
   - ``callbacks.onSatelliteMat`` **function (mesh) {}** Implement this to request the satellite textures of the terrain.  Called when the satellite texture of each mesh belonging to the terrain is obtained.

@@ -31,3 +31,10 @@ node_modules
 .vscode
 
 .DS_Store
+
+# geo-viewer specific
+cache
+dist
+src/env-dev.js
+
+

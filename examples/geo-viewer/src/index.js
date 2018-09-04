@@ -4,6 +4,8 @@ import Stats from 'stats.js';
 import OrbitControls from 'three-es6-plugin/es6/OrbitControls';
 
 import env from './env.js';
+// import env from './env-dev.js';
+
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
 
