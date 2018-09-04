@@ -15,7 +15,7 @@ Demo
 
 As a flagship demo application of the three-geo library, we introduce **examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
 
-This app supports features such as 1) on-demand 3D terrain generation, 2) camera trajectory synchronization with Leaflet, 3) terrain interaction/measurement, 4) auto camera orbiting, and more.
+This app demonstrates features such as 1) on-demand 3D terrain generation, 2) camera trajectory synchronization with Leaflet, 3) terrain interaction/measurement, 4) auto camera orbiting, and more.
 
 -
   .. image:: https://w3reality.github.io/three-geo/examples/img/5.jpg
@@ -51,8 +51,9 @@ Via the ES6 module system: use ``ThreeGeo`` after
 Usage
 -----
 
-Here's an example to build a terrain located at GPS coordinates (46.5763,
-7.9904) in a 5 km radius circle.  The terrain's zoom resolution is set to 12
+Here is an example of how to build a geographic terrain located at GPS coordinates (46.5763,
+7.9904) in a 5 km radius circle.  The terrain's zoom resolution is set to 12.
+
 (where the highest value supported is 14).
 
 For standalone tests, use **examples/simple-viewer** (`source code <https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer>`__).
