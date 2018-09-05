@@ -111,7 +111,7 @@ API
   - ``latlng`` **Array<number>** GPS coordinates of the form: [latitude, longitude].
   - ``radius`` **number** The radius of the circle that fits the terrain.
   - ``zoom`` **number (integer)** Zoom resolution of the tiles in the terrain.
-    Select from {11, 12, 13, 14, 15}, where 15 is the highest value supported.  Higher resolution results in larger number of tileset API calls.
+    Select from {11, 12, 13, 14, 15}, where 15 is the highest value supported.  Higher resolution results in a larger number of tileset API calls.
   - ``callbacks.onRgbDem`` **function (meshes) {}** Implement this to request the geometry of the terrain.  Called when the entire terrain's geometry is obtained.
       - ``meshes`` **Array<THREE.Mesh>** All the meshes belonging to the terrain.
   - ``callbacks.onSatelliteMat`` **function (mesh) {}** Implement this to request the satellite textures of the terrain.  Called when the satellite texture of each mesh belonging to the terrain is obtained.
