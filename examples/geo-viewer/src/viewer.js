@@ -608,7 +608,7 @@ class Viewer {
         let ll = this._origin;
         this.$msgTerrain.empty();
         this.$msgTerrain.append(`<div>lat lng: (${ll[0].toFixed(4)}, ${ll[1].toFixed(4)})</div>`);
-        this.$msgTerrain.append(`<div>zoom resolution (max=14): ${this._zoom}</div>`);
+        this.$msgTerrain.append(`<div>zoom resolution [11-15]: ${this._zoom}</div>`);
     }
 
     //======== ======== ======== ========
