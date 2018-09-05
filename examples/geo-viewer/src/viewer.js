@@ -311,6 +311,11 @@ class Viewer {
     nop() { /* nop */ }
     loadRgbDem(cb=this.nop) {
         if (this._isRgbDemLoaded) { return cb(); }
+        if (this.env.tokenMapbox === '********') {
+            console.log('Please set a valid Mapbox token in env.js');
+            return cb();
+        }
+
         this._isRgbDemLoaded = true;
         this.tgeo.getTerrain(this._origin, this._radius, this._zoom, {
             onRgbDem: (objs) => {
@@ -332,6 +337,11 @@ class Viewer {
     }
     loadVectorDem(cb=this.nop) {
         if (this._isVectorDemLoaded) { return cb(); }
+        if (this.env.tokenMapbox === '********') {
+            console.log('Please set a valid Mapbox token in env.js');
+            return cb();
+        }
+
         this._isVectorDemLoaded = true;
         this.tgeo.getTerrain(this._origin, this._radius, this._zoom, {
             onVectorDem: (objs) => {
