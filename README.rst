@@ -1,11 +1,11 @@
 three-geo
 ===================
 
-**three-geo** is a three.js based geographic visualization library.  Using
+**three-geo** is a `three.js <https://github.com/mrdoob/three.js>`__ based geographic visualization library.  Using
 three-geo, we can easily build satellite-textured 3D terrain models in near
 real-time by simply specifying GPS coordinates anywhere on the globe.
 The geometry of the terrain is based on the RGB-encoded DEM (Digital Elevation Model)
-provided by the Mapbox tileset API.
+provided by the Mapbox Maps API.
 
 The terrain is represented by standard `THREE.Mesh <https://threejs.org/docs/#api/en/objects/Mesh>`__ objects.
 This makes it easy for us to access underlying geometry/texture array and
@@ -13,7 +13,7 @@ perform original GIS (Geographic Information System) experiments in JavaScript.
 (See Usage for how to programatically obtain those mesh objects).
 
 Credits: this library has been made possible by many OSS geographic libraries
-such as @mapbox/\*, @turf/\*, d3 in npm, and the Mapbox tileset API.
+such as `mapbox <https://github.com/mapbox>`__, `Turfjs <https://github.com/Turfjs/turf>`__, `d3 <https://github.com/d3/d3>`__ in npm, and `the Mapbox Maps API <https://www.mapbox.com/api-documentation/#maps>`__.
 
 Demo
 ----
