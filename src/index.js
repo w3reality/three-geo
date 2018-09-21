@@ -287,18 +287,16 @@ class ThreeGeo {
         //     .interpolate(d3.interpolateRgb)
         //     .range(["#231918", "#ed6356"]);
         //========
+        const _range = [0x231918, 0xed6356];
+        const _rgb = hex => [hex >> 16, (hex & 0x00ff00) >> 8, hex & 0x0000ff];
+        const arrStart = _rgb(_range[0]);
+        const arrDiff = _rgb(_range[1] - _range[0]);
         const colorRangeNonD3 = (ic, len) => {
-            const start = 0x231918;
-            const end = 0xed6356;
-            const rgb = hex => [hex >> 16, (hex & 0x00ff00) >> 8, hex & 0x0000ff];
-            let arrStart = rgb(start);
-            let arrDiff = rgb(end - start);
-            let arrColor = [
-                arrStart[0] + Math.floor(ic * arrDiff[0] / len),
-                arrStart[1] + Math.floor(ic * arrDiff[1] / len),
-                arrStart[2] + Math.floor(ic * arrDiff[2] / len)];
-            // console.log('arrColor:', arrColor);
-            return arrColor[0] * 0x010000 + arrColor[1] * 0x0100 + arrColor[2];
+            let r = arrStart[0] + Math.floor(ic * arrDiff[0] / len);
+            let g = arrStart[1] + Math.floor(ic * arrDiff[1] / len);
+            let b = arrStart[2] + Math.floor(ic * arrDiff[2] / len);
+            console.log('r g b:', r, g, b);
+            return (r << 16) + (g << 8) + b;
         };
 
         const objs = [];
