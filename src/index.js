@@ -287,22 +287,24 @@ class ThreeGeo {
         //     .interpolate(d3.interpolateRgb)
         //     .range(["#231918", "#ed6356"]);
         //========
-        const _range = [0x231918, 0xed6356];
-        const _rgb = hex => [hex >> 16, (hex & 0x00ff00) >> 8, hex & 0x0000ff];
-        const arrStart = _rgb(_range[0]);
-        const arrDiff = _rgb(_range[1] - _range[0]);
-        const colorRangeNonD3 = (ic, len) => {
-            let r = arrStart[0] + Math.floor(ic * arrDiff[0] / len);
-            let g = arrStart[1] + Math.floor(ic * arrDiff[1] / len);
-            let b = arrStart[2] + Math.floor(ic * arrDiff[2] / len);
-            console.log('r g b:', r, g, b);
-            return (r << 16) + (g << 8) + b;
+        const _getColorRange = (range, len) => {
+            const _rgb = hex => [hex >> 16, (hex & 0x00ff00) >> 8, hex & 0x0000ff];
+            const arrStart = _rgb(range[0]);
+            const arrDiff = _rgb(range[1] - range[0]);
+            return (ic) => {
+                let r = arrStart[0] + Math.floor(ic * arrDiff[0] / len);
+                let g = arrStart[1] + Math.floor(ic * arrDiff[1] / len);
+                let b = arrStart[2] + Math.floor(ic * arrDiff[2] / len);
+                // console.log('r g b:', r, g, b);
+                return (r << 16) + (g << 8) + b;
+            };
         };
+        const colorRange = _getColorRange(
+            [0x231918, 0xed6356], contours.length);
 
         const objs = [];
         const addSlice = (coords, ic) => {
-            // let color = colorRange(ic);
-            let color = colorRangeNonD3(ic, contours.length);
+            let color = colorRange(ic);
             // console.log('color:', ic, color);
 
             let [lines, extrudeShade] = this.buildSliceGeometry(
