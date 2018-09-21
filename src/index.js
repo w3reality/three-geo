@@ -19,7 +19,8 @@ import Pbf from 'pbf';
 import { VectorTile } from '@mapbox/vector-tile';
 import uniq from 'uniq';
 
-import * as d3 from 'd3'; // TODO be more selective - https://github.com/d3/d3
+// no longer used; see colorRangeNonD3()
+// import * as d3 from 'd3'; // be more selective - https://github.com/d3/d3
 // import { scaleLinear, interpolateRgb } from 'd3'; // not much difference...
 // console.log('d3:', d3);
 
@@ -279,15 +280,35 @@ class ThreeGeo {
     }
     getVectorDem(contours, northWest, southEast, radius) {
         // console.log('getVectorDem():', contours, northWest, southEast, radius);
-        const colorRange = d3.scaleLinear()
-            .domain([0, contours.length])
-            .interpolate(d3.interpolateRgb)
-            .range(["#231918", "#ed6356"]);
+
+        // deprecated to remove the d3 dependency (save ~125KB)
+        // const colorRange = d3.scaleLinear()
+        //     .domain([0, contours.length])
+        //     .interpolate(d3.interpolateRgb)
+        //     .range(["#231918", "#ed6356"]);
+        //========
+        const colorRangeNonD3 = (ic, len) => {
+            const start = 0x231918;
+            const end = 0xed6356;
+            const rgb = hex => [hex >> 16, (hex & 0x00ff00) >> 8, hex & 0x0000ff];
+            let arrStart = rgb(start);
+            let arrDiff = rgb(end - start);
+            let arrColor = [
+                arrStart[0] + Math.floor(ic * arrDiff[0] / len),
+                arrStart[1] + Math.floor(ic * arrDiff[1] / len),
+                arrStart[2] + Math.floor(ic * arrDiff[2] / len)];
+            // console.log('arrColor:', arrColor);
+            return arrColor[0] * 0x010000 + arrColor[1] * 0x0100 + arrColor[2];
+        };
 
         const objs = [];
         const addSlice = (coords, ic) => {
+            // let color = colorRange(ic);
+            let color = colorRangeNonD3(ic, contours.length);
+            // console.log('color:', ic, color);
+
             let [lines, extrudeShade] = this.buildSliceGeometry(
-                coords, ic, colorRange(ic),
+                coords, ic, color,
                 contours, northWest, southEast, radius);
             lines.forEach((line) => { objs.push(line); });
             objs.push(extrudeShade);
