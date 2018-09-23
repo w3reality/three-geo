@@ -4,9 +4,16 @@ import * as THREE_ES6 from 'three';
 // console.log('window.THREE:', window.THREE);
 const THREE = window.THREE ? window.THREE : THREE_ES6;
 
-import * as turf from '@turf/turf'; // TODO be more selective - http://turfjs.org/getting-started/
+// import * as turf from '@turf/turf'; // need being more selective - http://turfjs.org/getting-started/
 // import { intersect } from '@turf/turf'; // TEST of tree-shaking, not working... FIXME
 // console.log('turf:', turf);
+//========
+import * as turfHelpers from '@turf/helpers';
+// console.log('turfHelpers:', turfHelpers);
+import turfTransformTranslate from '@turf/transform-translate';
+import turfUnion from '@turf/union';
+import turfArea from '@turf/area';
+import turfDestination from '@turf/destination';
 
 // turf.intersect (v5.1.6) fails in case MultiPolygon -- https://github.com/Turfjs/turf/issues/702
 // so, use this module version with recent fix instead
@@ -133,20 +140,20 @@ class ThreeGeo {
             try {
                 // this was commented...
                 // let mergedElevationPoly = tbuffer(
-                //     turf.featureCollection(elevationPolys), 0, 'miles').features[0];
+                //     turfHelpers.featureCollection(elevationPolys), 0, 'miles').features[0];
                 //========
                 // this was being used...
                 // let mergedElevationPoly = turf.merge(
-                //     turf.featureCollection(elevationPolys));
+                //     turfHelpers.featureCollection(elevationPolys));
                 //========
                 // - turf.merge is deprecated, so...
                 // - https://github.com/turf-junkyard/turf-merge
                 //     This module is now deprecated in favor of using
                 //     the turf-union module repeatedly on an array.
                 // - https://gis.stackexchange.com/questions/243460/turf-js-union-with-array-of-features
-                // console.log('feat collection:', turf.featureCollection(elevationPolys));
-                let mergedElevationPoly = turf.union.apply(
-                    this, turf.featureCollection(elevationPolys).features);
+                // console.log('feat collection:', turfHelpers.featureCollection(elevationPolys));
+                let mergedElevationPoly = turfUnion.apply(
+                    this, turfHelpers.featureCollection(elevationPolys).features);
                 // console.log('@@@', mergedElevationPoly, currentElevation);
 
                 // trim to desired search area
@@ -158,7 +165,7 @@ class ThreeGeo {
                 // console.log('@@@mergedElevationPoly:', mergedElevationPoly);
                 if (mergedElevationPoly) {
                     // console.log('@@@merge success', currentElevation);
-                    let contourArea = turf.area(mergedElevationPoly.geometry);
+                    let contourArea = turfArea(mergedElevationPoly.geometry);
                     // L.mapbox.featureLayer().setGeoJSON(mergedElevationPoly).addTo(map);
 
                     contours.push({
@@ -846,11 +853,11 @@ class ThreeGeo {
         const reverseCoords = (coords) => {
             return [coords[1], coords[0]];
         };
-        let northWest = turf.destination(
-            turf.point(reverseCoords(origin)),
+        let northWest = turfDestination(
+            turfHelpers.point(reverseCoords(origin)),
             radius, -45, {units: 'kilometers'}).geometry.coordinates;
-        let southEast = turf.destination(
-            turf.point(reverseCoords(origin)),
+        let southEast = turfDestination(
+            turfHelpers.point(reverseCoords(origin)),
             radius, 135, {units: 'kilometers'}).geometry.coordinates;
         let testPolygon = {
             "type": "FeatureCollection",

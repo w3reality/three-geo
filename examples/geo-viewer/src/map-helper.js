@@ -10,7 +10,15 @@ import ThreeGeo from '../../../src'; // for dev; fast compile
 
 import L from 'leaflet';
 // console.log('L:', L);
-import * as turf from '@turf/turf';
+
+// import * as turf from '@turf/turf';
+//========
+import * as turfHelpers from '@turf/helpers';
+import turfDistance from '@turf/distance';
+// import turfLineDistance from '@turf/line-distance'; // ?? runtime error about distance()
+import turfTransformTranslate from '@turf/transform-translate';
+import turfTransformRotate from '@turf/transform-rotate';
+import turfCircle from '@turf/circle/index';
 
 import $ from 'jquery';
 // console.log('$:', $);
@@ -169,22 +177,27 @@ class MapHelper {
     }
     static mkBboxLayers(origin, ftBbox) {
         let ttStr = `lat lng: ${MapHelper.llToString(origin)}`;
-        let line = turf.lineString([
-            [origin[1], origin[0]],
-            ftBbox.geometry.coordinates[0][3]]); // sw
-        let dist = turf.lineDistance(line, {units: 'kilometers'});
+        let llOrig = [origin[1], origin[0]];
+        let llSw = ftBbox.geometry.coordinates[0][3];
+        let line = turfHelpers.lineString([llOrig, llSw]);
+
+        // let dist = turfLineDistance(line, {units: 'kilometers'}); // ?? runtime error about 'distance()'
+        //========
+        let dist = turfDistance(
+            turfHelpers.point(llOrig),
+            turfHelpers.point(llSw),
+            {units: 'kilometers'});
+
         // console.log('dist:', dist.toFixed(3));
 
         let right = ftBbox.geometry.coordinates[0][1][0];
-        let lineX = turf.lineString([
-            [origin[1], origin[0]],
-            [origin[1] + 2*(right - origin[1]), origin[0]],
+        let lineX = turfHelpers.lineString([llOrig,
+            [origin[1] + 2*(right - origin[1]), origin[0]]
         ]);
 
         let top = ftBbox.geometry.coordinates[0][1][1];
-        let lineY = turf.lineString([
-            [origin[1], origin[0]],
-            [origin[1], origin[0] + 2*(top - origin[0])],
+        let lineY = turfHelpers.lineString([llOrig,
+            [origin[1], origin[0] + 2*(top - origin[0])]
         ]);
 
         return [
@@ -221,8 +234,8 @@ class MapHelper {
 
         // construct an oriented polygon for the camera
         let dist = 0.004; // "dist" of the pinhole to the screen
-        let lineCam = turf.transformRotate(
-            turf.lineString([
+        let lineCam = turfTransformRotate(
+            turfHelpers.lineString([
                 [origin[1] - dist * Math.tan(hfov/2), origin[0] + dist],
                 [origin[1], origin[0]],
                 [origin[1] + dist * Math.tan(hfov/2), origin[0] + dist],
@@ -235,7 +248,7 @@ class MapHelper {
             .divideScalar(unitsPerMeter);
         // console.log('vec:', vec); // in meters
         // http://turfjs.org/docs/#transformTranslate
-        lineCam = turf.transformTranslate(
+        lineCam = turfTransformTranslate(
             lineCam,
             vec.length(),
             90.0 - vec.angle() * 180.0 / Math.PI, {
@@ -284,8 +297,8 @@ class MapHelper {
         let target = orbit.userData.target;
         let vec = new THREE.Vector2(target.x, target.y)
             .divideScalar(_unitsPerMeter);
-        let ptTarget = turf.transformTranslate(
-            turf.point([_origin[1], _origin[0]]),
+        let ptTarget = turfTransformTranslate(
+            turfHelpers.point([_origin[1], _origin[0]]),
             vec.length(),
             90.0 - vec.angle() * 180.0 / Math.PI, {
                 units: 'meters',
@@ -300,7 +313,7 @@ class MapHelper {
                 }).addTo(this.map);
 
         // add orbitCircle
-        let circle = turf.circle(
+        let circle = turfCircle(
             ptTarget, orbit.userData.radius / _unitsPerMeter, {
                 units: 'meters',
             });
