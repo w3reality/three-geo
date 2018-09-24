@@ -1,13 +1,14 @@
 /* global __dirname, require, module */
 
 // config for webpack 4
-
-// based on https://github.com/krasimir/webpack-library-starter
+// originally based on https://github.com/krasimir/webpack-library-starter
 
 const webpack = require('webpack');
 const path = require('path');
 const env = require('yargs').argv.env; // use --env with webpack 2
 const pkg = require('./package.json');
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 let libraryName = 'three-geo'; // pkg.name;
 let libraryObjName = 'ThreeGeo'; // name for script tag loading
@@ -16,10 +17,15 @@ let plugins = [], outputFile, minimize;
 if (env === 'build') {
     minimize = true;
     outputFile = libraryName + '.min.js';
+    if (1) {
+        plugins.push(new BundleAnalyzerPlugin());
+    }
 } else {
     minimize = false;
     outputFile = libraryName + '.js';
 }
+
+
 
 const config = {
     entry: __dirname + '/src/index.js',
@@ -35,7 +41,16 @@ const config = {
         umdNamedDefine: false // must be 'false' for m to be resolved in require([''], (m) => {});
     },
     optimization: {
-        minimize: minimize
+        minimize: minimize,
+        minimizer: [
+            new UglifyJSPlugin({
+                uglifyOptions: {
+                    compress: {
+                        drop_console: true
+                    }
+                }
+            })
+        ]
     },
     module: {
         rules: [
