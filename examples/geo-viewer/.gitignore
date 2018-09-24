@@ -35,6 +35,5 @@ node_modules
 # geo-viewer specific
 cache
 dist
-src/env-dev.js
-
+src/envs-ignore
 
