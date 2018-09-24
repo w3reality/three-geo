@@ -27,8 +27,8 @@ class GuiHelper extends DatGuiDefaults {
         let controller;
 
         controller = gui.add(params, 'vis',
-            ["Satellite", "Wireframe", "Contours"]).name('Terrain'); // FIXME: to be fixed soon ;-)
-            // ["Satellite", "Wireframe"]).name('Terrain');
+            // ["Satellite", "Wireframe", "Contours"]).name('Terrain'); // FIXME: to be fixed soon ;-)
+            ["Satellite", "Wireframe"]).name('Terrain');
         controller.onChange((value) => {
             this.onChangeVis(value);
             data.vis = value;
