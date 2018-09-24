@@ -17,7 +17,7 @@ let plugins = [], outputFile, minimize;
 if (env === 'build') {
     minimize = true;
     outputFile = libraryName + '.min.js';
-    if (1) {
+    if (0) {
         plugins.push(new BundleAnalyzerPlugin());
     }
 } else {

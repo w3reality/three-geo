@@ -19,7 +19,6 @@
         "@turf/line-distance": "^4.7.3",
         "@turf/transform-rotate": "^5.1.5",
         "@turf/transform-translate": "^5.1.5",
-        "@turf/turf": "^5.1.6",
         "babel-cli": "^6.26.0",
         "babel-core": "^6.26.0",
         "babel-eslint": "^8.0.3",
