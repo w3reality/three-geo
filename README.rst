@@ -93,6 +93,12 @@ For standalone tests, use **examples/simple-viewer** (`source code <https://gith
 
 .. image:: https://w3reality.github.io/three-geo/examples/img/1.jpg
 
+Who is using ``three-geo``?
+---------------------------
+
+- `jet-wasp <https://jet-wasp.glitch.me/>`__ - Three-geo as A-Frame component (`source code <https://glitch.com/edit/#!/jet-wasp>`__)
+- *Your App* - *PR us!*
+
 API
 ---
 
