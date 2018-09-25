@@ -1,8 +1,9 @@
 import DatGuiDefaults from 'dat-gui-defaults';
 
 class GuiHelper extends DatGuiDefaults {
-    constructor(data, callbacks={}) {
+    constructor(env, data, callbacks={}) {
         super(data);
+        this.env = env;
         this.onChangeAutoOrbit = callbacks.onChangeAutoOrbit;
         this.onChangeVis = callbacks.onChangeVis;
         this.onChangeVrLaser = callbacks.onChangeVrLaser;
@@ -26,9 +27,18 @@ class GuiHelper extends DatGuiDefaults {
 
         let controller;
 
-        controller = gui.add(params, 'vis',
-            // ["Satellite", "Wireframe", "Contours"]).name('Terrain'); // FIXME: to be fixed soon ;-)
-            ["Satellite", "Wireframe"]).name('Terrain');
+        if (this.env.isDev) {
+            controller = gui.add(params, 'isDev').name("isDev: true !!!!");
+            controller.onChange((value) => {
+                console.log('this.env:', this.env);
+            });
+        }
+
+        // TODO fix contour mode !!!!
+        let visItems = this.env.isDev ?
+            ["Satellite", "Wireframe", "Contours"] :
+            ["Satellite", "Wireframe"];
+        controller = gui.add(params, 'vis', visItems).name('Terrain');
         controller.onChange((value) => {
             this.onChangeVis(value);
             data.vis = value;

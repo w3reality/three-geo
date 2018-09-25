@@ -443,6 +443,7 @@ class ThreeGeo {
             getPixels(uri, (err, pixels) => {
                 if (err) {
                     console.log("Bad image uri:", uri);
+                    cb(null);
                     return;
                 }
                 // console.log("got pixels", pixels.shape.slice());
@@ -726,13 +727,18 @@ class ThreeGeo {
 
     static resolveTex(zoompos, apiSatellite, token, onTex) {
         this.fetchTile(zoompos, apiSatellite, token, (pixels) => {
-            // console.log("satellite pixels", pixels.shape.slice());
-            // console.log('satellite pixels:', pixels);
-            // https://threejs.org/docs/#api/textures/DataTexture
-            let tex = new THREE.DataTexture(pixels.data,
-                pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
-            tex.flipY = true;
-            tex.needsUpdate = true;
+            let tex = null;
+            if (pixels) {
+                // console.log("satellite pixels", pixels.shape.slice());
+                // console.log('satellite pixels:', pixels);
+                // https://threejs.org/docs/#api/textures/DataTexture
+                tex = new THREE.DataTexture(pixels.data,
+                    pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
+                tex.flipY = true;
+                tex.needsUpdate = true;
+            } else {
+                console.log(`fetchTile() failed for tex of zp: ${zoompos}`);
+            }
             if (onTex) {
                 onTex(tex);
             }
@@ -784,11 +790,13 @@ class ThreeGeo {
             objs.push(plane);
 
             ThreeGeo.resolveTex(zoompos, apiSatellite, this.tokenMapbox, (tex) => {
-                plane.material = new THREE.MeshBasicMaterial({
-                    side: THREE.FrontSide,
-                    // side: THREE.DoubleSide,
-                    map: tex,
-                });
+                if (tex) {
+                    plane.material = new THREE.MeshBasicMaterial({
+                        side: THREE.FrontSide,
+                        // side: THREE.DoubleSide,
+                        map: tex,
+                    });
+                }
                 if (onSatelliteMat) {
                     onSatelliteMat(plane);
                 }
@@ -799,22 +807,28 @@ class ThreeGeo {
 
     getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite,
         onRgbDem, onSatelliteMat) {
-        let zpEle = ThreeGeo.getZoomposEle(zpCovered);
-        console.log('zpEle:', zpEle);
+        let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. zoom: 14
+        console.log('zpEle:', zpEle); // e.g. zoom: 12 (=14-2)
         let dataEleCovered = [];
-        let countEle = 0; // TODO use Promise() instead...
+        let countEle = 0; // TODO use Promise() instead ??
         zpEle.forEach((zoompos) => {
             // console.log('ele zoompos', zoompos);
             ThreeGeo.fetchTile(zoompos, apiRgb, this.tokenMapbox, (pixels) => {
-                dataEleCovered = dataEleCovered.concat(this.processRgbTile(
-                    pixels, zoompos, zpCovered, bbox, radius));
-                console.log(`now ${dataEleCovered.length} tiles in dataEleCovered`);
+                if (pixels) {
+                    dataEleCovered = dataEleCovered.concat(this.processRgbTile(
+                        pixels, zoompos, zpCovered, bbox, radius));
+                    console.log(`now ${dataEleCovered.length} tiles in dataEleCovered`);
+                } else {
+                    console.log(`fetchTile() failed for rgb dem of zp: ${zoompos} (countEle: ${countEle})`);
+                }
 
                 countEle++;
                 if (countEle === zpEle.length) {
                     console.log('dataEleCovered:', dataEleCovered);
-                    onRgbDem(this.getRgbDem(
-                        dataEleCovered, apiSatellite, onSatelliteMat));
+                    if (onRgbDem) {
+                        onRgbDem(this.getRgbDem(
+                            dataEleCovered, apiSatellite, onSatelliteMat));
+                    }
                 }
             });
         });
@@ -826,7 +840,7 @@ class ThreeGeo {
             type: "FeatureCollection",
             features: [],
         };
-        let countCovered = 0; // TODO use Promise() instead...
+        let countCovered = 0; // TODO use Promise() instead ??
         zpCovered.forEach((zoompos) => {
             ThreeGeo.fetchTile(zoompos, apiVector, this.tokenMapbox, (tile) => {
                 ThreeGeo.processVectorTile(tile, zoompos, geojson, bottomTiles);

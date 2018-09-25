@@ -4,7 +4,9 @@ import Stats from 'stats.js';
 import OrbitControls from 'three-es6-plugin/es6/OrbitControls';
 
 import env from './env.js';
-// import env from './env-dev.js';
+//========
+// import env from './envs-ignore/env-dev.js';
+// import env from './envs-ignore/env-io.js';
 
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
@@ -79,7 +81,7 @@ const guiData = { // with defaults
     loc: title ? title.replace('_', ' ') : "",
     leaflet: true,
 };
-const guiHelper = new GuiHelper(guiData, {
+const guiHelper = new GuiHelper(env, guiData, {
     onChangeAutoOrbit: (value) => {
         viewer.toggleOrbiting(value);
         if (value) {
@@ -126,6 +128,7 @@ const guiHelper = new GuiHelper(guiData, {
     },
 });
 guiHelper.setDefaults({
+    isDev: () => {},
     vis: guiData.vis,
     autoOrbit: guiData.autoOrbit,
     vrLaser: guiData.vrLaser,
