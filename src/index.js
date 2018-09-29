@@ -389,7 +389,11 @@ class ThreeGeo {
             this.getUriOffline(api, zoompos);
         const xhrDumpBlob = (uri, api, zoompos) => {
             xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, buffer) => {
-                if (error) return;
+                if (error || response.statusCode === 404) {
+                    console.log(`xhrDumpBlob(): failed for uri: ${uri}`);
+                    return;
+                }
+
                 let name = `${api}-${zoompos.join('-')}.blob`;
                 this.dumpBufferAsBlob(buffer, name);
             });
@@ -403,10 +407,10 @@ class ThreeGeo {
                     // return;
                 }
                 xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, buffer) => {
-                    if (error) {
-                        console.log(error);
+                    if (error || response.statusCode === 404) {
+                        cb(null);
                         return;
-                    };
+                    }
                     console.log('mapbox -> buffer:', buffer); // ArrayBuffer(39353) {}
                     cb(new VectorTile(new Pbf(buffer)));
                 });
@@ -853,7 +857,7 @@ class ThreeGeo {
                 if (tile) {
                     ThreeGeo.processVectorTile(tile, zoompos, geojson, bottomTiles);
                 } else {
-                    console.log(`fetchTile() failed for vector dem of zp: ${zoompos} (count: ${count}/${zpCovered.length})`);
+                    console.log(`fetchTile() failed for vector dem of zp: ${zoompos} (count: ${count}/${zpEle.length})`);
                 }
 
                 count++;
