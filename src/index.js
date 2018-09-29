@@ -11,7 +11,11 @@ const THREE = window.THREE ? window.THREE : THREE_ES6;
 import * as turfHelpers from '@turf/helpers';
 // console.log('turfHelpers:', turfHelpers);
 import turfTransformTranslate from '@turf/transform-translate';
+
+// https://github.com/Turfjs/turf/issues/1392#issuecomment-403189175
+// @turf/union v5.1.5 ok; v6 fails (broken at ele 1160 for the river data)......
 import turfUnion from '@turf/union';
+
 import turfArea from '@turf/area';
 import turfDestination from '@turf/destination';
 
@@ -131,36 +135,26 @@ class ThreeGeo {
 
         // iterate through elevations, and merge polys of the same elevation
         for (let x = 0; x < eleList.length; x++) {
+            // console.log(`getContours(): ${x}/${eleList.length}`);
             let currentElevation = eleList[x];
             let elevationPolys = geojson.features.filter((feature) => {
                 return feature.properties.ele === currentElevation;
             });
 
-            // merge between tiles
-            try {
-                // this was commented...
-                // let mergedElevationPoly = tbuffer(
-                //     turfHelpers.featureCollection(elevationPolys), 0, 'miles').features[0];
-                //========
-                // this was being used...
-                // let mergedElevationPoly = turf.merge(
-                //     turfHelpers.featureCollection(elevationPolys));
-                //========
-                // - turf.merge is deprecated, so...
-                // - https://github.com/turf-junkyard/turf-merge
-                //     This module is now deprecated in favor of using
-                //     the turf-union module repeatedly on an array.
-                // - https://gis.stackexchange.com/questions/243460/turf-js-union-with-array-of-features
-                // console.log('feat collection:', turfHelpers.featureCollection(elevationPolys));
-                let mergedElevationPoly = turfUnion.apply(
-                    this, turfHelpers.featureCollection(elevationPolys).features);
+            try { // merge between tiles
+                let feats = turfHelpers.featureCollection(elevationPolys).features;
+                // console.log(currentElevation, feats.length, feats);
+
+                // https://github.com/Turfjs/turf/issues/1392#issuecomment-403189175
+                // @turf/union v5.1.5 ok; v6 fails (broken at ele 1160)......
+                let mergedElevationPoly = feats.reduce(((accm, feat) => turfUnion(accm, feat)), feats[0]);
                 // console.log('@@@', mergedElevationPoly, currentElevation);
 
-                // trim to desired search area
-                // mergedElevationPoly = turf.intersect( // turf.intersect of v5.1.6 is broken, not up-to-date
-                mergedElevationPoly = turfIntersect( // use module version instead
-                    polygon, mergedElevationPoly);
-                // console.log('@@@', polygon);
+                if (0) { // trim to desired search area
+                    mergedElevationPoly = turfIntersect( // use module version instead
+                        polygon, mergedElevationPoly);
+                    // console.log('@@@', polygon);
+                }
 
                 // console.log('@@@mergedElevationPoly:', mergedElevationPoly);
                 if (mergedElevationPoly) {
@@ -181,13 +175,15 @@ class ThreeGeo {
         }
 
         // remove contour undercuts
-        for (let m = contours.length-2; m >= 0; m--) {
-            var currContour = contours[m];
-            var prevContour = contours[m+1];
-            if (currContour.area >= maxArea && prevContour.area >= maxArea) {
-                console.log('max area reached!');
-                contours = contours.slice(m+1);
-                break;
+        if (0) {
+            for (let m = contours.length-2; m >= 0; m--) {
+                let currContour = contours[m];
+                let prevContour = contours[m+1];
+                if (currContour.area >= maxArea && prevContour.area >= maxArea) {
+                    console.log('max area reached! ele, area:', currContour.ele, currContour.area);
+                    contours = contours.slice(m+1);
+                    break;
+                }
             }
         }
 
@@ -226,7 +222,7 @@ class ThreeGeo {
 
         // carve out holes (if none, would automatically skip this)
         for (let k = 1; k < coords.length; k++) {
-            console.log('holes');
+            // console.log('holes');
             let holePath = new THREE.Path();
             wireframeContours.push(new THREE.Geometry());
 
@@ -311,11 +307,9 @@ class ThreeGeo {
 
         const objs = [];
         const addSlice = (coords, ic) => {
-            let color = colorRange(ic);
-            // console.log('color:', ic, color);
-
+            // console.log('coords:', coords);
             let [lines, extrudeShade] = this.buildSliceGeometry(
-                coords, ic, color,
+                coords, ic, colorRange(ic),
                 contours, northWest, southEast, radius);
             lines.forEach((line) => { objs.push(line); });
             objs.push(extrudeShade);
@@ -326,6 +320,7 @@ class ThreeGeo {
             let level = contours[ic].geometry.geometry;
             // if (ic !== 110) continue; // debug
 
+            // console.log('level.type:', level.type);
             if (level.type === 'Polygon') {
                 addSlice(level.coordinates, ic);
             } else if (level.type === 'MultiPolygon') {
@@ -417,13 +412,19 @@ class ThreeGeo {
                 });
             } else {
                 xhr({uri: uri, responseType: 'blob'}, (error, response, blob) => {
+                    // console.log('error, response, blob:', error, response, blob);
+                    if (error || response.statusCode === 404) {
+                        cb(null);
+                        return;
+                    }
                     this.blobToBuffer(blob, (buffer) => {
-                        console.log('blob -> buffer:', buffer); // ArrayBuffer(39353) {}
+                        // console.log('blob -> buffer:', buffer); // ArrayBuffer(39353) {}
                         try {
                             let pbf = new Pbf(buffer);
                             cb(new VectorTile(pbf));
                         } catch (e) {
-                            console.log('e:', e);
+                            // console.log('e:', e);
+                            cb(null);
                             return;
                         }
                     });
@@ -527,12 +528,14 @@ class ThreeGeo {
         }
     }
     static processVectorGeojson(geojson, bottomTiles, polygon, radius) {
+        // console.log('polygon:', polygon);
+        // console.log('bottomTiles:', bottomTiles);
         let eleList = this.getEleList(geojson);
         // console.log('eleList:', eleList);
         this.addBottomEle(geojson, bottomTiles, eleList);
         // console.log('geojson:', geojson);
 
-        let maxArea = radius * radius * 2 * 1000000;
+        let maxArea = radius * radius * 2 * 1000000; // (r * sqrt2 * 1000)**2
         let contours = this.getContours(eleList, geojson, polygon, maxArea);
         // console.log('contours:', contours);
         return contours;
@@ -649,16 +652,16 @@ class ThreeGeo {
         }
     }
     static resolveSeams(array, infoNei) {
-        console.log('infoNei:', infoNei);
+        // console.log('infoNei:', infoNei);
         let cSegments = [constVertices-1, constVertices-1];
 
         Object.entries(infoNei).forEach(([idxNei, arrayNei]) => {
             if (idxNei === "2") {
-                console.log('now stitchWithNei2()...');
+                // console.log('now stitchWithNei2()...');
                 this.stitchWithNei2(array, arrayNei);
                 cSegments[1]++;
             } else if (idxNei === "3") {
-                console.log('now stitchWithNei3()...');
+                // console.log('now stitchWithNei3()...');
                 this.stitchWithNei3(array, arrayNei);
                 cSegments[0]++;
             }
@@ -668,7 +671,7 @@ class ThreeGeo {
             cSegments[1] === constVertices) {
             // Both stitchWithNei2() and stitchWithNei3() were
             // applided to this array.  Need filling a diagonal pothole.
-            console.log('filling a pothole...');
+            // console.log('filling a pothole...');
             let arrayNei6 = infoNei["6"];
             if (arrayNei6) {
                 array.push(arrayNei6[0], arrayNei6[1], arrayNei6[2]);
@@ -764,7 +767,7 @@ class ThreeGeo {
                 return;
             }
 
-            console.log('dealing with the seams of:', zoompos);
+            // console.log('dealing with the seams of:', zoompos);
             let cSegments = ThreeGeo.resolveSeams(
                 array, ThreeGeo.getNeighborsInfo(dataEle, dataEleIds, zoompos));
             // w and h don't matter since position.array is being overwritten
@@ -807,23 +810,24 @@ class ThreeGeo {
 
     getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite,
         onRgbDem, onSatelliteMat) {
-        let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. zoom: 14
-        console.log('zpEle:', zpEle); // e.g. zoom: 12 (=14-2)
+        let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
+        console.log('zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
+
         let dataEleCovered = [];
-        let countEle = 0; // TODO use Promise() instead ??
+        let count = 0; // TODO use Promise() instead ??
         zpEle.forEach((zoompos) => {
             // console.log('ele zoompos', zoompos);
             ThreeGeo.fetchTile(zoompos, apiRgb, this.tokenMapbox, (pixels) => {
                 if (pixels) {
                     dataEleCovered = dataEleCovered.concat(this.processRgbTile(
                         pixels, zoompos, zpCovered, bbox, radius));
-                    console.log(`now ${dataEleCovered.length} tiles in dataEleCovered`);
+                    console.log(`now ${dataEleCovered.length} satellite tiles in dataEleCovered`);
                 } else {
-                    console.log(`fetchTile() failed for rgb dem of zp: ${zoompos} (countEle: ${countEle})`);
+                    console.log(`fetchTile() failed for rgb dem of zp: ${zoompos} (count: ${count}/${zpEle.length})`);
                 }
 
-                countEle++;
-                if (countEle === zpEle.length) {
+                count++;
+                if (count === zpEle.length) {
                     console.log('dataEleCovered:', dataEleCovered);
                     if (onRgbDem) {
                         onRgbDem(this.getRgbDem(
@@ -835,27 +839,27 @@ class ThreeGeo {
     }
 
     getVectorTiles(zpCovered, bbox, radius, apiVector, onVectorDem) {
+        let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
+        console.log('zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
+
         let bottomTiles = []; // will get reduced
         let geojson = { // will get reduced
             type: "FeatureCollection",
             features: [],
         };
-        let countCovered = 0; // TODO use Promise() instead ??
-        zpCovered.forEach((zoompos) => {
+        let count = 0; // TODO use Promise() instead ??
+        zpEle.forEach((zoompos) => {
             ThreeGeo.fetchTile(zoompos, apiVector, this.tokenMapbox, (tile) => {
-                ThreeGeo.processVectorTile(tile, zoompos, geojson, bottomTiles);
+                if (tile) {
+                    ThreeGeo.processVectorTile(tile, zoompos, geojson, bottomTiles);
+                } else {
+                    console.log(`fetchTile() failed for vector dem of zp: ${zoompos} (count: ${count}/${zpCovered.length})`);
+                }
 
-                countCovered++;
-                if (countCovered === zpCovered.length) {
+                count++;
+                if (count === zpEle.length) {
                     let contours = ThreeGeo.processVectorGeojson(
                         geojson, bottomTiles, bbox.feature, radius);
-
-                    // drawHistogram(contours.map((contour) => {
-                    //     return contour.area;
-                    // }));
-                    // drawRain(origin);
-                    // drawDEM(contours, bbox.northWest, bbox.southEast, radius);
-                    //========
                     onVectorDem(this.getVectorDem(
                         contours, bbox.northWest, bbox.southEast, radius));
                 }
