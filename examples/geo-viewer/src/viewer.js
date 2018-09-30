@@ -342,9 +342,11 @@ class Viewer {
             return cb();
         }
 
+        console.log('load vector dem: start');
         this._isVectorDemLoaded = true;
         this.tgeo.getTerrain(this._origin, this._radius, this._zoom, {
             onVectorDem: (objs) => {
+                console.log('load vector dem: end');
                 // dem-vec-shade-<ele>-* and dem-vec-line-<ele>-*
                 objs.forEach((obj) => {
                     this.scene.add(obj);

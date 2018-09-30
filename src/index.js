@@ -12,9 +12,36 @@ import * as turfHelpers from '@turf/helpers';
 // console.log('turfHelpers:', turfHelpers);
 import turfTransformTranslate from '@turf/transform-translate';
 
+//======== FIXME try v7 in future??
+// v5 approach introduces jsts.min.js causing bloat (to 482KB)
 // https://github.com/Turfjs/turf/issues/1392#issuecomment-403189175
 // @turf/union v5.1.5 ok; v6 fails (broken at ele 1160 for the river data)......
 import turfUnion from '@turf/union';
+//======== NG
+// manually construct union op with turf-jsts
+// --> more bloats than the above (v5) and a uglifyjs problem
+// use ./turf-union-jsts-es6.js
+// see how union is implemented with jsts -- node_modules/@turf/union
+// https://gis.stackexchange.com/questions/283806/creating-buffers-using-jsts-es6-modules-not-working
+// https://github.com/DenisCarriere/jsts-es6-example
+// import turfUnion from './turf-union-jsts-es6'
+// window.turfUnion = turfUnion;
+// window.p1 = turfHelpers.polygon([[
+//     [-82.574787, 35.594087],
+//     [-82.574787, 35.615581],
+//     [-82.545261, 35.615581],
+//     [-82.545261, 35.594087],
+//     [-82.574787, 35.594087]
+// ]], {"fill": "#0f0"});
+// window.p2 = turfHelpers.polygon([[
+//     [-82.560024, 35.585153],
+//     [-82.560024, 35.602602],
+//     [-82.52964, 35.602602],
+//     [-82.52964, 35.585153],
+//     [-82.560024, 35.585153]
+// ]], {"fill": "#0f0"});
+// console.log('turfUnion:', turfUnion);
+// console.log('turfUnion(p1, p2):', turfUnion(p1, p2));
 
 import turfArea from '@turf/area';
 import turfDestination from '@turf/destination';
@@ -144,9 +171,8 @@ class ThreeGeo {
             try { // merge between tiles
                 let feats = turfHelpers.featureCollection(elevationPolys).features;
                 // console.log(currentElevation, feats.length, feats);
+                // feats.forEach(feat => { console.log('type:', feat.geometry.type); }); // 'Polygon'
 
-                // https://github.com/Turfjs/turf/issues/1392#issuecomment-403189175
-                // @turf/union v5.1.5 ok; v6 fails (broken at ele 1160)......
                 let mergedElevationPoly = feats.reduce(((accm, feat) => turfUnion(accm, feat)), feats[0]);
                 // console.log('@@@', mergedElevationPoly, currentElevation);
 
