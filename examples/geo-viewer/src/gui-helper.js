@@ -34,10 +34,7 @@ class GuiHelper extends DatGuiDefaults {
             });
         }
 
-        // TODO fix contour mode !!!!
-        let visItems = this.env.isDev ?
-            ["Satellite", "Wireframe", "Contours"] :
-            ["Satellite", "Wireframe"];
+        let visItems = ["Satellite", "Wireframe", "Contours"];
         controller = gui.add(params, 'vis', visItems).name('Terrain');
         controller.onChange((value) => {
             this.onChangeVis(value);
