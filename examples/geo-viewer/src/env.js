@@ -1,5 +1,5 @@
 export default {
-    zoom: 13, // select from {11, 12, 13, 14, 15}; higher zoom requires more API calls. 
+    zoom: 13, // satellite zoom resolution -- min: 11, defaut: 13, max: 17
     enableTilesLeaflet: true,
     tokenMapbox: '********', // <---- set your Mapbox API token here
 };

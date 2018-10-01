@@ -86,10 +86,13 @@ class Viewer {
             tokenMapbox: this.env.tokenMapbox,
         });
 
+        // vector dem: 9--15 (at 8, no contour data returned)
+        // rbg dem: ?--15 per https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
+        // satellite zoom resolution -- min: 11, defaut: 13, max: 17
+        this._zoom = this.env.zoom;
         let query = Viewer.parseQuery();
         this._origin = query.origin;
-        this._radius = 5.0;
-        this._zoom = this.env.zoom;
+        this._radius = 5.0*2**(13-this._zoom);
 
         this._vis = "Satellite";
 
@@ -620,7 +623,7 @@ class Viewer {
         let ll = this._origin;
         this.$msgTerrain.empty();
         this.$msgTerrain.append(`<div>lat lng: (${ll[0].toFixed(4)}, ${ll[1].toFixed(4)})</div>`);
-        this.$msgTerrain.append(`<div>zoom resolution [11-15]: ${this._zoom}</div>`);
+        this.$msgTerrain.append(`<div>satellite zoom resolution [11-17]: ${this._zoom}</div>`);
     }
 
     //======== ======== ======== ========

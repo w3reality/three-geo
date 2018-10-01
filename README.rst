@@ -68,8 +68,8 @@ Usage
 -----
 
 Here is an example of how to build a geographic terrain located at GPS coordinates (46.5763,
-7.9904) in a 5 km radius circle.  The terrain's zoom resolution is set to 12.
-(The highest zoom value supported is 15 resulting in more number of tileset API calls.)
+7.9904) in a 5 km radius circle.  The terrain's satellite zoom resolution is set to 12.
+(The highest zoom value supported is 17.)
 
 For standalone tests, use **examples/simple-viewer** (`source code <https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer>`__).
 
@@ -79,8 +79,8 @@ For standalone tests, use **examples/simple-viewer** (`source code <https://gith
         tokenMapbox: '********', // <---- set your Mapbox API token here
     });
 
-    // params: [lat, lng], terrain's radius (km), zoom resolution, callbacks
-    // Beware the value of radius; radius > 5.0 (km) could trigger huge number of tile API calls!!
+    // params: [lat, lng], terrain's radius (km), satellite zoom resolution, callbacks
+    // Beware the value of radius; for zoom 12, radius > 5.0 (km) could trigger huge number of tile API calls!!
     tgeo.getTerrain([46.5763, 7.9904], 5.0, 12, {
         onRgbDem: (meshes) => { // your implementation when the terrain's geometry is obtained
             meshes.forEach((mesh) => { scene.add(mesh); });
@@ -116,8 +116,8 @@ API
 
   - ``latlng`` **Array<number>** GPS coordinates of the form: [latitude, longitude].
   - ``radius`` **number** The radius of the circle that fits the terrain.
-  - ``zoom`` **number (integer)** Zoom resolution of the tiles in the terrain.
-    Select from {11, 12, 13, 14, 15}, where 15 is the highest value supported.  Higher resolution results in a larger number of tileset API calls.
+  - ``zoom`` **number (integer)** Satellite zoom resolution of the tiles in the terrain.
+    Select from {11, 12, 13, 14, 15, 16, 17}, where 17 is the highest value supported.  Higher resolution results in a larger number of tileset API calls.
   - ``callbacks.onRgbDem`` **function (meshes) {}** Implement this to request the geometry of the terrain.  Called when the entire terrain's geometry is obtained.
       - ``meshes`` **Array<THREE.Mesh>** All the meshes belonging to the terrain.
   - ``callbacks.onSatelliteMat`` **function (mesh) {}** Implement this to request the satellite textures of the terrain.  Called when the satellite texture of each mesh belonging to the terrain is obtained.

@@ -437,7 +437,7 @@ class ThreeGeo {
                         cb(null);
                         return;
                     }
-                    console.log('mapbox -> buffer:', buffer); // ArrayBuffer(39353) {}
+                    // console.log('mapbox -> buffer:', buffer); // ArrayBuffer(39353) {}
                     cb(new VectorTile(new Pbf(buffer)));
                 });
             } else {
@@ -532,6 +532,12 @@ class ThreeGeo {
     }
 
     static processVectorTile(tile, zoompos, geojson, bottomTiles) {
+        const contour = tile.layers.contour;
+        if (! contour) { // zoom <= 8
+            console.log(`processVectorTile(): no contours! (zoom=${zoompos[0]})`);
+            return;
+        }
+
         //populate geoJSON
         for (let i = 0; i < tile.layers.contour.length; i++) {
             // convert each feature (within #population) into a geoJSON polygon,
