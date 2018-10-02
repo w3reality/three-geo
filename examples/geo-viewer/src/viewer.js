@@ -89,19 +89,19 @@ class Viewer {
         // vector dem: 9--15 (at 8, no contour data returned)
         // rbg dem: ?--15 per https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
         // satellite zoom resolution -- min: 11, defaut: 13, max: 17
-        this._zoom = this.env.zoom;
+        this._zoom = this.env.zoom || 13;
+        this._radius = 5.0*2**(13-this._zoom);
         let query = Viewer.parseQuery();
         this._origin = query.origin;
-        this._radius = 5.0*2**(13-this._zoom);
-
-        this._vis = "Satellite";
+        this._vis = query.mode;
 
         this._debugLoading = this.env.debugLoading === true;
         this._debugTitleLast = 'invalid';
         if (this._debugLoading) { // use cache for debug....
             this._setApiDebug(this.tgeo, query.title);
         }
-        this.loadRgbDem();
+
+        this.updateTerrain(this._vis);
 
         // ------- leaflet stuff
         this._unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.unitsSide, this._radius);
@@ -157,10 +157,18 @@ class Viewer {
             _origin = [-33.9625, 18.4107];
             _title = "Table Mountain";
         }
+
+        let _mode = _parsedQ.mode;
+        _mode = _mode ? this.capitalizeFirst(_mode.toLowerCase()) : "Satellite";
+
         return {
             origin: _origin,
             title: _title,
+            mode: _mode,
         };
+    }
+    static capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     // loading stuff --------
@@ -270,27 +278,33 @@ class Viewer {
             if (this._debugLoading) {
                 this._setApiDebug(this.tgeo, title);
             }
-            switch (this._vis) {
-                case "Satellite":
-                    this.loadRgbDem(() => {
-                        this._render();
-                    });
-                    break;
-                case "Wireframe":
-                    this.loadRgbDem(() => {
-                        // override the default satellite texture
-                        this.updateMode("Wireframe");
-                        this._render();
-                    });
-                    break;
-                case "Contours":
-                    this.loadVectorDem(() => {
-                        this._render();
-                    });
-                    break;
-                default:
-                    break;
-            }
+            this.updateTerrain(this._vis);
+        }
+    }
+    updateTerrain(vis) {
+        switch (vis.toLowerCase()) {
+            case "satellite":
+                console.log('update to satellite');
+                this.loadRgbDem(() => {
+                    this._render();
+                });
+                break;
+            case "wireframe":
+                console.log('update to wireframe');
+                this.loadRgbDem(() => {
+                    // override the default satellite texture
+                    this.updateMode("Wireframe");
+                    this._render();
+                });
+                break;
+            case "contours":
+                console.log('update to contours');
+                this.loadVectorDem(() => {
+                    this._render();
+                });
+                break;
+            default:
+                break;
         }
     }
     _setApiDebug(tgeo, title) {

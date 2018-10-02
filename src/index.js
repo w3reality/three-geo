@@ -943,12 +943,12 @@ class ThreeGeo {
         };
     }
 
-    // tiles to cover a 5km-radius:  - processing/quality
-    // zoom: 15, // 64  <= 8x8 tiles - 8s/best
-    // zoom: 14, // 20  <= 5x5 tiles - 4s/high (high resolution)
-    // zoom: 13, // 6-9 <= 3x3 tiles - 2s/good
-    // zoom: 12, // 2-4 <= 2x2 tiles - 1s/fair (default)
-    // zoom: 11, // 1 tile           - 0s/poor
+    // tiles to cover a 5km-radius:  - processing
+    // zoom: 15, // 64  <= 8x8 tiles - 8s
+    // zoom: 14, // 20  <= 5x5 tiles - 4s (high resolution)
+    // zoom: 13, // 6-9 <= 3x3 tiles - 2s (default)
+    // zoom: 12, // 2-4 <= 2x2 tiles - 1s
+    // zoom: 11, // 1 tile           - 0s
     getTerrain(origin, radius, zoom, callbacks={}) {
         let bbox = ThreeGeo.getBbox(origin, radius);
         console.log('bbox:', bbox);

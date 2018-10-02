@@ -71,13 +71,13 @@ const toggleAnimation = (tf) => {
 };
 // end render stuff --------
 
-const title = Viewer.parseQuery().title;
+const query = Viewer.parseQuery();
 const guiData = { // with defaults
-    vis: "Satellite",
+    vis: query.mode,
     autoOrbit: false,
     vrLaser: false,
     //----
-    loc: title ? title.replace('_', ' ') : "",
+    loc: query.title ? query.title.replace('_', ' ') : "",
     leaflet: true,
 };
 const guiHelper = new GuiHelper(env, guiData, {
