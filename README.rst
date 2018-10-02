@@ -129,6 +129,8 @@ API
       - ``meshes`` **Array<THREE.Mesh>** All the meshes belonging to the terrain.
   - ``callbacks.onSatelliteMat`` **function (mesh) {}** Implement this to request the satellite textures of the terrain.  Called when the satellite texture of each mesh belonging to the terrain is obtained.
       - ``mesh`` **THREE.Mesh** One of the meshes that's part of the terrain.
+  - ``callbacks.onVectorDem`` **function (objs) {}** Implement this to request the contour map of the terrain.  Called when the contour map of the terrain is obtained.
+      - ``objs`` **Array<THREE.Object3D>** Extruded meshes (THREE.Mesh objects with .name attribute prefixed by dem-vec-shade-<ele>-) and lines (THREE.Line objects with .name attribute prefixed by dem-vec-line-<ele>-), where <ele> is the height of each contour in meters.
 
 
 Build
