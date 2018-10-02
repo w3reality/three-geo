@@ -12,8 +12,10 @@ This makes it easy for us to access underlying geometry/texture array and
 perform original GIS (Geographic Information System) experiments in JavaScript.
 (See Usage for how to programatically obtain those mesh objects).
 
-Credits: this library has been made possible by many OSS geographic libraries
-such as `mapbox <https://github.com/mapbox>`__, `Turfjs <https://github.com/Turfjs/turf>`__, `d3 <https://github.com/d3/d3>`__ in npm, and `the Mapbox Maps API <https://www.mapbox.com/api-documentation/#maps>`__.
+Credits: this library has been made possible thanks to
+
+- geo-related libraries such as `mapbox <https://github.com/mapbox>`__, `Turfjs <https://github.com/Turfjs/turf>`__, `d3 <https://github.com/d3/d3>`__ in npm, and `the Mapbox Maps API <https://www.mapbox.com/api-documentation/#maps>`__.
+- DEM generator implementation in `peterqliu.github.io <https://github.com/peterqliu/peterqliu.github.io>`__
 
 Demo
 ----
