@@ -37,6 +37,11 @@ Live:
   .. image:: https://w3reality.github.io/three-geo/examples/img/5.jpg
      :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=46.5763&lng=7.9904&title=Eiger
 
+- https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=46.5763&lng=7.9904&mode=contours
+
+  .. image:: https://w3reality.github.io/three-geo/examples/img/eiger-contours-100m.png
+     :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=46.5763&lng=7.9904&mode=contours&title=Eiger
+ 
 - https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=36.2058&lng=-112.4413
 
   .. image:: https://w3reality.github.io/three-geo/examples/img/2.jpg
