@@ -1,6 +1,6 @@
 {
     "name": "three-geo",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "Geographic visualization with three.js",
     "main": "dist/three-geo.js",
     "directories": {
@@ -8,8 +8,9 @@
         "test": "test"
     },
     "scripts": {
-        "dist": "npm run build && rm -rf ./dist && cp -r ./lib ./dist",
+        "dist": "npm run build && npm run build:esm && rm -rf ./dist && cp -r ./lib ./dist",
         "build": "webpack --env dev && webpack --env build && npm run test",
+        "build:esm": "webpack --env esm && npm run test",
         "dev": "webpack --progress --colors --watch --env dev",
         "test": "mocha --require babel-core/register --colors ./test/*.spec.js",
         "test:watch": "mocha --require babel-core/register --colors -w ./test/*.spec.js"
@@ -60,6 +61,7 @@
         "webpack": "^4.16.5",
         "webpack-bundle-analyzer": "^3.0.2",
         "webpack-cli": "^3.1.0",
+        "webpack-var2esm-plugin": "^1.0.0",
         "xhr": "^2.5.0",
         "yargs": "^10.0.3"
     }

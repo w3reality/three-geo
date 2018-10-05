@@ -9,23 +9,30 @@ const env = require('yargs').argv.env; // use --env with webpack 2
 const pkg = require('./package.json');
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const Var2EsmPlugin = require('webpack-var2esm-plugin');
 
 let libraryName = 'three-geo'; // pkg.name;
 let libraryObjName = 'ThreeGeo'; // name for script tag loading
 
-let plugins = [], outputFile, minimize;
+const isEsm = env === 'esm';
+let plugins = [], outputFile, minimize, target;
 if (env === 'build') {
     minimize = true;
     outputFile = libraryName + '.min.js';
+    target = 'umd';
     if (0) {
         plugins.push(new BundleAnalyzerPlugin());
     }
+} else if (isEsm) {
+    minimize = true;
+    outputFile = libraryName  + '.esm.min.js';
+    target = 'var';
+    plugins.push(new Var2EsmPlugin(libraryObjName, outputFile));
 } else {
     minimize = false;
     outputFile = libraryName + '.js';
+    target = 'umd';
 }
-
-
 
 const config = {
     entry: __dirname + '/src/index.js',
@@ -36,7 +43,7 @@ const config = {
         path: __dirname + '/lib',
         filename: outputFile,
         library: libraryObjName,
-        libraryTarget: 'umd',
+        libraryTarget: target,
         libraryExport: 'default', // https://github.com/webpack/webpack/commit/de8fc51a6fe2aff3ea3a1c24d34d429897c3b694
         umdNamedDefine: false // must be 'false' for m to be resolved in require([''], (m) => {});
     },
