@@ -27,7 +27,7 @@ if (env === 'build') {
     minimize = true;
     outputFile = libraryName  + '.esm.min.js';
     target = 'var';
-    plugins.push(new Var2EsmPlugin(libraryObjName, outputFile));
+    plugins.push(new Var2EsmPlugin(libraryObjName, outputFile, true));
 } else {
     minimize = false;
     outputFile = libraryName + '.js';

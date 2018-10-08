@@ -61,7 +61,7 @@
         "webpack": "^4.16.5",
         "webpack-bundle-analyzer": "^3.0.2",
         "webpack-cli": "^3.1.0",
-        "webpack-var2esm-plugin": "^1.1.0",
+        "webpack-var2esm-plugin": "^1.2.1",
         "xhr": "^2.5.0",
         "yargs": "^10.0.3"
     }
