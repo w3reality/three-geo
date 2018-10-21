@@ -23,6 +23,10 @@ import turfCircle from '@turf/circle/index';
 import $ from 'jquery';
 // console.log('$:', $);
 
+import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
+// import { GeoSearchControl, OpenStreetMapProvider } from '/Users/j/Projects/j-devel/leaflet-geosearch';
+
+
 class MapHelper {
     constructor(options={}) {
         const defaults = {
@@ -50,11 +54,13 @@ class MapHelper {
         let _mapId = actual.mapId;
         let _enableTiles = actual.enableTiles;
 
-        // let this.map = L.map(_mapId, {
-        //     center: latlng,
-        //     zoom: 13,
-        // });
+
+        // let this.map = L.map(_mapId, {center: latlng, zoom: 13});
         this.map = L.map(_mapId).setView(_origin, 12);
+
+        MapHelper.addSearchControl(this.map, (ll) => { // latlng
+            this.buildTerrain(ll);
+        });
 
         // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png?{foo}', {
         //     foo: 'bar',
@@ -133,6 +139,71 @@ class MapHelper {
             let e2 = turf.envelope(c2);
             L.geoJson(e2).addTo(_map);
         }
+    }
+
+    static addSearchControl(map, onLocationSelected) {
+        // https://github.com/smeijer/leaflet-geosearch#geosearchcontrol
+        const searchControl = new GeoSearchControl({
+            provider: new OpenStreetMapProvider(),
+            style: 'bar',
+            //--------
+            // if autoComplete is false, need manually calling provider.search({ query: input.value })
+            autoComplete: true,         // optional: true|false  - default true
+            autoCompleteDelay: 250,     // optional: number      - default 250
+            //--------
+            showMarker: false,          // optional: true|false  - default true
+            showPopup: false,           // optional: true|false  - default false
+            // marker: {                // optional: L.Marker    - default L.Icon.Default
+            //     icon: new L.Icon.Default(),
+            //     draggable: false,
+            // },
+            // popupFormat: ({ query, result }) => result.label,   // optional: function    - default returns result label
+            // maxMarkers: 1,              // optional: number      - default 1
+            retainZoomLevel: true,      // optional: true|false  - default false
+            animateZoom: true,          // optional: true|false  - default true
+            autoClose: false,           // optional: true|false  - default false
+            searchLabel: 'Search for',  // optional: string      - default 'Enter address'
+            keepResult: false           // optional: true|false  - default false
+        });
+        // console.log('searchControl:', searchControl);
+
+        map.addControl(searchControl).on('geosearch/showlocation', (data) => {
+            searchControl.closeResults();
+            // console.log('data:', data);
+            console.log('label:', data.location.label);
+            // y, x : lat, lng
+            onLocationSelected([Number(data.location.y), Number(data.location.x)]);
+        });
+
+        /* workaround for --
+            Uncaught TypeError: Cannot read property '-1' of undefined
+                at ResultList.select
+                at NewClass.selectResult
+                at HTMLInputElement.<anonymous>
+            in leaflet-geosearch/src/resultList.js
+                this.result is first initialized in render()
+                but it's not called early enough...
+        */
+        searchControl.resultList.results = [];
+        // but this DOES trigger result-select action even when list.selected is -1
+        // (e.g. type some words in search bar and press ENTER)
+        // so, sent a PR - https://github.com/smeijer/leaflet-geosearch/pull/178
+        // that solves this issue.  FIXME later...
+
+
+        // kludge -- prevent invoking this.map.on('click'
+        // https://github.com/Leaflet/Leaflet/issues/1343#issuecomment-99494636
+        // https://github.com/Leaflet/Leaflet/blob/master/src/control/Control.Zoom.js#L46
+        const $geosearchForm = $('.leaflet-control-geosearch form');
+        // console.log('el:', $geosearchForm[0]);
+        L.DomEvent.disableClickPropagation($geosearchForm[0]);
+
+        // https://stackoverflow.com/questions/19347269/jquery-keypress-arrow-keys
+        $geosearchForm.on('keydown', (e) => {
+            // console.log('e:', e);
+            // prevent arrow keys' interaction with the orbit control
+            e.stopPropagation();
+        });
     }
 
     static swap(ll) {
@@ -346,30 +417,30 @@ class MapHelper {
         this.map.panTo(ll);
         this.updateBboxLayers(ll, ThreeGeo.getBbox(ll, this.radius).feature);
     }
+
+    clearTmpLayers() {
+        if (this.markerTmp) this.map.removeLayer(this.markerTmp);
+        if (this.bbTmp) this.map.removeLayer(this.bbTmp);
+    }
+    buildTerrain(ll) {
+        this.clearTmpLayers();
+        this.updateBboxLayers(ll, ThreeGeo.getBbox(ll, this.radius).feature);
+        console.log('build terrain:', ll);
+        if (this.onBuildTerrain) {
+            this.onBuildTerrain(ll);
+        }
+    }
     showDialog(ll) {
         console.log('ll:', ll);
         this.map.panTo(ll);
 
         //-------- update temporary marker/bbox
-        if (this.markerTmp) {
-            this.map.removeLayer(this.markerTmp);
-        }
-        if (this.bbTmp) {
-            this.map.removeLayer(this.bbTmp);
-        }
-
+        this.clearTmpLayers();
         let onBuild = () => {
-            this.map.removeLayer(this.markerTmp);
-            this.map.removeLayer(this.bbTmp);
-            this.updateBboxLayers(ll, ThreeGeo.getBbox(ll, this.radius).feature);
-            console.log('build terrain:', ll);
-            if (this.onBuildTerrain) {
-                this.onBuildTerrain(ll);
-            }
+            this.buildTerrain(ll)
         };
         let onCancel = () => {
-            this.map.removeLayer(this.markerTmp);
-            this.map.removeLayer(this.bbTmp);
+            this.clearTmpLayers();
         };
         this.markerTmp = MapHelper.mkBuildMarker(ll, onBuild, onCancel)
             .addTo(this.map).openPopup();
