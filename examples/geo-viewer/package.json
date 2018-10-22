@@ -37,7 +37,7 @@
         "query-string": "^6.1.0",
         "stats.js": "^0.17.0",
         "three": "^0.93.0",
-        "three-es6-plugin": "^1.0.6",
+        "three-es6-plugin": "^1.0.8",
         "three-laser-pointer": "^1.1.1",
         "webpack": "^4.16.5",
         "webpack-cli": "^3.1.0",
