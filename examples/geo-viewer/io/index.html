@@ -1,12 +1,22 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <link rel="stylesheet" href="./leaflet.css" />
+    <!-- <style type="text/css">
+        .leaflet-container {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+    </style> -->
+
+    <!-- copied node_modules/leaflet-geosearch/assets/css/leaflet.css -->
+    <link rel="stylesheet" href="./assets/css/leaflet.css" />
+</head>
 <body>
     <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
     <div id="mapWrapper" style="
         position: absolute;
         z-index: 100;
-        width: 480px; height: 320px;
-        /* width: 512px; height: 512px; */
+        width: 520px; height: 340px;
         top: 60px;">
         <div id="map" style="height: 100%;"></div>
     </div>
@@ -36,14 +46,6 @@
         <div>[right-click]: set an orbital axis</div>
     </div>
 
-    <link rel="stylesheet" href="./leaflet.css" />
-    <!-- <style type="text/css">
-        .leaflet-container {
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-    </style> -->
-
-    <!-- select dev/prod -->
-    <script src='./app.min.js'></script>
+    <script src='./app.js'></script>
 </body>
 </html>
