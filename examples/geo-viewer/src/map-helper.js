@@ -24,7 +24,6 @@ import $ from 'jquery';
 // console.log('$:', $);
 
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
-// import { GeoSearchControl, OpenStreetMapProvider } from '/Users/j/Projects/j-devel/leaflet-geosearch';
 
 
 class MapHelper {
@@ -36,6 +35,7 @@ class MapHelper {
             mapId: 'map',
             enableTiles: false,
             onBuildTerrain: null,
+            onMapZoomEnd: null,
         };
         let actual = Object.assign({}, defaults, options);
         if (!actual.origin || !actual.radius || !actual.unitsPerMeter) {
@@ -47,6 +47,7 @@ class MapHelper {
         this.mapId = actual.mapId;
         this.enableTiles = actual.enableTiles;
         this.onBuildTerrain = actual.onBuildTerrain;
+        this.onMapZoomEnd = actual.onMapZoomEnd;
 
         let _origin = actual.origin;
         let _radius = actual.radius;
@@ -84,6 +85,12 @@ class MapHelper {
         this.map.on('click', e => {
             // console.log('e:', e);
             this.showDialog([e.latlng.lat, e.latlng.lng]);
+        });
+
+        this.map.on('zoomend', e => {
+            if (this.onMapZoomEnd) {
+                this.onMapZoomEnd();
+            }
         });
 
         this.camMarker = null;
@@ -285,7 +292,7 @@ class MapHelper {
             }),
         ];
     }
-    static mkLineCam(cam, origin, unitsPerMeter) {
+    static mkLineCam(cam, origin, unitsPerMeter, zoomMap) {
         // resolve cam's z-rotation w.r.t. the world
         // https://stackoverflow.com/questions/21557341/three-js-get-world-rotation-from-matrixworld
         // https://stackoverflow.com/questions/12784807/get-euler-rotation-from-quaternion
@@ -304,7 +311,8 @@ class MapHelper {
         //     cam.fov, cam.aspect, hfov / Math.PI * 180);
 
         // construct an oriented polygon for the camera
-        let dist = 0.004; // "dist" of the pinhole to the screen
+        // console.log('zoomMap:', zoomMap);
+        let dist = 0.004 * (2**(12 - zoomMap)); // "dist" of the pinhole to the screen
         let lineCam = turfTransformRotate(
             turfHelpers.lineString([
                 [origin[1] - dist * Math.tan(hfov/2), origin[0] + dist],
@@ -336,7 +344,8 @@ class MapHelper {
     }
     plotCam(cam) {
         // console.log('cam:', cam);
-        let lineCam = MapHelper.mkLineCam(cam, this.origin, this.unitsPerMeter);
+        let lineCam = MapHelper.mkLineCam(
+            cam, this.origin, this.unitsPerMeter, this.map.getZoom());
         // console.log('lineCam:', lineCam);
 
         let camLatLngs = lineCam.geometry.coordinates.map(ll => MapHelper.swap(ll));

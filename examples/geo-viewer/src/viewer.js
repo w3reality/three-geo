@@ -113,6 +113,7 @@ class Viewer {
             mapId: 'map',
             enableTiles: env.enableTilesLeaflet === true,
             onBuildTerrain: (ll) => { this.reloadPageWithLocation(ll); },
+            onMapZoomEnd: () => { this.plotCamInMap(this.camera); },
         });
         // console.log('this.mapHelper:', this.mapHelper);
 
