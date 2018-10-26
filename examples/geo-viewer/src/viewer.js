@@ -59,7 +59,10 @@ class Viewer {
         walls.position.set(0, 0, 0);
         walls.name = "singleton-walls";
         this.scene.add(walls);
-        this.scene.add(new THREE.AxesHelper(1));
+
+        const axes = new THREE.AxesHelper(1);
+        axes.name = "singleton-axes";
+        this.scene.add(axes);
 
         //======== add laser
         this._laser = new Laser({
@@ -447,6 +450,11 @@ class Viewer {
     toggleVrLaser(tf) {
         this._showVrLaser = tf;
     }
+    toggleGrids(tf) {
+        this.scene.getObjectByName("singleton-walls").visible = tf;
+        this.scene.getObjectByName("singleton-axes").visible = tf;
+        this._render();
+    }
 
     // laser casting stuff --------
     static _applyWithMeshesVisible(meshes, func) {
@@ -678,6 +686,83 @@ class Viewer {
         this.renderer.clearDepth();
         this.renderer.render(this.sceneMeasure, this.camera);
     }
+    capture() {
+        // Without this, on the Silk browser,
+        // the result is blacked out second time in successive captures.
+        this._render();
+
+        Viewer._capture(this.renderer.domElement);
+    }
+    static _formatDate(date, format='YYYY-MM-DD-hh.mm.ss') {
+        format = format.replace(/YYYY/g, date.getFullYear());
+        format = format.replace(/MM/g, ('0' + (date.getMonth() + 1)).slice(-2));
+        format = format.replace(/DD/g, ('0' + date.getDate()).slice(-2));
+        format = format.replace(/hh/g, ('0' + date.getHours()).slice(-2));
+        format = format.replace(/mm/g, ('0' + date.getMinutes()).slice(-2));
+        format = format.replace(/ss/g, ('0' + date.getSeconds()).slice(-2));
+        return format;
+    }
+    static _downloadImage(data, filename) {
+        // https://github.com/gillyb/reimg/blob/master/reimg.js
+        let a = document.createElement('a');
+        a.href = data;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+    }
+    static _capture(canvas) {
+        // test; 1x1 green png
+        // const extension = "png";
+        // const data = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        //========
+        const extension = 1 ? 'jpg' : 'png';
+
+        const data = extension === 'jpg' ?
+            canvas.toDataURL('image/jpeg', 0.8) :
+            canvas.toDataURL('image/png'); // equivalent to .toDataURL()
+
+        const div = document.createElement('div');
+        const divMenu = document.createElement('div');
+        const img = document.createElement('img');
+        // img.width = 100; // only for the 1x1 test data
+        // img.height = 80; // only for the 1x1 test data
+        img.src = data;
+
+        const input = document.createElement('input');
+        input.style['width'] = "320px";
+        input.style['margin-left'] = "8px";
+        input.type = 'text';
+        input.value = `capture-${this._formatDate(new Date())}`;
+
+        const spanExtension = document.createElement('span');
+        spanExtension.textContent = `.${extension}`;
+
+        const btn = document.createElement('button');
+        btn.textContent = 'Save As';
+        // FIXME ?? not triggered on safari-iphone5
+        btn.onclick = () => {
+            this._downloadImage(data, `${input.value}.${extension}`);
+        };
+
+        div.appendChild(divMenu);
+        divMenu.appendChild(btn);
+        divMenu.appendChild(input);
+        divMenu.appendChild(spanExtension);
+        divMenu.appendChild(document.createElement('hr'));
+        div.appendChild(img);
+
+        // https://stackoverflow.com/questions/46666559/base64-image-open-in-new-tab-window-is-not-allowed-to-navigate-top-frame-naviga
+        const newTab = window.open();
+        // newTab.document.body.innerHTML = `<img src="${data}" width="100px" height="100px">`; // ok
+        try {
+            newTab.document.body.appendChild(div);
+        } catch (e) {
+            console.log('ie !!!!????', e);
+            // https://stackoverflow.com/questions/36504016/appendchild-datauri-image-to-window-open-failing-in-ie
+            newTab.document.body.innerHTML = div.outerHTML;
+            // FIXME: onclick of btn not triggered...
+        }
+    };
 }
 
 export default Viewer;

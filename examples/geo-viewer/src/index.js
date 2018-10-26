@@ -18,6 +18,7 @@ camera.up.set(0, 0, 1); // important for OrbitControls
 const renderer = new THREE.WebGLRenderer({
     // alpha: true,
     canvas: canvas,
+    preserveDrawingBuffer: true, // to support .toDataURL()
 });
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -74,6 +75,7 @@ const toggleAnimation = (tf) => {
 const query = Viewer.parseQuery();
 const guiData = { // with defaults
     vis: query.mode,
+    grids: true,
     autoOrbit: false,
     vrLaser: false,
     //----
@@ -81,6 +83,12 @@ const guiData = { // with defaults
     leaflet: true,
 };
 const guiHelper = new GuiHelper(env, guiData, {
+    onCapture: () => {
+        viewer.capture();
+    },
+    onChangeGrids: (value) => {
+        viewer.toggleGrids(value);
+    },
     onChangeAutoOrbit: (value) => {
         viewer.toggleOrbiting(value);
         if (value) {
@@ -129,6 +137,9 @@ const guiHelper = new GuiHelper(env, guiData, {
 guiHelper.setDefaults({
     isDev: () => {},
     vis: guiData.vis,
+    capture: () => {},
+    grids: guiData.grids,
+    //----
     autoOrbit: guiData.autoOrbit,
     vrLaser: guiData.vrLaser,
     reset: () => {},

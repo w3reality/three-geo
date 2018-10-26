@@ -4,6 +4,9 @@ class GuiHelper extends DatGuiDefaults {
     constructor(env, data, callbacks={}) {
         super(data);
         this.env = env;
+        this.onChangeGrids = callbacks.onChangeGrids;
+        this.onCapture = callbacks.onCapture;
+        //----
         this.onChangeAutoOrbit = callbacks.onChangeAutoOrbit;
         this.onChangeVis = callbacks.onChangeVis;
         this.onChangeVrLaser = callbacks.onChangeVrLaser;
@@ -39,6 +42,17 @@ class GuiHelper extends DatGuiDefaults {
         controller.onChange((value) => {
             this.onChangeVis(value);
             data.vis = value;
+        });
+
+        controller = gui.add(params, 'capture').name("Capture Now");
+        controller.onChange((value) => {
+            this.onCapture();
+        });
+
+        controller = gui.add(params, 'grids').name('Grids');
+        controller.onChange((value) => {
+            this.onChangeGrids(value);
+            data.grids = value;
         });
 
         controller = gui.add(params, 'autoOrbit').name('Orbit');
