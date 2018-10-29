@@ -55,7 +55,7 @@
         "jsts": "^2.0.2",
         "mocha": "^4.0.1",
         "pbf": "^3.1.0",
-        "three": "^0.92.0",
+        "three": "^0.97.0",
         "uglifyjs-webpack-plugin": "^2.0.1",
         "uniq": "^1.0.1",
         "webpack": "^4.16.5",
