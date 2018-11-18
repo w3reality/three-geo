@@ -656,7 +656,7 @@ class ThreeGeo {
                 }
             }
             // console.log('zoompos, array:', zoompos, array); // 49152 = 128*128*3 elements
-            dataEle.push([zoompos, array]);
+            dataEle.push([zoompos, array, zoomposEle]);
         });
         // console.log('dataEle:', dataEle);
         return dataEle;
@@ -795,8 +795,8 @@ class ThreeGeo {
 
         let objs = [];
         let dataEleIds = ThreeGeo.getDataEleIds(dataEle);
-        dataEle.forEach(([zoompos, array]) => {
-            // console.log(zoompos, array);
+        dataEle.forEach(([zoompos, array, zoomposEle]) => {
+            // console.log(zoompos, array); // a 16th of zoomposEle
             if (array.length !== constVertices * constVertices * 3) {
                 // assumtion on the size of the array failed...
                 console.log('woops: already seams resolved? or what..., NOP');
@@ -817,15 +817,17 @@ class ThreeGeo {
             // arr.length = 128*2*3;
             // geom.attributes.position.array = new Float32Array(arr);
 
-            let plane = new THREE.Mesh(
-                geom,
+            let plane = new THREE.Mesh(geom,
                 new THREE.MeshBasicMaterial({
                     wireframe: true,
-                    color: 0x999999,
+                    color: 0xcccccc,
                 }));
             plane.position.x = this.constUnitsSide/2;
             plane.position.y = -this.constUnitsSide/2;
             plane.name = `dem-rgb-${zoompos.join('/')}`;
+            plane.userData.threeGeo = {
+                srcDemUri: ThreeGeo.getUriMapbox('', 'mapbox-terrain-rgb', zoomposEle),
+            };
             objs.push(plane);
 
             ThreeGeo.resolveTex(zoompos, apiSatellite, this.tokenMapbox, (tex) => {

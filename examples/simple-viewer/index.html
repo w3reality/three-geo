@@ -72,7 +72,7 @@
         });
 
         if (tgeo.tokenMapbox === '********') {
-            alert('Please provide your Mapbox API token with the ThreeGeo constructor.');
+            alert('Please set your Mapbox API token in ThreeGeo constructor.');
         } else {
             // params: [lat, lng], terrain's radius (km), zoom resolution, callbacks
             // Beware the value of radius; radius > 5.0 (km) could trigger huge number of tile API calls!!
