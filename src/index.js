@@ -826,6 +826,8 @@ class ThreeGeo {
             plane.position.y = -this.constUnitsSide/2;
             plane.name = `dem-rgb-${zoompos.join('/')}`;
             plane.userData.threeGeo = {
+                tile: zoompos,
+                srcDemTile: zoomposEle,
                 srcDemUri: ThreeGeo.getUriMapbox('', 'mapbox-terrain-rgb', zoomposEle),
             };
             objs.push(plane);
