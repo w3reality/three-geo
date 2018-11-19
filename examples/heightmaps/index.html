@@ -122,12 +122,12 @@
                         console.log('mesh:', mesh);
                         scene.add(mesh);
 
-                        //======== how to access mesh's hightmap
+                        //======== how to access mesh's heightmap
                         const array = mesh.geometry.attributes.position.array;
                         // console.log('array:', array);
                         console.log('array.length:', array.length); // 3x128x128 (+ deltaSeams)
 
-                        //======== how to access src hightmap (grand-parental tile)
+                        //======== how to access src heightmap (grand-parental tile)
                         console.log('userData:', mesh.userData);
                         const srcDem = mesh.userData.threeGeo.srcDem;
                         const srcDemUri = `${srcDem.uri}${tgeo.tokenMapbox}`;
