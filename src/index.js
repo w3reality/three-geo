@@ -56,6 +56,7 @@ import xhr from 'xhr';
 import Pbf from 'pbf';
 import { VectorTile } from '@mapbox/vector-tile';
 import uniq from 'uniq';
+import tilebelt from "@mapbox/tilebelt";
 
 // no longer used; see colorRangeNonD3()
 // import * as d3 from 'd3'; // be more selective - https://github.com/d3/d3
@@ -218,12 +219,29 @@ class ThreeGeo {
     static getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
     }
-    projectCoord(coord, nw, se) { // lonlat to pixel coordinates
+    projectCoord(coord, nw, se) { // lng, lat -> px, py
         return [
             this.constUnitsSide * (1 - (coord[0]-nw[0]) / (se[0]-nw[0])),
             - this.constUnitsSide *    (coord[1]-se[1]) / (se[1]-nw[1])
         ];
     }
+    getProjection(origin, radius) {
+        const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
+        return {
+            proj: ll => {
+                const [px, py] = this.projectCoord(ll, [w, n], [e, s]);
+                return [
+                    - px + this.constUnitsSide / 2,
+                    py - this.constUnitsSide / 2
+                ];
+            },
+            unitsPerMeter: ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius),
+        };
+    }
+    static tileToBbox(tile) {
+        return tilebelt.tileToBBOX(tile);
+    }
+
     buildSliceGeometry(coords, iContour, color,
         contours, nw, se, radius) {
         const shadedContour = new THREE.Shape();
@@ -825,10 +843,17 @@ class ThreeGeo {
             plane.position.x = this.constUnitsSide/2;
             plane.position.y = -this.constUnitsSide/2;
             plane.name = `dem-rgb-${zoompos.join('/')}`;
+            const _toTile = (zp) => { // [z,x,y] to a new [x,y,z]
+                let tile = zp.slice();
+                tile.push(tile.shift());
+                return tile;
+            };
             plane.userData.threeGeo = {
-                tile: zoompos,
-                srcDemTile: zoomposEle,
-                srcDemUri: ThreeGeo.getUriMapbox('', 'mapbox-terrain-rgb', zoomposEle),
+                tile: _toTile(zoompos),
+                srcDem: {
+                    tile: _toTile(zoomposEle),
+                    uri: ThreeGeo.getUriMapbox('', 'mapbox-terrain-rgb', zoomposEle),
+                },
             };
             objs.push(plane);
 
@@ -907,17 +932,16 @@ class ThreeGeo {
         });
     }
 
-    static getBbox(origin, radius) {
-        const reverseCoords = (coords) => {
-            return [coords[1], coords[0]];
-        };
-        let northWest = turfDestination(
-            turfHelpers.point(reverseCoords(origin)),
+    static originRadiusToBbox(origin, radius) {
+        const _swap = ll => [ll[1], ll[0]];
+        const [w, n] = turfDestination(turfHelpers.point(_swap(origin)),
             radius, -45, {units: 'kilometers'}).geometry.coordinates;
-        let southEast = turfDestination(
-            turfHelpers.point(reverseCoords(origin)),
+        const [e, s] = turfDestination(turfHelpers.point(_swap(origin)),
             radius, 135, {units: 'kilometers'}).geometry.coordinates;
-        let testPolygon = {
+        return [w, s, e, n];
+    }
+    static getBbox(origin, radius) {
+        const testPolygon = {
             "type": "FeatureCollection",
             "features": [{
                 "type": "Feature",
@@ -931,19 +955,17 @@ class ThreeGeo {
                 }
             }]
         };
-        let polygon = testPolygon.features[0];
+        const polygon = testPolygon.features[0];
+        const [w, s, e, n] = this.originRadiusToBbox(origin, radius);
+        const nw = [w, n], se = [e, s];
         polygon.geometry.coordinates[0] = [
-            northWest,
-            [southEast[0], northWest[1]],
-            southEast,
-            [northWest[0], southEast[1]],
-            northWest,
+            nw, [se[0], nw[1]], se, [nw[0], se[1]], nw
         ];
         // console.log('testPolygon:', testPolygon);
         return {
             feature: polygon,
-            northWest: northWest,
-            southEast: southEast,
+            northWest: nw,
+            southEast: se,
         };
     }
 
