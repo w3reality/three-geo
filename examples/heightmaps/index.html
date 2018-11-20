@@ -139,7 +139,7 @@
                             srcDemUris[srcDemUri] = true;
                             scene.add(bboxToThreeObject(
                                 ThreeGeo.tileToBbox(srcDem.tile), proj, {
-                                    offsetZ: -0.1,
+                                    offsetZ: - 0.2,
                                     color: 0xcc00cc,
                                 }));
                         }
@@ -150,7 +150,9 @@
                         // if (tile[0]%2 === tile[1]%2) {
                         // if (tile[0] === 2139 && tile[1] === 1447) { // [2139, 1447, 12] -> offset=[0.557974768072778, 0.20081274371580737]
                             scene.add(bboxToThreeObject(
-                                ThreeGeo.tileToBbox(tile), proj));
+                                ThreeGeo.tileToBbox(tile), proj, {
+                                    offsetZ: - 0.1,
+                                }));
                         }
                     });
                     render(); // now render scene after dem meshes are added
