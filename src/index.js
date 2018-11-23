@@ -238,6 +238,38 @@ class ThreeGeo {
             unitsPerMeter: ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius),
         };
     }
+    static bboxToWireframe(wsen, proj, opts={}) {
+        const defaults = {
+            offsetZ: 0.0,
+            color: 0x00cccc,
+            height: 0.001,
+        };
+        const actual = Object.assign({}, defaults, opts);
+
+        const [w, s, e, n] = wsen; // of bbox
+        // console.log('wsen:', wsen);
+        const offset = proj([(w+e)/2, (s+n)/2]); // lng, lat -> x, y
+        // console.log('offset:', offset);
+
+        const [pw, pn, pe, ps] = [...proj([w, n]), ...proj([e, s])];
+        // console.log('pw, pn, pe, ps:', pw, pn, pe, ps);
+        // const sides = [0.05, 0.05]; // show the mid point
+        const sides = [pe - pw, pn - ps];
+
+        const dzBounds = actual.height;
+        const ls = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(
+                ...sides, dzBounds)),
+            new THREE.LineBasicMaterial({color: actual.color}));
+        ls.position.set(...offset, - dzBounds / 2 + actual.offsetZ);
+        ls.name = `bbox-${window.performance.now()}`;
+        return {
+            obj: ls,
+            offset: [...offset, actual.offsetZ],
+            size: [...sides, actual.height],
+        };
+    }
+
     static tileToBbox(tile) {
         return tilebelt.tileToBBOX(tile);
     }
@@ -813,27 +845,29 @@ class ThreeGeo {
 
         let objs = [];
         let dataEleIds = ThreeGeo.getDataEleIds(dataEle);
-        dataEle.forEach(([zoompos, array, zoomposEle]) => {
-            // console.log(zoompos, array); // a 16th of zoomposEle
-            if (array.length !== constVertices * constVertices * 3) {
-                // assumtion on the size of the array failed...
+        dataEle.forEach(([zoompos, arr, zoomposEle]) => {
+            // console.log(zoompos, arr); // a 16th of zoomposEle
+            if (arr.length !== constVertices * constVertices * 3) {
+                // assumtion on the size of the arr failed...
                 console.log('woops: already seams resolved? or what..., NOP');
                 return;
             }
 
             // console.log('dealing with the seams of:', zoompos);
             let cSegments = ThreeGeo.resolveSeams(
-                array, ThreeGeo.getNeighborsInfo(dataEle, dataEleIds, zoompos));
+                arr, ThreeGeo.getNeighborsInfo(dataEle, dataEleIds, zoompos));
+            console.log('cSegments:', cSegments);
             // w and h don't matter since position.array is being overwritten
+
             let geom = new THREE.PlaneBufferGeometry(
                 1, 1, cSegments[0], cSegments[1]);
-            geom.attributes.position.array = new Float32Array(array);
+            geom.attributes.position.array = new Float32Array(arr);
             //--------
             // test identifying a 127x1 "belt"
             // let geom = new THREE.PlaneBufferGeometry(1, 1, 127, 1);
-            // let arr = array;
-            // arr.length = 128*2*3;
-            // geom.attributes.position.array = new Float32Array(arr);
+            // let arrBelt = arr;
+            // arrBelt.length = 128*2*3;
+            // geom.attributes.position.array = new Float32Array(arrBelt);
 
             let plane = new THREE.Mesh(geom,
                 new THREE.MeshBasicMaterial({
@@ -843,11 +877,12 @@ class ThreeGeo {
             plane.position.x = this.constUnitsSide/2;
             plane.position.y = -this.constUnitsSide/2;
             plane.name = `dem-rgb-${zoompos.join('/')}`;
-            const _toTile = (zp) => { // [z,x,y] to a new [x,y,z]
-                let tile = zp.slice();
-                tile.push(tile.shift());
-                return tile;
-            };
+            // const _toTile = (zp) => { // [z,x,y] to a new [x,y,z]
+            //     let tile = zp.slice();
+            //     tile.push(tile.shift());
+            //     return tile;
+            // };
+            const _toTile = zp => [zp[1], zp[2], zp[0]];
             plane.userData.threeGeo = {
                 tile: _toTile(zoompos),
                 srcDem: {

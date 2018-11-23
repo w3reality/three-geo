@@ -64,45 +64,50 @@
             renderer.render(scene, camera);
         };
 
-        const bboxToThreeObject = (wsen, proj, opts={}) => {
-            const defaults = {
-                offsetZ: 0.0,
-                color: 0x00cccc,
-            };
-            const actual = Object.assign({}, defaults, opts);
-
-            const [w, s, e, n] = wsen; // of bbox
-            // console.log('wsen:', wsen);
-            const offset = proj([(w+e)/2, (s+n)/2]); // lng, lat -> x, y
-            // console.log('offset:', offset);
-
-            const [pw, pn, pe, ps] = [...proj([w, n]), ...proj([e, s])];
-            // console.log('pw, pn, pe, ps:', pw, pn, pe, ps);
-            // const sides = [0.05, 0.05]; // show the mid point
-            const sides = [pe - pw, pn - ps];
-
-            const dzBounds = 0.001;
-            const ls = new THREE.LineSegments(
-                new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(
-                    ...sides, dzBounds)),
-                new THREE.LineBasicMaterial({color: actual.color}));
-            ls.position.set(...offset, -dzBounds / 2 + actual.offsetZ);
-            ls.name = `bbox-${window.performance.now()}`;
-            return ls;
-        };
 
         // main --------
         render(); // first time
         controls.addEventListener('change', render);
 
         const tgeo = new ThreeGeo({
-            // tokenMapbox: '********', // <---- set your Mapbox API token here
-            tokenMapbox: 'xxxx', // <---- set your Mapbox API token here
+            tokenMapbox: '********', // <---- set your Mapbox API token here
         });
-        tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
-        tgeo.setApiSatellite(`../geo-viewer/cache/eiger/mapbox-satellite`);
-        // console.log('tgeo:', tgeo);
 
+        const isDebug = 0;
+        if (isDebug) {
+            tgeo.tokenMapbox = '....';
+            tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
+            tgeo.setApiSatellite(`../geo-viewer/cache/eiger/mapbox-satellite`);
+            // console.log('tgeo:', tgeo);
+        }
+
+        const demToObjects = (demUri, demTile, proj) => {
+            const {obj, offset, size} = ThreeGeo.bboxToWireframe(
+                ThreeGeo.tileToBbox(demTile), proj, {
+                    offsetZ: - 0.2,
+                    color: 0xcc00cc,
+                });
+            // console.log('offset, size:', offset, size);
+
+            let _demUri = demUri;
+            if (isDebug) {
+                const [tx, ty, tz] = demTile;
+                // _demUri = `../geo-viewer/cache/eiger/mapbox-terrain-rgb-${tz}-${tx}-${ty}.blob.debug.png`;
+                _demUri = `../geo-viewer/cache/eiger/mapbox-terrain-rgb-${tz}-${tx}-${ty}.blob`;
+            }
+
+            const plane = new THREE.Mesh(
+                new THREE.PlaneGeometry(size[0], size[1]),
+                new THREE.MeshBasicMaterial({
+                    map: new THREE.TextureLoader().load(_demUri),
+                    // side: THREE.DoubleSide,
+                }));
+            plane.position.set(...offset);
+            return {
+                wireframe: obj,
+                plane: plane,
+            };
+        };
 
         if (tgeo.tokenMapbox === '********') {
             alert('Please set your Mapbox API token in ThreeGeo constructor.');
@@ -113,14 +118,14 @@
             const radius = 5.0;
             const {proj, unitsPerMeter} = tgeo.getProjection(origin, radius);
             // console.log('proj:', proj);
-            // console.log('unitsPerMeter:', unitsPerMeter); // (unused)
+            // console.log('unitsPerMeter:', unitsPerMeter); // (unused here)
 
             const srcDemUris = {};
 
             tgeo.getTerrain(origin, radius, 12, {
                 onRgbDem: (meshes) => { // your implementation when terrain's geometry is obtained
                     meshes.forEach((mesh) => {
-                        console.log('mesh:', mesh);
+                        console.log('rgb dem mesh:', mesh);
                         scene.add(mesh);
 
                         //======== how to access mesh's heightmap
@@ -128,40 +133,33 @@
                         // console.log('array:', array);
                         console.log('array.length:', array.length); // 3x128x128 (+ deltaSeams)
 
-                        //======== how to access src heightmap (grand-parental tile)
+                        //======== how to access heightmap (grand-parental tile)
                         console.log('userData:', mesh.userData);
                         const srcDem = mesh.userData.threeGeo.srcDem;
                         const srcDemUri = `${srcDem.uri}${tgeo.tokenMapbox}`;
+                        const srcDemTile = srcDem.tile;
                         console.log('srcDemUri:', srcDemUri);
 
                         if (! srcDemUris[srcDemUri]) {
                             console.log('adding:', srcDemUri);
                             srcDemUris[srcDemUri] = true;
-                            scene.add(bboxToThreeObject(
-                                ThreeGeo.tileToBbox(srcDem.tile), proj, {
-                                    offsetZ: - 0.2,
-                                    color: 0xcc00cc,
-                                }));
+
+                            const {wireframe, plane} = demToObjects(srcDemUri, srcDemTile, proj);
+                            scene.add(wireframe, plane);
                         }
 
-                        //======== how to visualize corresponding tile
+                        //======== how to visualize the corresponding satellite tile's geometry
                         const tile = mesh.userData.threeGeo.tile;
-                        if (1) {
-                        // if (tile[0]%2 === tile[1]%2) {
-                        // if (tile[0] === 2139 && tile[1] === 1447) { // [2139, 1447, 12] -> offset=[0.557974768072778, 0.20081274371580737]
-                            scene.add(bboxToThreeObject(
-                                ThreeGeo.tileToBbox(tile), proj, {
-                                    offsetZ: - 0.1,
-                                }));
-                        }
+                        scene.add(ThreeGeo.bboxToWireframe(
+                            ThreeGeo.tileToBbox(tile), proj, {offsetZ: - 0.1}).obj);
                     });
                     render(); // now render scene after dem meshes are added
                 },
                 onSatelliteMat: (mesh) => { // your implementation when terrain's satellite texture is obtained
                     const tile = mesh.userData.threeGeo.tile;
                     console.log('tile:', tile);
-                    mesh.material.wireframe = (tile[0]%2 === tile[1]%2);
-                    // mesh.material.wireframe = (tile[0] === 2138 && tile[1] === 1447);
+                    mesh.material.wireframe = true;
+                    // mesh.material.wireframe = (tile[0]%2 === tile[1]%2);
                     // mesh.material.side = THREE.DoubleSide;
                     render(); // now render scene after dem material (satellite texture) is applifed
                 },
