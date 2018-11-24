@@ -225,6 +225,7 @@ class ThreeGeo {
             - this.constUnitsSide *    (coord[1]-se[1]) / (se[1]-nw[1])
         ];
     }
+    // TODO add inverse projection; and refactor geo-viewer etc
     getProjection(origin, radius) {
         const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
         return {
@@ -235,6 +236,7 @@ class ThreeGeo {
                     py - this.constUnitsSide / 2
                 ];
             },
+            bbox: [w, s, e, n],
             unitsPerMeter: ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius),
         };
     }

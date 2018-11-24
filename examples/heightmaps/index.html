@@ -5,12 +5,21 @@
     <title>heightmap demo</title>
 </head>
 <body>
-    <h1>(WIP)</h1>
     <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
+    <div id="mapWrapper" style="
+        position: absolute;
+        z-index: 100;
+        width: 520px; height: 320px;
+        top: 360px;
+        color: white;
+        background: #00000080;">
+        <div id="msg"></div>
+    </div>
 
     <script src="../simple-viewer/three.min.js"></script>
     <script src="../simple-viewer/stats.min.js"></script>
     <script src="../simple-viewer/OrbitControls.js"></script>
+    <script src="./jquery.min.js"></script>
 
     <!-- <script src="../../dist/three-geo.min.js"></script> -->
     <script src="../../lib/three-geo.js"></script>
@@ -75,7 +84,7 @@
 
         const isDebug = 0;
         if (isDebug) {
-            tgeo.tokenMapbox = '....';
+            tgeo.tokenMapbox = 'zzzz';
             tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
             tgeo.setApiSatellite(`../geo-viewer/cache/eiger/mapbox-satellite`);
             // console.log('tgeo:', tgeo);
@@ -84,7 +93,7 @@
         const demToObjects = (demUri, demTile, proj) => {
             const {obj, offset, size} = ThreeGeo.bboxToWireframe(
                 ThreeGeo.tileToBbox(demTile), proj, {
-                    offsetZ: - 0.2,
+                    offsetZ: - 0.1,
                     color: 0xcc00cc,
                 });
             // console.log('offset, size:', offset, size);
@@ -109,32 +118,49 @@
             };
         };
 
+        const $msg = $('#msg');
+
         if (tgeo.tokenMapbox === '********') {
-            alert('Please set your Mapbox API token in ThreeGeo constructor.');
+            const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
+            // alert(warning);
+            $msg.append(`<div>${warning}</div>`);
         } else {
             // params: [lat, lng], terrain's radius (km), zoom resolution, callbacks
             // Beware the value of radius; radius > 5.0 (km) could trigger huge number of tile API calls!!
             const origin = [46.5763, 7.9904];
             const radius = 5.0;
-            const {proj, unitsPerMeter} = tgeo.getProjection(origin, radius);
+            const {proj, bbox, unitsPerMeter} = tgeo.getProjection(origin, radius);
             // console.log('proj:', proj);
-            // console.log('unitsPerMeter:', unitsPerMeter); // (unused here)
+            // console.log('unitsPerMeter:', unitsPerMeter);
 
             const srcDemUris = {};
 
+            $msg.empty();
+            $msg.append(`<div>---- selected area ----</div>`);
+            $msg.append(`<div>lat lng: (${origin[0]}, ${origin[1]})</div>`);
+            $msg.append(`<div>radius: ${radius} [km]</div>`);
+            $msg.append(`<div>bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})</div>`);
+            $msg.append(`<div>units per km: ${unitsPerMeter * 1000}</div>`);
+            $msg.append(`<div>---- terrain composition ----</div>`);
+
             tgeo.getTerrain(origin, radius, 12, {
-                onRgbDem: (meshes) => { // your implementation when terrain's geometry is obtained
+                onRgbDem: (meshes) => {
                     meshes.forEach((mesh) => {
                         console.log('rgb dem mesh:', mesh);
                         scene.add(mesh);
+                        console.log('userData:', mesh.userData);
 
                         //======== how to access mesh's heightmap
                         const array = mesh.geometry.attributes.position.array;
                         // console.log('array:', array);
                         console.log('array.length:', array.length); // 3x128x128 (+ deltaSeams)
 
-                        //======== how to access heightmap (grand-parental tile)
-                        console.log('userData:', mesh.userData);
+                        //======== how to visualize the corresponding tile
+                        const tile = mesh.userData.threeGeo.tile;
+                        scene.add(ThreeGeo.bboxToWireframe(
+                            ThreeGeo.tileToBbox(tile), proj, {offsetZ: - 0.05}).obj);
+
+                        //======== how to access src dem (grand-parental tile)
                         const srcDem = mesh.userData.threeGeo.srcDem;
                         const srcDemUri = `${srcDem.uri}${tgeo.tokenMapbox}`;
                         const srcDemTile = srcDem.tile;
@@ -148,20 +174,14 @@
                             scene.add(wireframe, plane);
                         }
 
-                        //======== how to visualize the corresponding satellite tile's geometry
-                        const tile = mesh.userData.threeGeo.tile;
-                        scene.add(ThreeGeo.bboxToWireframe(
-                            ThreeGeo.tileToBbox(tile), proj, {offsetZ: - 0.1}).obj);
+                        $msg.append(`<div><span style="color: #00ffffff;">tile ${tile.join('-')}</span> using <span style="color: #ff00ffff";>DEM ${srcDemTile.join('-')}</span></div>`);
                     });
-                    render(); // now render scene after dem meshes are added
+                    render();
                 },
-                onSatelliteMat: (mesh) => { // your implementation when terrain's satellite texture is obtained
-                    const tile = mesh.userData.threeGeo.tile;
-                    console.log('tile:', tile);
+                onSatelliteMat: (mesh) => {
                     mesh.material.wireframe = true;
-                    // mesh.material.wireframe = (tile[0]%2 === tile[1]%2);
                     // mesh.material.side = THREE.DoubleSide;
-                    render(); // now render scene after dem material (satellite texture) is applifed
+                    render();
                 },
             });
         }
