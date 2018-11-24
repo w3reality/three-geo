@@ -14,6 +14,7 @@
         color: white;
         background: #00000080;">
         <div id="msg"></div>
+        <p>[<a style="color: white;" href="https://github.com/w3reality/three-geo/tree/master/examples/heightmaps">Source Code</a>]</p>
     </div>
 
     <script src="../simple-viewer/three.min.js"></script>
@@ -136,12 +137,12 @@
             const srcDemUris = {};
 
             $msg.empty();
-            $msg.append(`<div>---- selected area ----</div>`);
+            $msg.append(`<div>---- Selected Area ----</div>`);
             $msg.append(`<div>lat lng: (${origin[0]}, ${origin[1]})</div>`);
             $msg.append(`<div>radius: ${radius} [km]</div>`);
             $msg.append(`<div>bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})</div>`);
             $msg.append(`<div>units per km: ${unitsPerMeter * 1000}</div>`);
-            $msg.append(`<div>---- terrain composition ----</div>`);
+            $msg.append(`<div>---- Terrain Composition ----</div>`);
 
             tgeo.getTerrain(origin, radius, 12, {
                 onRgbDem: (meshes) => {
