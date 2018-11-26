@@ -7,7 +7,7 @@
 		exports["ThreeGeo"] = factory(require("THREE"));
 	else
 		root["ThreeGeo"] = factory(root["THREE"]);
-})(window, function(__WEBPACK_EXTERNAL_MODULE__30__) {
+})(window, function(__WEBPACK_EXTERNAL_MODULE__31__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -1104,7 +1104,7 @@ var util = __webpack_require__(6);
 util.inherits = __webpack_require__(4);
 /*</replacement>*/
 
-var Readable = __webpack_require__(25);
+var Readable = __webpack_require__(26);
 var Writable = __webpack_require__(14);
 
 util.inherits(Duplex, Readable);
@@ -1564,8 +1564,8 @@ function objectToString(o) {
 
 
 var base64 = __webpack_require__(47)
-var ieee754 = __webpack_require__(20)
-var isArray = __webpack_require__(23)
+var ieee754 = __webpack_require__(21)
+var isArray = __webpack_require__(24)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -4038,12 +4038,12 @@ function isUndefined(arg) {
 /* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(25);
+exports = module.exports = __webpack_require__(26);
 exports.Stream = exports;
 exports.Readable = exports;
 exports.Writable = __webpack_require__(14);
 exports.Duplex = __webpack_require__(3);
-exports.Transform = __webpack_require__(29);
+exports.Transform = __webpack_require__(30);
 exports.PassThrough = __webpack_require__(65);
 
 
@@ -4129,7 +4129,7 @@ var internalUtil = {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(26);
+var Stream = __webpack_require__(27);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -4145,7 +4145,7 @@ function _isUint8Array(obj) {
 
 /*</replacement>*/
 
-var destroyImpl = __webpack_require__(27);
+var destroyImpl = __webpack_require__(28);
 
 util.inherits(Writable, Stream);
 
@@ -5673,6 +5673,319 @@ function lineReduce(geojson, callback, initialValue) {
 "use strict";
 
 
+var d2r = Math.PI / 180,
+    r2d = 180 / Math.PI;
+
+/**
+ * Get the bbox of a tile
+ *
+ * @name tileToBBOX
+ * @param {Array<number>} tile
+ * @returns {Array<number>} bbox
+ * @example
+ * var bbox = tileToBBOX([5, 10, 10])
+ * //=bbox
+ */
+function tileToBBOX(tile) {
+    var e = tile2lon(tile[0] + 1, tile[2]);
+    var w = tile2lon(tile[0], tile[2]);
+    var s = tile2lat(tile[1] + 1, tile[2]);
+    var n = tile2lat(tile[1], tile[2]);
+    return [w, s, e, n];
+}
+
+/**
+ * Get a geojson representation of a tile
+ *
+ * @name tileToGeoJSON
+ * @param {Array<number>} tile
+ * @returns {Feature<Polygon>}
+ * @example
+ * var poly = tileToGeoJSON([5, 10, 10])
+ * //=poly
+ */
+function tileToGeoJSON(tile) {
+    var bbox = tileToBBOX(tile);
+    var poly = {
+        type: 'Polygon',
+        coordinates: [[
+            [bbox[0], bbox[1]],
+            [bbox[0], bbox[3]],
+            [bbox[2], bbox[3]],
+            [bbox[2], bbox[1]],
+            [bbox[0], bbox[1]]
+        ]]
+    };
+    return poly;
+}
+
+function tile2lon(x, z) {
+    return x / Math.pow(2, z) * 360 - 180;
+}
+
+function tile2lat(y, z) {
+    var n = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
+    return r2d * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+}
+
+/**
+ * Get the tile for a point at a specified zoom level
+ *
+ * @name pointToTile
+ * @param {number} lon
+ * @param {number} lat
+ * @param {number} z
+ * @returns {Array<number>} tile
+ * @example
+ * var tile = pointToTile(1, 1, 20)
+ * //=tile
+ */
+function pointToTile(lon, lat, z) {
+    var tile = pointToTileFraction(lon, lat, z);
+    tile[0] = Math.floor(tile[0]);
+    tile[1] = Math.floor(tile[1]);
+    return tile;
+}
+
+/**
+ * Get the 4 tiles one zoom level higher
+ *
+ * @name getChildren
+ * @param {Array<number>} tile
+ * @returns {Array<Array<number>>} tiles
+ * @example
+ * var tiles = getChildren([5, 10, 10])
+ * //=tiles
+ */
+function getChildren(tile) {
+    return [
+        [tile[0] * 2, tile[1] * 2, tile[2] + 1],
+        [tile[0] * 2 + 1, tile[1] * 2, tile[2 ] + 1],
+        [tile[0] * 2 + 1, tile[1] * 2 + 1, tile[2] + 1],
+        [tile[0] * 2, tile[1] * 2 + 1, tile[2] + 1]
+    ];
+}
+
+/**
+ * Get the tile one zoom level lower
+ *
+ * @name getParent
+ * @param {Array<number>} tile
+ * @returns {Array<number>} tile
+ * @example
+ * var tile = getParent([5, 10, 10])
+ * //=tile
+ */
+function getParent(tile) {
+    // top left
+    if (tile[0] % 2 === 0 && tile[1] % 2 === 0) {
+        return [tile[0] / 2, tile[1] / 2, tile[2] - 1];
+    }
+    // bottom left
+    if ((tile[0] % 2 === 0) && (!tile[1] % 2 === 0)) {
+        return [tile[0] / 2, (tile[1] - 1) / 2, tile[2] - 1];
+    }
+    // top right
+    if ((!tile[0] % 2 === 0) && (tile[1] % 2 === 0)) {
+        return [(tile[0] - 1) / 2, (tile[1]) / 2, tile[2] - 1];
+    }
+    // bottom right
+    return [(tile[0] - 1) / 2, (tile[1] - 1) / 2, tile[2] - 1];
+}
+
+function getSiblings(tile) {
+    return getChildren(getParent(tile));
+}
+
+/**
+ * Get the 3 sibling tiles for a tile
+ *
+ * @name getSiblings
+ * @param {Array<number>} tile
+ * @returns {Array<Array<number>>} tiles
+ * @example
+ * var tiles = getSiblings([5, 10, 10])
+ * //=tiles
+ */
+function hasSiblings(tile, tiles) {
+    var siblings = getSiblings(tile);
+    for (var i = 0; i < siblings.length; i++) {
+        if (!hasTile(tiles, siblings[i])) return false;
+    }
+    return true;
+}
+
+/**
+ * Check to see if an array of tiles contains a particular tile
+ *
+ * @name hasTile
+ * @param {Array<Array<number>>} tiles
+ * @param {Array<number>} tile
+ * @returns {boolean}
+ * @example
+ * var tiles = [
+ *     [0, 0, 5],
+ *     [0, 1, 5],
+ *     [1, 1, 5],
+ *     [1, 0, 5]
+ * ]
+ * hasTile(tiles, [0, 0, 5])
+ * //=boolean
+ */
+function hasTile(tiles, tile) {
+    for (var i = 0; i < tiles.length; i++) {
+        if (tilesEqual(tiles[i], tile)) return true;
+    }
+    return false;
+}
+
+/**
+ * Check to see if two tiles are the same
+ *
+ * @name tilesEqual
+ * @param {Array<number>} tile1
+ * @param {Array<number>} tile2
+ * @returns {boolean}
+ * @example
+ * tilesEqual([0, 1, 5], [0, 0, 5])
+ * //=boolean
+ */
+function tilesEqual(tile1, tile2) {
+    return (
+        tile1[0] === tile2[0] &&
+        tile1[1] === tile2[1] &&
+        tile1[2] === tile2[2]
+    );
+}
+
+/**
+ * Get the quadkey for a tile
+ *
+ * @name tileToQuadkey
+ * @param {Array<number>} tile
+ * @returns {string} quadkey
+ * @example
+ * var quadkey = tileToQuadkey([0, 1, 5])
+ * //=quadkey
+ */
+function tileToQuadkey(tile) {
+    var index = '';
+    for (var z = tile[2]; z > 0; z--) {
+        var b = 0;
+        var mask = 1 << (z - 1);
+        if ((tile[0] & mask) !== 0) b++;
+        if ((tile[1] & mask) !== 0) b += 2;
+        index += b.toString();
+    }
+    return index;
+}
+
+/**
+ * Get the tile for a quadkey
+ *
+ * @name quadkeyToTile
+ * @param {string} quadkey
+ * @returns {Array<number>} tile
+ * @example
+ * var tile = quadkeyToTile('00001033')
+ * //=tile
+ */
+function quadkeyToTile(quadkey) {
+    var x = 0;
+    var y = 0;
+    var z = quadkey.length;
+
+    for (var i = z; i > 0; i--) {
+        var mask = 1 << (i - 1);
+        var q = +quadkey[z - i];
+        if (q === 1) x |= mask;
+        if (q === 2) y |= mask;
+        if (q === 3) {
+            x |= mask;
+            y |= mask;
+        }
+    }
+    return [x, y, z];
+}
+
+/**
+ * Get the smallest tile to cover a bbox
+ *
+ * @name bboxToTile
+ * @param {Array<number>} bbox
+ * @returns {Array<number>} tile
+ * @example
+ * var tile = bboxToTile([ -178, 84, -177, 85 ])
+ * //=tile
+ */
+function bboxToTile(bboxCoords) {
+    var min = pointToTile(bboxCoords[0], bboxCoords[1], 32);
+    var max = pointToTile(bboxCoords[2], bboxCoords[3], 32);
+    var bbox = [min[0], min[1], max[0], max[1]];
+
+    var z = getBboxZoom(bbox);
+    if (z === 0) return [0, 0, 0];
+    var x = bbox[0] >>> (32 - z);
+    var y = bbox[1] >>> (32 - z);
+    return [x, y, z];
+}
+
+function getBboxZoom(bbox) {
+    var MAX_ZOOM = 28;
+    for (var z = 0; z < MAX_ZOOM; z++) {
+        var mask = 1 << (32 - (z + 1));
+        if (((bbox[0] & mask) !== (bbox[2] & mask)) ||
+            ((bbox[1] & mask) !== (bbox[3] & mask))) {
+            return z;
+        }
+    }
+
+    return MAX_ZOOM;
+}
+
+/**
+ * Get the precise fractional tile location for a point at a zoom level
+ *
+ * @name pointToTileFraction
+ * @param {number} lon
+ * @param {number} lat
+ * @param {number} z
+ * @returns {Array<number>} tile fraction
+ * var tile = pointToTileFraction(30.5, 50.5, 15)
+ * //=tile
+ */
+function pointToTileFraction(lon, lat, z) {
+    var sin = Math.sin(lat * d2r),
+        z2 = Math.pow(2, z),
+        x = z2 * (lon / 360 + 0.5),
+        y = z2 * (0.5 - 0.25 * Math.log((1 + sin) / (1 - sin)) / Math.PI);
+    return [x, y, z];
+}
+
+module.exports = {
+    tileToGeoJSON: tileToGeoJSON,
+    tileToBBOX: tileToBBOX,
+    getChildren: getChildren,
+    getParent: getParent,
+    getSiblings: getSiblings,
+    hasTile: hasTile,
+    hasSiblings: hasSiblings,
+    tilesEqual: tilesEqual,
+    tileToQuadkey: tileToQuadkey,
+    quadkeyToTile: quadkeyToTile,
+    pointToTile: pointToTile,
+    bboxToTile: bboxToTile,
+    pointToTileFraction: pointToTileFraction
+};
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 function unique_pred(list, compare) {
   var ptr = 1
     , len = list.length
@@ -5731,7 +6044,7 @@ module.exports = unique
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5787,7 +6100,7 @@ exports.default = destination;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5795,7 +6108,7 @@ exports.default = destination;
 
 module.exports = Pbf;
 
-var ieee754 = __webpack_require__(20);
+var ieee754 = __webpack_require__(21);
 
 function Pbf(buf) {
     this.buf = ArrayBuffer.isView && ArrayBuffer.isView(buf) ? buf : new Uint8Array(buf || 0);
@@ -6412,16 +6725,16 @@ function writeUtf8(buf, str, pos) {
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports.VectorTile = __webpack_require__(45);
-module.exports.VectorTileFeature = __webpack_require__(22);
-module.exports.VectorTileLayer = __webpack_require__(21);
+module.exports.VectorTileFeature = __webpack_require__(23);
+module.exports.VectorTileLayer = __webpack_require__(22);
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -6511,13 +6824,13 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var VectorTileFeature = __webpack_require__(22);
+var VectorTileFeature = __webpack_require__(23);
 
 module.exports = VectorTileLayer;
 
@@ -6579,7 +6892,7 @@ VectorTileLayer.prototype.feature = function(i) {
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6819,7 +7132,7 @@ function signedArea(ring) {
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -6830,7 +7143,7 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var iota = __webpack_require__(49)
@@ -7179,7 +7492,7 @@ module.exports = wrappedNDArrayCtor
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7214,7 +7527,7 @@ var pna = __webpack_require__(8);
 module.exports = Readable;
 
 /*<replacement>*/
-var isArray = __webpack_require__(23);
+var isArray = __webpack_require__(24);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -7232,7 +7545,7 @@ var EElistenerCount = function (emitter, type) {
 /*</replacement>*/
 
 /*<replacement>*/
-var Stream = __webpack_require__(26);
+var Stream = __webpack_require__(27);
 /*</replacement>*/
 
 /*<replacement>*/
@@ -7264,7 +7577,7 @@ if (debugUtil && debugUtil.debuglog) {
 /*</replacement>*/
 
 var BufferList = __webpack_require__(60);
-var destroyImpl = __webpack_require__(27);
+var destroyImpl = __webpack_require__(28);
 var StringDecoder;
 
 util.inherits(Readable, Stream);
@@ -7354,7 +7667,7 @@ function ReadableState(options, stream) {
   this.decoder = null;
   this.encoding = null;
   if (options.encoding) {
-    if (!StringDecoder) StringDecoder = __webpack_require__(28).StringDecoder;
+    if (!StringDecoder) StringDecoder = __webpack_require__(29).StringDecoder;
     this.decoder = new StringDecoder(options.encoding);
     this.encoding = options.encoding;
   }
@@ -7510,7 +7823,7 @@ Readable.prototype.isPaused = function () {
 
 // backwards compatibility.
 Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = __webpack_require__(28).StringDecoder;
+  if (!StringDecoder) StringDecoder = __webpack_require__(29).StringDecoder;
   this._readableState.decoder = new StringDecoder(enc);
   this._readableState.encoding = enc;
   return this;
@@ -8205,14 +8518,14 @@ function indexOf(xs, x) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(1), __webpack_require__(2)))
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(12).EventEmitter;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8292,7 +8605,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8594,7 +8907,7 @@ function simpleEnd(buf) {
 }
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8814,13 +9127,13 @@ function done(stream, er, data) {
 }
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE__30__;
+module.exports = __WEBPACK_EXTERNAL_MODULE__31__;
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8941,13 +9254,13 @@ function rad(num) {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var tilebelt = __webpack_require__(37);
+var tilebelt = __webpack_require__(16);
 
 /**
  * Given a geometry, create cells and return them in a format easily readable
@@ -9201,14 +9514,14 @@ function fromID(id) {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process, Buffer) {
 
 var path          = __webpack_require__(48)
-var ndarray       = __webpack_require__(24)
+var ndarray       = __webpack_require__(25)
 var GifReader     = __webpack_require__(51).GifReader
 var pack          = __webpack_require__(52)
 var through       = __webpack_require__(57)
@@ -9343,7 +9656,7 @@ module.exports = function getPixels(url, type, cb) {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(2), __webpack_require__(7).Buffer))
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var SphericalMercator = (function(){
@@ -9551,7 +9864,7 @@ if (true) {
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9566,7 +9879,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var helpers_1 = __webpack_require__(0);
 var invariant_1 = __webpack_require__(5);
-var martinez = __importStar(__webpack_require__(36));
+var martinez = __importStar(__webpack_require__(37));
 /**
  * Takes two {@link Polygon|polygon} or {@link MultiPolygon|multi-polygon} geometries and
  * finds their polygonal intersection. If they don't intersect, returns null.
@@ -9667,7 +9980,7 @@ exports.default = intersect;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -11388,319 +11701,6 @@ exports.default = intersect;
 
 
 /***/ }),
-/* 37 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var d2r = Math.PI / 180,
-    r2d = 180 / Math.PI;
-
-/**
- * Get the bbox of a tile
- *
- * @name tileToBBOX
- * @param {Array<number>} tile
- * @returns {Array<number>} bbox
- * @example
- * var bbox = tileToBBOX([5, 10, 10])
- * //=bbox
- */
-function tileToBBOX(tile) {
-    var e = tile2lon(tile[0] + 1, tile[2]);
-    var w = tile2lon(tile[0], tile[2]);
-    var s = tile2lat(tile[1] + 1, tile[2]);
-    var n = tile2lat(tile[1], tile[2]);
-    return [w, s, e, n];
-}
-
-/**
- * Get a geojson representation of a tile
- *
- * @name tileToGeoJSON
- * @param {Array<number>} tile
- * @returns {Feature<Polygon>}
- * @example
- * var poly = tileToGeoJSON([5, 10, 10])
- * //=poly
- */
-function tileToGeoJSON(tile) {
-    var bbox = tileToBBOX(tile);
-    var poly = {
-        type: 'Polygon',
-        coordinates: [[
-            [bbox[0], bbox[1]],
-            [bbox[0], bbox[3]],
-            [bbox[2], bbox[3]],
-            [bbox[2], bbox[1]],
-            [bbox[0], bbox[1]]
-        ]]
-    };
-    return poly;
-}
-
-function tile2lon(x, z) {
-    return x / Math.pow(2, z) * 360 - 180;
-}
-
-function tile2lat(y, z) {
-    var n = Math.PI - 2 * Math.PI * y / Math.pow(2, z);
-    return r2d * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-}
-
-/**
- * Get the tile for a point at a specified zoom level
- *
- * @name pointToTile
- * @param {number} lon
- * @param {number} lat
- * @param {number} z
- * @returns {Array<number>} tile
- * @example
- * var tile = pointToTile(1, 1, 20)
- * //=tile
- */
-function pointToTile(lon, lat, z) {
-    var tile = pointToTileFraction(lon, lat, z);
-    tile[0] = Math.floor(tile[0]);
-    tile[1] = Math.floor(tile[1]);
-    return tile;
-}
-
-/**
- * Get the 4 tiles one zoom level higher
- *
- * @name getChildren
- * @param {Array<number>} tile
- * @returns {Array<Array<number>>} tiles
- * @example
- * var tiles = getChildren([5, 10, 10])
- * //=tiles
- */
-function getChildren(tile) {
-    return [
-        [tile[0] * 2, tile[1] * 2, tile[2] + 1],
-        [tile[0] * 2 + 1, tile[1] * 2, tile[2 ] + 1],
-        [tile[0] * 2 + 1, tile[1] * 2 + 1, tile[2] + 1],
-        [tile[0] * 2, tile[1] * 2 + 1, tile[2] + 1]
-    ];
-}
-
-/**
- * Get the tile one zoom level lower
- *
- * @name getParent
- * @param {Array<number>} tile
- * @returns {Array<number>} tile
- * @example
- * var tile = getParent([5, 10, 10])
- * //=tile
- */
-function getParent(tile) {
-    // top left
-    if (tile[0] % 2 === 0 && tile[1] % 2 === 0) {
-        return [tile[0] / 2, tile[1] / 2, tile[2] - 1];
-    }
-    // bottom left
-    if ((tile[0] % 2 === 0) && (!tile[1] % 2 === 0)) {
-        return [tile[0] / 2, (tile[1] - 1) / 2, tile[2] - 1];
-    }
-    // top right
-    if ((!tile[0] % 2 === 0) && (tile[1] % 2 === 0)) {
-        return [(tile[0] - 1) / 2, (tile[1]) / 2, tile[2] - 1];
-    }
-    // bottom right
-    return [(tile[0] - 1) / 2, (tile[1] - 1) / 2, tile[2] - 1];
-}
-
-function getSiblings(tile) {
-    return getChildren(getParent(tile));
-}
-
-/**
- * Get the 3 sibling tiles for a tile
- *
- * @name getSiblings
- * @param {Array<number>} tile
- * @returns {Array<Array<number>>} tiles
- * @example
- * var tiles = getSiblings([5, 10, 10])
- * //=tiles
- */
-function hasSiblings(tile, tiles) {
-    var siblings = getSiblings(tile);
-    for (var i = 0; i < siblings.length; i++) {
-        if (!hasTile(tiles, siblings[i])) return false;
-    }
-    return true;
-}
-
-/**
- * Check to see if an array of tiles contains a particular tile
- *
- * @name hasTile
- * @param {Array<Array<number>>} tiles
- * @param {Array<number>} tile
- * @returns {boolean}
- * @example
- * var tiles = [
- *     [0, 0, 5],
- *     [0, 1, 5],
- *     [1, 1, 5],
- *     [1, 0, 5]
- * ]
- * hasTile(tiles, [0, 0, 5])
- * //=boolean
- */
-function hasTile(tiles, tile) {
-    for (var i = 0; i < tiles.length; i++) {
-        if (tilesEqual(tiles[i], tile)) return true;
-    }
-    return false;
-}
-
-/**
- * Check to see if two tiles are the same
- *
- * @name tilesEqual
- * @param {Array<number>} tile1
- * @param {Array<number>} tile2
- * @returns {boolean}
- * @example
- * tilesEqual([0, 1, 5], [0, 0, 5])
- * //=boolean
- */
-function tilesEqual(tile1, tile2) {
-    return (
-        tile1[0] === tile2[0] &&
-        tile1[1] === tile2[1] &&
-        tile1[2] === tile2[2]
-    );
-}
-
-/**
- * Get the quadkey for a tile
- *
- * @name tileToQuadkey
- * @param {Array<number>} tile
- * @returns {string} quadkey
- * @example
- * var quadkey = tileToQuadkey([0, 1, 5])
- * //=quadkey
- */
-function tileToQuadkey(tile) {
-    var index = '';
-    for (var z = tile[2]; z > 0; z--) {
-        var b = 0;
-        var mask = 1 << (z - 1);
-        if ((tile[0] & mask) !== 0) b++;
-        if ((tile[1] & mask) !== 0) b += 2;
-        index += b.toString();
-    }
-    return index;
-}
-
-/**
- * Get the tile for a quadkey
- *
- * @name quadkeyToTile
- * @param {string} quadkey
- * @returns {Array<number>} tile
- * @example
- * var tile = quadkeyToTile('00001033')
- * //=tile
- */
-function quadkeyToTile(quadkey) {
-    var x = 0;
-    var y = 0;
-    var z = quadkey.length;
-
-    for (var i = z; i > 0; i--) {
-        var mask = 1 << (i - 1);
-        var q = +quadkey[z - i];
-        if (q === 1) x |= mask;
-        if (q === 2) y |= mask;
-        if (q === 3) {
-            x |= mask;
-            y |= mask;
-        }
-    }
-    return [x, y, z];
-}
-
-/**
- * Get the smallest tile to cover a bbox
- *
- * @name bboxToTile
- * @param {Array<number>} bbox
- * @returns {Array<number>} tile
- * @example
- * var tile = bboxToTile([ -178, 84, -177, 85 ])
- * //=tile
- */
-function bboxToTile(bboxCoords) {
-    var min = pointToTile(bboxCoords[0], bboxCoords[1], 32);
-    var max = pointToTile(bboxCoords[2], bboxCoords[3], 32);
-    var bbox = [min[0], min[1], max[0], max[1]];
-
-    var z = getBboxZoom(bbox);
-    if (z === 0) return [0, 0, 0];
-    var x = bbox[0] >>> (32 - z);
-    var y = bbox[1] >>> (32 - z);
-    return [x, y, z];
-}
-
-function getBboxZoom(bbox) {
-    var MAX_ZOOM = 28;
-    for (var z = 0; z < MAX_ZOOM; z++) {
-        var mask = 1 << (32 - (z + 1));
-        if (((bbox[0] & mask) !== (bbox[2] & mask)) ||
-            ((bbox[1] & mask) !== (bbox[3] & mask))) {
-            return z;
-        }
-    }
-
-    return MAX_ZOOM;
-}
-
-/**
- * Get the precise fractional tile location for a point at a zoom level
- *
- * @name pointToTileFraction
- * @param {number} lon
- * @param {number} lat
- * @param {number} z
- * @returns {Array<number>} tile fraction
- * var tile = pointToTileFraction(30.5, 50.5, 15)
- * //=tile
- */
-function pointToTileFraction(lon, lat, z) {
-    var sin = Math.sin(lat * d2r),
-        z2 = Math.pow(2, z),
-        x = z2 * (lon / 360 + 0.5),
-        y = z2 * (0.5 - 0.25 * Math.log((1 + sin) / (1 - sin)) / Math.PI);
-    return [x, y, z];
-}
-
-module.exports = {
-    tileToGeoJSON: tileToGeoJSON,
-    tileToBBOX: tileToBBOX,
-    getChildren: getChildren,
-    getParent: getParent,
-    getSiblings: getSiblings,
-    hasTile: hasTile,
-    hasSiblings: hasSiblings,
-    tilesEqual: tilesEqual,
-    tileToQuadkey: tileToQuadkey,
-    quadkeyToTile: quadkeyToTile,
-    pointToTile: pointToTile,
-    bboxToTile: bboxToTile,
-    pointToTileFraction: pointToTileFraction
-};
-
-
-/***/ }),
 /* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11942,7 +11942,7 @@ function extend() {
 "use strict";
 
 
-var VectorTileLayer = __webpack_require__(21);
+var VectorTileLayer = __webpack_require__(22);
 
 module.exports = VectorTile;
 
@@ -13532,7 +13532,7 @@ try { exports.GifWriter = GifWriter; exports.GifReader = GifReader } catch(e) {}
 "use strict";
 
 
-var ndarray = __webpack_require__(24)
+var ndarray = __webpack_require__(25)
 var do_convert = __webpack_require__(53)
 
 module.exports = function convert(arr, result) {
@@ -13776,7 +13776,7 @@ module.exports = createThunk
 "use strict";
 
 
-var uniq = __webpack_require__(16)
+var uniq = __webpack_require__(17)
 
 // This function generates very simple loops analogous to how you typically traverse arrays (the outermost loop corresponds to the slowest changing index, the innermost loop to the fastest changing index)
 // TODO: If two arrays have the same strides (and offsets) there is potential for decreasing the number of "pointers" and related variables. The drawback is that the type signature would become more specific and that there would thus be less potential for caching, but it might still be worth it, especially when dealing with large numbers of arguments.
@@ -14850,7 +14850,7 @@ function config (name) {
 
 module.exports = PassThrough;
 
-var Transform = __webpack_require__(29);
+var Transform = __webpack_require__(30);
 
 /*<replacement>*/
 var util = __webpack_require__(6);
@@ -14966,7 +14966,7 @@ function dataUriToBuffer (uri) {
 __webpack_require__.r(__webpack_exports__);
 
 // EXTERNAL MODULE: external "THREE"
-var external_THREE_ = __webpack_require__(30);
+var external_THREE_ = __webpack_require__(31);
 
 // EXTERNAL MODULE: ./node_modules/@turf/helpers/index.js
 var helpers = __webpack_require__(0);
@@ -15349,18 +15349,18 @@ function union() {
 /* harmony default export */ var union_main_es = (union);
 
 // EXTERNAL MODULE: ./node_modules/@turf/area/index.js
-var _turf_area = __webpack_require__(31);
+var _turf_area = __webpack_require__(32);
 var area_default = /*#__PURE__*/__webpack_require__.n(_turf_area);
 
 // EXTERNAL MODULE: ./node_modules/@turf/destination/index.js
-var _turf_destination = __webpack_require__(17);
+var _turf_destination = __webpack_require__(18);
 var destination_default = /*#__PURE__*/__webpack_require__.n(_turf_destination);
 
 // EXTERNAL MODULE: ./node_modules/@turf/intersect/index.js
-var intersect = __webpack_require__(35);
+var intersect = __webpack_require__(36);
 
 // EXTERNAL MODULE: ./node_modules/@mapbox/tile-cover/index.js
-var tile_cover = __webpack_require__(32);
+var tile_cover = __webpack_require__(33);
 var tile_cover_default = /*#__PURE__*/__webpack_require__.n(tile_cover);
 
 // EXTERNAL MODULE: ./node_modules/xhr/index.js
@@ -15368,28 +15368,34 @@ var xhr = __webpack_require__(11);
 var xhr_default = /*#__PURE__*/__webpack_require__.n(xhr);
 
 // EXTERNAL MODULE: ./node_modules/pbf/index.js
-var node_modules_pbf = __webpack_require__(18);
+var node_modules_pbf = __webpack_require__(19);
 var pbf_default = /*#__PURE__*/__webpack_require__.n(node_modules_pbf);
 
 // EXTERNAL MODULE: ./node_modules/@mapbox/vector-tile/index.js
-var vector_tile = __webpack_require__(19);
+var vector_tile = __webpack_require__(20);
 
 // EXTERNAL MODULE: ./node_modules/uniq/uniq.js
-var uniq = __webpack_require__(16);
+var uniq = __webpack_require__(17);
 var uniq_default = /*#__PURE__*/__webpack_require__.n(uniq);
 
+// EXTERNAL MODULE: ./node_modules/@mapbox/tilebelt/index.js
+var tilebelt = __webpack_require__(16);
+var tilebelt_default = /*#__PURE__*/__webpack_require__.n(tilebelt);
+
 // EXTERNAL MODULE: ./node_modules/get-pixels/dom-pixels.js
-var dom_pixels = __webpack_require__(33);
+var dom_pixels = __webpack_require__(34);
 var dom_pixels_default = /*#__PURE__*/__webpack_require__.n(dom_pixels);
 
 // EXTERNAL MODULE: ./node_modules/@mapbox/sphericalmercator/sphericalmercator.js
-var sphericalmercator = __webpack_require__(34);
+var sphericalmercator = __webpack_require__(35);
 var sphericalmercator_default = /*#__PURE__*/__webpack_require__.n(sphericalmercator);
 
 // CONCATENATED MODULE: ./src/index.js
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -15445,6 +15451,7 @@ var THREE = window.THREE ? window.THREE : external_THREE_;
 // so, use this module version with recent fix instead
 
 // console.log('turfIntersect:', turfIntersect);
+
 
 
 
@@ -15538,13 +15545,40 @@ var src_ThreeGeo = function () {
     _createClass(ThreeGeo, [{
         key: 'projectCoord',
         value: function projectCoord(coord, nw, se) {
-            // lonlat to pixel coordinates
+            // lng, lat -> px, py
             return [this.constUnitsSide * (1 - (coord[0] - nw[0]) / (se[0] - nw[0])), -this.constUnitsSide * (coord[1] - se[1]) / (se[1] - nw[1])];
+        }
+        // TODO add inverse projection; and refactor geo-viewer etc
+
+    }, {
+        key: 'getProjection',
+        value: function getProjection(origin, radius) {
+            var _this = this;
+
+            var _ThreeGeo$originRadiu = ThreeGeo.originRadiusToBbox(origin, radius),
+                _ThreeGeo$originRadiu2 = _slicedToArray(_ThreeGeo$originRadiu, 4),
+                w = _ThreeGeo$originRadiu2[0],
+                s = _ThreeGeo$originRadiu2[1],
+                e = _ThreeGeo$originRadiu2[2],
+                n = _ThreeGeo$originRadiu2[3];
+
+            return {
+                proj: function proj(ll) {
+                    var _projectCoord = _this.projectCoord(ll, [w, n], [e, s]),
+                        _projectCoord2 = _slicedToArray(_projectCoord, 2),
+                        px = _projectCoord2[0],
+                        py = _projectCoord2[1];
+
+                    return [-px + _this.constUnitsSide / 2, py - _this.constUnitsSide / 2];
+                },
+                bbox: [w, s, e, n],
+                unitsPerMeter: ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius)
+            };
         }
     }, {
         key: 'buildSliceGeometry',
         value: function buildSliceGeometry(coords, iContour, color, contours, nw, se, radius) {
-            var _this = this;
+            var _this2 = this;
 
             var shadedContour = new THREE.Shape();
             var wireframeContours = [new THREE.Geometry()];
@@ -15556,10 +15590,10 @@ var src_ThreeGeo = function () {
             // iterate through vertices per shape
             // console.log('coords[0]:', coords[0]);
             coords[0].forEach(function (coord, index) {
-                var _projectCoord = _this.projectCoord(coord, nw, se),
-                    _projectCoord2 = _slicedToArray(_projectCoord, 2),
-                    px = _projectCoord2[0],
-                    py = _projectCoord2[1];
+                var _projectCoord3 = _this2.projectCoord(coord, nw, se),
+                    _projectCoord4 = _slicedToArray(_projectCoord3, 2),
+                    px = _projectCoord4[0],
+                    py = _projectCoord4[1];
 
                 wireframeContours[0].vertices.push(new THREE.Vector3(px, py, pz));
                 if (index === 0) {
@@ -15577,10 +15611,10 @@ var src_ThreeGeo = function () {
 
                 // iterate through hole path vertices
                 for (var j = 0; j < coords[k].length; j++) {
-                    var _projectCoord3 = this.projectCoord(coords[k][j], nw, se),
-                        _projectCoord4 = _slicedToArray(_projectCoord3, 2),
-                        px = _projectCoord4[0],
-                        py = _projectCoord4[1];
+                    var _projectCoord5 = this.projectCoord(coords[k][j], nw, se),
+                        _projectCoord6 = _slicedToArray(_projectCoord5, 2),
+                        px = _projectCoord6[0],
+                        py = _projectCoord6[1];
 
                     wireframeContours[k].vertices.push(new THREE.Vector3(px, py, pz));
                     if (j === 0) {
@@ -15600,8 +15634,8 @@ var src_ThreeGeo = function () {
 
                 //======== align x-y : east-north
                 line.rotation.y = Math.PI;
-                line.position.x = _this.constUnitsSide / 2;
-                line.position.y = -_this.constUnitsSide / 2;
+                line.position.x = _this2.constUnitsSide / 2;
+                line.position.y = -_this2.constUnitsSide / 2;
                 line.name = 'dem-vec-line-' + contours[h].ele + '-' + line.uuid;
 
                 // line.visible = false;
@@ -15630,7 +15664,7 @@ var src_ThreeGeo = function () {
     }, {
         key: 'getVectorDem',
         value: function getVectorDem(contours, northWest, southEast, radius) {
-            var _this2 = this;
+            var _this3 = this;
 
             // console.log('getVectorDem():', contours, northWest, southEast, radius);
 
@@ -15659,7 +15693,7 @@ var src_ThreeGeo = function () {
             var objs = [];
             var addSlice = function addSlice(coords, ic) {
                 // console.log('coords:', coords);
-                var _buildSliceGeometry = _this2.buildSliceGeometry(coords, ic, colorRange(ic), contours, northWest, southEast, radius),
+                var _buildSliceGeometry = _this3.buildSliceGeometry(coords, ic, colorRange(ic), contours, northWest, southEast, radius),
                     _buildSliceGeometry2 = _slicedToArray(_buildSliceGeometry, 2),
                     lines = _buildSliceGeometry2[0],
                     extrudeShade = _buildSliceGeometry2[1];
@@ -15690,7 +15724,7 @@ var src_ThreeGeo = function () {
     }, {
         key: 'processRgbTile',
         value: function processRgbTile(pixels, zoomposEle, zpCovered, bbox, radius) {
-            var _this3 = this;
+            var _this4 = this;
 
             var elevations = [];
             if (pixels) {
@@ -15759,10 +15793,10 @@ var src_ThreeGeo = function () {
                         var lonlatPixel = constTilePixels.ll([zoompos[1] * 128 + col, zoompos[2] * 128 + row], zoompos[0]);
                         // console.log('lonlatPixel:', lonlatPixel);
 
-                        var _projectCoord5 = _this3.projectCoord(lonlatPixel, bbox.northWest, bbox.southEast),
-                            _projectCoord6 = _slicedToArray(_projectCoord5, 2),
-                            px = _projectCoord6[0],
-                            py = _projectCoord6[1];
+                        var _projectCoord7 = _this4.projectCoord(lonlatPixel, bbox.northWest, bbox.southEast),
+                            _projectCoord8 = _slicedToArray(_projectCoord7, 2),
+                            px = _projectCoord8[0],
+                            py = _projectCoord8[1];
                         // NOTE: do use shift = 1 for computeSeamRows()
 
 
@@ -15771,7 +15805,7 @@ var src_ThreeGeo = function () {
                     }
                 }
                 // console.log('zoompos, array:', zoompos, array); // 49152 = 128*128*3 elements
-                dataEle.push([zoompos, array]);
+                dataEle.push([zoompos, array, zoomposEle]);
             });
             // console.log('dataEle:', dataEle);
             return dataEle;
@@ -15779,7 +15813,7 @@ var src_ThreeGeo = function () {
     }, {
         key: 'getRgbDem',
         value: function getRgbDem(dataEle, apiSatellite, onSatelliteMat) {
-            var _this4 = this;
+            var _this5 = this;
 
             console.log('apiSatellite:', apiSatellite);
 
@@ -15794,39 +15828,57 @@ var src_ThreeGeo = function () {
             var objs = [];
             var dataEleIds = ThreeGeo.getDataEleIds(dataEle);
             dataEle.forEach(function (_ref) {
-                var _ref2 = _slicedToArray(_ref, 2),
+                var _ref2 = _slicedToArray(_ref, 3),
                     zoompos = _ref2[0],
-                    array = _ref2[1];
+                    arr = _ref2[1],
+                    zoomposEle = _ref2[2];
 
-                // console.log(zoompos, array);
-                if (array.length !== constVertices * constVertices * 3) {
-                    // assumtion on the size of the array failed...
+                // console.log(zoompos, arr); // a 16th of zoomposEle
+                if (arr.length !== constVertices * constVertices * 3) {
+                    // assumtion on the size of the arr failed...
                     console.log('woops: already seams resolved? or what..., NOP');
                     return;
                 }
 
                 // console.log('dealing with the seams of:', zoompos);
-                var cSegments = ThreeGeo.resolveSeams(array, ThreeGeo.getNeighborsInfo(dataEle, dataEleIds, zoompos));
+                var cSegments = ThreeGeo.resolveSeams(arr, ThreeGeo.getNeighborsInfo(dataEle, dataEleIds, zoompos));
+                console.log('cSegments:', cSegments);
                 // w and h don't matter since position.array is being overwritten
+
                 var geom = new THREE.PlaneBufferGeometry(1, 1, cSegments[0], cSegments[1]);
-                geom.attributes.position.array = new Float32Array(array);
+                geom.attributes.position.array = new Float32Array(arr);
                 //--------
                 // test identifying a 127x1 "belt"
                 // let geom = new THREE.PlaneBufferGeometry(1, 1, 127, 1);
-                // let arr = array;
-                // arr.length = 128*2*3;
-                // geom.attributes.position.array = new Float32Array(arr);
+                // let arrBelt = arr;
+                // arrBelt.length = 128*2*3;
+                // geom.attributes.position.array = new Float32Array(arrBelt);
 
                 var plane = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({
                     wireframe: true,
-                    color: 0x999999
+                    color: 0xcccccc
                 }));
-                plane.position.x = _this4.constUnitsSide / 2;
-                plane.position.y = -_this4.constUnitsSide / 2;
+                plane.position.x = _this5.constUnitsSide / 2;
+                plane.position.y = -_this5.constUnitsSide / 2;
                 plane.name = 'dem-rgb-' + zoompos.join('/');
+                // const _toTile = (zp) => { // [z,x,y] to a new [x,y,z]
+                //     let tile = zp.slice();
+                //     tile.push(tile.shift());
+                //     return tile;
+                // };
+                var _toTile = function _toTile(zp) {
+                    return [zp[1], zp[2], zp[0]];
+                };
+                plane.userData.threeGeo = {
+                    tile: _toTile(zoompos),
+                    srcDem: {
+                        tile: _toTile(zoomposEle),
+                        uri: ThreeGeo.getUriMapbox('', 'mapbox-terrain-rgb', zoomposEle)
+                    }
+                };
                 objs.push(plane);
 
-                ThreeGeo.resolveTex(zoompos, apiSatellite, _this4.tokenMapbox, function (tex) {
+                ThreeGeo.resolveTex(zoompos, apiSatellite, _this5.tokenMapbox, function (tex) {
                     if (tex) {
                         plane.material = new THREE.MeshBasicMaterial({
                             side: THREE.FrontSide,
@@ -15844,7 +15896,7 @@ var src_ThreeGeo = function () {
     }, {
         key: 'getRgbTiles',
         value: function getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite, onRgbDem, onSatelliteMat) {
-            var _this5 = this;
+            var _this6 = this;
 
             var zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
             console.log('zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
@@ -15853,9 +15905,9 @@ var src_ThreeGeo = function () {
             var count = 0; // TODO use Promise() instead ??
             zpEle.forEach(function (zoompos) {
                 // console.log('ele zoompos', zoompos);
-                ThreeGeo.fetchTile(zoompos, apiRgb, _this5.tokenMapbox, function (pixels) {
+                ThreeGeo.fetchTile(zoompos, apiRgb, _this6.tokenMapbox, function (pixels) {
                     if (pixels) {
-                        dataEleCovered = dataEleCovered.concat(_this5.processRgbTile(pixels, zoompos, zpCovered, bbox, radius));
+                        dataEleCovered = dataEleCovered.concat(_this6.processRgbTile(pixels, zoompos, zpCovered, bbox, radius));
                         console.log('now ' + dataEleCovered.length + ' satellite tiles in dataEleCovered');
                     } else {
                         console.log('fetchTile() failed for rgb dem of zp: ' + zoompos + ' (count: ' + count + '/' + zpEle.length + ')');
@@ -15865,7 +15917,7 @@ var src_ThreeGeo = function () {
                     if (count === zpEle.length) {
                         console.log('dataEleCovered:', dataEleCovered);
                         if (onRgbDem) {
-                            onRgbDem(_this5.getRgbDem(dataEleCovered, apiSatellite, onSatelliteMat));
+                            onRgbDem(_this6.getRgbDem(dataEleCovered, apiSatellite, onSatelliteMat));
                         }
                     }
                 });
@@ -15874,7 +15926,7 @@ var src_ThreeGeo = function () {
     }, {
         key: 'getVectorTiles',
         value: function getVectorTiles(zpCovered, bbox, radius, apiVector, onVectorDem) {
-            var _this6 = this;
+            var _this7 = this;
 
             var zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
             console.log('zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
@@ -15886,7 +15938,7 @@ var src_ThreeGeo = function () {
             };
             var count = 0; // TODO use Promise() instead ??
             zpEle.forEach(function (zoompos) {
-                ThreeGeo.fetchTile(zoompos, apiVector, _this6.tokenMapbox, function (tile) {
+                ThreeGeo.fetchTile(zoompos, apiVector, _this7.tokenMapbox, function (tile) {
                     if (tile) {
                         ThreeGeo.processVectorTile(tile, zoompos, geojson, bottomTiles);
                     } else {
@@ -15896,7 +15948,7 @@ var src_ThreeGeo = function () {
                     count++;
                     if (count === zpEle.length) {
                         var contours = ThreeGeo.processVectorGeojson(geojson, bottomTiles, bbox.feature, radius);
-                        onVectorDem(_this6.getVectorDem(contours, bbox.northWest, bbox.southEast, radius));
+                        onVectorDem(_this7.getVectorDem(contours, bbox.northWest, bbox.southEast, radius));
                     }
                 });
             });
@@ -16029,6 +16081,57 @@ var src_ThreeGeo = function () {
             return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
         }
     }, {
+        key: 'bboxToWireframe',
+        value: function bboxToWireframe(wsen, proj) {
+            var _ls$position;
+
+            var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+            var defaults = {
+                offsetZ: 0.0,
+                color: 0x00cccc,
+                height: 0.001
+            };
+            var actual = Object.assign({}, defaults, opts);
+
+            var _wsen = _slicedToArray(wsen, 4),
+                w = _wsen[0],
+                s = _wsen[1],
+                e = _wsen[2],
+                n = _wsen[3]; // of bbox
+            // console.log('wsen:', wsen);
+
+
+            var offset = proj([(w + e) / 2, (s + n) / 2]); // lng, lat -> x, y
+            // console.log('offset:', offset);
+
+            var _ref3 = [].concat(_toConsumableArray(proj([w, n])), _toConsumableArray(proj([e, s]))),
+                pw = _ref3[0],
+                pn = _ref3[1],
+                pe = _ref3[2],
+                ps = _ref3[3];
+            // console.log('pw, pn, pe, ps:', pw, pn, pe, ps);
+            // const sides = [0.05, 0.05]; // show the mid point
+
+
+            var sides = [pe - pw, pn - ps];
+
+            var dzBounds = actual.height;
+            var ls = new THREE.LineSegments(new THREE.EdgesGeometry(new (Function.prototype.bind.apply(THREE.BoxBufferGeometry, [null].concat(sides, [dzBounds])))()), new THREE.LineBasicMaterial({ color: actual.color }));
+            (_ls$position = ls.position).set.apply(_ls$position, _toConsumableArray(offset).concat([-dzBounds / 2 + actual.offsetZ]));
+            ls.name = 'bbox-' + window.performance.now();
+            return {
+                obj: ls,
+                offset: [].concat(_toConsumableArray(offset), [actual.offsetZ]),
+                size: [].concat(sides, [actual.height])
+            };
+        }
+    }, {
+        key: 'tileToBbox',
+        value: function tileToBbox(tile) {
+            return tilebelt_default.a.tileToBBOX(tile);
+        }
+    }, {
         key: 'dumpBufferAsBlob',
         value: function dumpBufferAsBlob(buffer, name) {
             // https://discourse.threejs.org/t/how-to-create-a-new-file-and-save-it-with-arraybuffer-content/628/2
@@ -16087,7 +16190,7 @@ var src_ThreeGeo = function () {
     }, {
         key: 'fetchTile',
         value: function fetchTile(zoompos, api, token, cb) {
-            var _this7 = this;
+            var _this8 = this;
 
             var isOnline = api.startsWith('mapbox-');
             var uri = isOnline ? this.getUriMapbox(token, api, zoompos) : this.getUriOffline(api, zoompos);
@@ -16099,7 +16202,7 @@ var src_ThreeGeo = function () {
                     }
 
                     var name = api + '-' + zoompos.join('-') + '.blob';
-                    _this7.dumpBufferAsBlob(buffer, name);
+                    _this8.dumpBufferAsBlob(buffer, name);
                 });
             };
             var dumpBlobForDebug = 0;
@@ -16125,7 +16228,7 @@ var src_ThreeGeo = function () {
                             cb(null);
                             return;
                         }
-                        _this7.blobToBuffer(blob, function (buffer) {
+                        _this8.blobToBuffer(blob, function (buffer) {
                             // console.log('blob -> buffer:', buffer); // ArrayBuffer(39353) {}
                             try {
                                 var pbf = new pbf_default.a(buffer);
@@ -16184,11 +16287,11 @@ var src_ThreeGeo = function () {
                 max_zoom: zoom
             };
             return tile_cover_default.a.tiles(polygon.geometry, limits) // poszoom
-            .map(function (_ref3) {
-                var _ref4 = _slicedToArray(_ref3, 3),
-                    x = _ref4[0],
-                    y = _ref4[1],
-                    z = _ref4[2];
+            .map(function (_ref4) {
+                var _ref5 = _slicedToArray(_ref4, 3),
+                    x = _ref5[0],
+                    y = _ref5[1],
+                    z = _ref5[2];
 
                 return [z, x, y];
             }); // zoompos now!!
@@ -16310,23 +16413,23 @@ var src_ThreeGeo = function () {
     }, {
         key: 'resolveSeams',
         value: function resolveSeams(array, infoNei) {
-            var _this8 = this;
+            var _this9 = this;
 
             // console.log('infoNei:', infoNei);
             var cSegments = [constVertices - 1, constVertices - 1];
 
-            Object.entries(infoNei).forEach(function (_ref5) {
-                var _ref6 = _slicedToArray(_ref5, 2),
-                    idxNei = _ref6[0],
-                    arrayNei = _ref6[1];
+            Object.entries(infoNei).forEach(function (_ref6) {
+                var _ref7 = _slicedToArray(_ref6, 2),
+                    idxNei = _ref7[0],
+                    arrayNei = _ref7[1];
 
                 if (idxNei === "2") {
                     // console.log('now stitchWithNei2()...');
-                    _this8.stitchWithNei2(array, arrayNei);
+                    _this9.stitchWithNei2(array, arrayNei);
                     cSegments[1]++;
                 } else if (idxNei === "3") {
                     // console.log('now stitchWithNei3()...');
-                    _this8.stitchWithNei3(array, arrayNei);
+                    _this9.stitchWithNei3(array, arrayNei);
                     cSegments[0]++;
                 }
             });
@@ -16412,13 +16515,25 @@ var src_ThreeGeo = function () {
             });
         }
     }, {
+        key: 'originRadiusToBbox',
+        value: function originRadiusToBbox(origin, radius) {
+            var _swap = function _swap(ll) {
+                return [ll[1], ll[0]];
+            };
+
+            var _turfDestination$geom = _slicedToArray(destination_default()(helpers["point"](_swap(origin)), radius, -45, { units: 'kilometers' }).geometry.coordinates, 2),
+                w = _turfDestination$geom[0],
+                n = _turfDestination$geom[1];
+
+            var _turfDestination$geom2 = _slicedToArray(destination_default()(helpers["point"](_swap(origin)), radius, 135, { units: 'kilometers' }).geometry.coordinates, 2),
+                e = _turfDestination$geom2[0],
+                s = _turfDestination$geom2[1];
+
+            return [w, s, e, n];
+        }
+    }, {
         key: 'getBbox',
         value: function getBbox(origin, radius) {
-            var reverseCoords = function reverseCoords(coords) {
-                return [coords[1], coords[0]];
-            };
-            var northWest = destination_default()(helpers["point"](reverseCoords(origin)), radius, -45, { units: 'kilometers' }).geometry.coordinates;
-            var southEast = destination_default()(helpers["point"](reverseCoords(origin)), radius, 135, { units: 'kilometers' }).geometry.coordinates;
             var testPolygon = {
                 "type": "FeatureCollection",
                 "features": [{
@@ -16431,12 +16546,22 @@ var src_ThreeGeo = function () {
                 }]
             };
             var polygon = testPolygon.features[0];
-            polygon.geometry.coordinates[0] = [northWest, [southEast[0], northWest[1]], southEast, [northWest[0], southEast[1]], northWest];
+
+            var _originRadiusToBbox = this.originRadiusToBbox(origin, radius),
+                _originRadiusToBbox2 = _slicedToArray(_originRadiusToBbox, 4),
+                w = _originRadiusToBbox2[0],
+                s = _originRadiusToBbox2[1],
+                e = _originRadiusToBbox2[2],
+                n = _originRadiusToBbox2[3];
+
+            var nw = [w, n],
+                se = [e, s];
+            polygon.geometry.coordinates[0] = [nw, [se[0], nw[1]], se, [nw[0], se[1]], nw];
             // console.log('testPolygon:', testPolygon);
             return {
                 feature: polygon,
-                northWest: northWest,
-                southEast: southEast
+                northWest: nw,
+                southEast: se
             };
         }
     }]);
