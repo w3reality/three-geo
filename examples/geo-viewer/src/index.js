@@ -92,7 +92,7 @@ const guiHelper = new GuiHelper(env, guiData, {
     onChangeAutoOrbit: (value) => {
         viewer.toggleOrbiting(value);
         if (value) {
-            if (!viewer.hasOrbit()) {
+            if (! viewer.hasOrbit()) {
                 viewer.setOrbitDefault();
             }
             console.log('starting anim...');

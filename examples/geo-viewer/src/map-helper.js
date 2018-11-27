@@ -323,19 +323,8 @@ class MapHelper {
                 mutate: true, // significant performance increase if true
             });
 
-        let vec = new THREE.Vector2(cam.position.x, cam.position.y)
-            .divideScalar(unitsPerMeter);
-        // console.log('vec:', vec); // in meters
-        // http://turfjs.org/docs/#transformTranslate
-        lineCam = turfTransformTranslate(
-            lineCam,
-            vec.length(),
-            90.0 - vec.angle() * 180.0 / Math.PI, {
-                units: 'meters',
-                zTranslation: cam.position.z/unitsPerMeter,
-                mutate: true, // significant performance increase if true
-            });
-        return lineCam;
+        return ThreeGeo.translate(
+            lineCam, ...cam.position.toArray(), unitsPerMeter);
     }
 
 
@@ -375,16 +364,11 @@ class MapHelper {
 
         // add orbitMarker
         let target = orbit.userData.target;
-        let vec = new THREE.Vector2(target.x, target.y)
-            .divideScalar(_unitsPerMeter);
-        let ptTarget = turfTransformTranslate(
+        let ptTarget = ThreeGeo.translate(
             turfHelpers.point([_origin[1], _origin[0]]),
-            vec.length(),
-            90.0 - vec.angle() * 180.0 / Math.PI, {
-                units: 'meters',
-                zTranslation: target.z / _unitsPerMeter,
-                mutate: true, // significant performance increase if true
-            });
+            ...target.toArray(), _unitsPerMeter);
+        console.log('ptTarget:', ptTarget);
+
         this.orbitMarker =
             L.marker(MapHelper.swap(ptTarget.geometry.coordinates))
                 .bindTooltip("Orbit Axis", {

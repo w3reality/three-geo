@@ -216,6 +216,7 @@ class ThreeGeo {
 
         return contours;
     }
+    // TODO doc
     static getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
     }
@@ -225,7 +226,18 @@ class ThreeGeo {
             - this.constUnitsSide *    (coord[1]-se[1]) / (se[1]-nw[1])
         ];
     }
-    // TODO add inverse projection; and refactor geo-viewer etc
+    // TODO doc
+    static translate(turfObj, dx, dy, dz, unitsPerMeter, mutate=true) {
+        const vec = new THREE.Vector2(dx, dy).divideScalar(unitsPerMeter);
+        const theta = 90.0 - vec.angle() * 180.0 / Math.PI;
+        return turfTransformTranslate(turfObj, vec.length(), theta, {
+                units: 'meters',
+                zTranslation: dz / unitsPerMeter,
+                mutate: mutate, // "significant performance increase if true" per doc
+            });
+    }
+    // TODO doc
+    // TODO add inverse projection; use ThreeGeo.translate()
     getProjection(origin, radius) {
         const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
         return {
@@ -240,6 +252,7 @@ class ThreeGeo {
             unitsPerMeter: ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius),
         };
     }
+    // TODO doc
     static bboxToWireframe(wsen, proj, opts={}) {
         const defaults = {
             offsetZ: 0.0,
@@ -271,7 +284,7 @@ class ThreeGeo {
             size: [...sides, actual.height],
         };
     }
-
+    // TODO doc
     static tileToBbox(tile) {
         return tilebelt.tileToBBOX(tile);
     }
