@@ -237,9 +237,17 @@ class ThreeGeo {
             });
     }
     // TODO doc
+    static projInv(x, y, origin, unitsPerMeter) {
+        const _swap = ll => [ll[1], ll[0]]; // lng, lat
+        return _swap(this.translate(
+            turfHelpers.point(_swap(origin)),
+            x, y, 0, unitsPerMeter).geometry.coordinates);
+    }
+    // TODO doc
     // TODO add inverse projection; use ThreeGeo.translate()
     getProjection(origin, radius) {
         const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
+        const _unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);
         return {
             proj: ll => {
                 const [px, py] = this.projectCoord(ll, [w, n], [e, s]);
@@ -248,8 +256,9 @@ class ThreeGeo {
                     py - this.constUnitsSide / 2
                 ];
             },
+            projInv: (x, y) => ThreeGeo.projInv(x, y, origin, _unitsPerMeter),
             bbox: [w, s, e, n],
-            unitsPerMeter: ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius),
+            unitsPerMeter: _unitsPerMeter,
         };
     }
     // TODO doc

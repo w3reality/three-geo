@@ -364,13 +364,12 @@ class MapHelper {
 
         // add orbitMarker
         let target = orbit.userData.target;
-        let ptTarget = ThreeGeo.translate(
-            turfHelpers.point([_origin[1], _origin[0]]),
-            ...target.toArray(), _unitsPerMeter);
-        console.log('ptTarget:', ptTarget);
+        let llTarget = ThreeGeo.projInv(
+            target.x, target.y, _origin, _unitsPerMeter);
+        // console.log('llTarget:', llTarget);
 
         this.orbitMarker =
-            L.marker(MapHelper.swap(ptTarget.geometry.coordinates))
+            L.marker(llTarget)
                 .bindTooltip("Orbit Axis", {
                     permanent: true,
                     direction: 'right',
@@ -378,7 +377,7 @@ class MapHelper {
 
         // add orbitCircle
         let circle = turfCircle(
-            ptTarget, orbit.userData.radius / _unitsPerMeter, {
+            MapHelper.swap(llTarget), orbit.userData.radius / _unitsPerMeter, {
                 units: 'meters',
             });
         this.orbitCircle =
