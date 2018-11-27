@@ -15,14 +15,15 @@ perform original GIS (Geographic Information System) experiments in JavaScript.
 Credits: this library has been made possible thanks to
 
 - geo-related libraries such as `mapbox <https://github.com/mapbox>`__, `Turfjs <https://github.com/Turfjs/turf>`__, `d3 <https://github.com/d3/d3>`__ in npm, and `the Mapbox Maps API <https://www.mapbox.com/api-documentation/#maps>`__.
-- DEM generator implementation in `peterqliu.github.io <https://github.com/peterqliu/peterqliu.github.io>`__
+- `peterqliu <https://github.com/peterqliu>`__ for informative 3D terrain-related articles and implementation.
+
 
 Demo
 ----
 
-As a flagship demo application of the three-geo library, we introduce **examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
+As a demo using the three-geo library, we introduce **examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
 
-This app demonstrates features such as
+This demo app includes features such as
 
 - on-demand 3D terrain building (by a mouse click on the Leaflet map),
 - real-time camera projection onto Leaflet (with oritentaion and HFoV indication),
