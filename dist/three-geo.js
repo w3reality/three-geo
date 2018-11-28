@@ -15548,10 +15548,13 @@ var src_ThreeGeo = function () {
             // lng, lat -> px, py
             return [this.constUnitsSide * (1 - (coord[0] - nw[0]) / (se[0] - nw[0])), -this.constUnitsSide * (coord[1] - se[1]) / (se[1] - nw[1])];
         }
-        // TODO add inverse projection; and refactor geo-viewer etc
+        // TODO doc
 
     }, {
         key: 'getProjection',
+
+        // TODO doc
+        // TODO add inverse projection; use ThreeGeo.translate()
         value: function getProjection(origin, radius) {
             var _this = this;
 
@@ -15562,6 +15565,7 @@ var src_ThreeGeo = function () {
                 e = _ThreeGeo$originRadiu2[2],
                 n = _ThreeGeo$originRadiu2[3];
 
+            var _unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);
             return {
                 proj: function proj(ll) {
                     var _projectCoord = _this.projectCoord(ll, [w, n], [e, s]),
@@ -15571,10 +15575,15 @@ var src_ThreeGeo = function () {
 
                     return [-px + _this.constUnitsSide / 2, py - _this.constUnitsSide / 2];
                 },
+                projInv: function projInv(x, y) {
+                    return ThreeGeo.projInv(x, y, origin, _unitsPerMeter);
+                },
                 bbox: [w, s, e, n],
-                unitsPerMeter: ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius)
+                unitsPerMeter: _unitsPerMeter
             };
         }
+        // TODO doc
+
     }, {
         key: 'buildSliceGeometry',
         value: function buildSliceGeometry(coords, iContour, color, contours, nw, se, radius) {
@@ -16075,10 +16084,35 @@ var src_ThreeGeo = function () {
 
             return contours;
         }
+        // TODO doc
+
     }, {
         key: 'getUnitsPerMeter',
         value: function getUnitsPerMeter(unitsSide, radius) {
             return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
+        }
+    }, {
+        key: 'translate',
+        value: function translate(turfObj, dx, dy, dz, unitsPerMeter) {
+            var mutate = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : true;
+
+            var vec = new THREE.Vector2(dx, dy).divideScalar(unitsPerMeter);
+            var theta = 90.0 - vec.angle() * 180.0 / Math.PI;
+            return transform_translate_main_es(turfObj, vec.length(), theta, {
+                units: 'meters',
+                zTranslation: dz / unitsPerMeter,
+                mutate: mutate // "significant performance increase if true" per doc
+            });
+        }
+        // TODO doc
+
+    }, {
+        key: 'projInv',
+        value: function projInv(x, y, origin, unitsPerMeter) {
+            var _swap = function _swap(ll) {
+                return [ll[1], ll[0]];
+            }; // leaflet: ltlg, turf: lglt
+            return _swap(this.translate(helpers["point"](_swap(origin)), x, y, 0, unitsPerMeter).geometry.coordinates);
         }
     }, {
         key: 'bboxToWireframe',
@@ -16126,6 +16160,8 @@ var src_ThreeGeo = function () {
                 size: [].concat(sides, [actual.height])
             };
         }
+        // TODO doc
+
     }, {
         key: 'tileToBbox',
         value: function tileToBbox(tile) {
