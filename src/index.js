@@ -238,7 +238,7 @@ class ThreeGeo {
     }
     // TODO doc
     static projInv(x, y, origin, unitsPerMeter) {
-        const _swap = ll => [ll[1], ll[0]]; // lng, lat
+        const _swap = ll => [ll[1], ll[0]]; // leaflet: ltlg, turf: lglt
         return _swap(this.translate(
             turfHelpers.point(_swap(origin)),
             x, y, 0, unitsPerMeter).geometry.coordinates);
