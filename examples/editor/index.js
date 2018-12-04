@@ -55,7 +55,7 @@ const tgeo = new ThreeGeo({
     tokenMapbox: '********', // <---- set your Mapbox API token here
 });
 
-const isDebug = 1;
+const isDebug = 0;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
     tgeo.setApiVector(`../geo-viewer/cache/eiger/mapbox-terrain-vector`);
@@ -92,9 +92,7 @@ if (tgeo.tokenMapbox.startsWith('****')) {
     $msg.append(`<div>---- Log ----</div>`);
 
     tgeo.getTerrain(origin, radius, 12, {
-        onVectorDem: (mesh) => {
-            //!!!!!
-        },
+        // onVectorDem: (mesh) => { /* just for debugging ajax */ },
         onRgbDem: (meshes) => {
 
             const pt = new THREE.Vector3(0, 0, 0);
