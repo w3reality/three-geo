@@ -952,7 +952,7 @@ class ThreeGeo {
 
                 count++;
                 if (count === zpEle.length) {
-                    console.log('dataEleCovered:', dataEleCovered);
+                    // console.log('dataEleCovered:', dataEleCovered);
                     if (onRgbDem) {
                         onRgbDem(this.getRgbDem(
                             dataEleCovered, apiSatellite, onSatelliteMat));
