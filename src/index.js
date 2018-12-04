@@ -482,14 +482,20 @@ class ThreeGeo {
         return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
     }
 
+    static isAjaxSuccessful(stat) {
+        console.log('stat:', stat);
+        // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
+        return stat >= 200 && stat < 300 || stat === 304;
+    }
     static fetchTile(zoompos, api, token, cb) {
         let isOnline = api.startsWith('mapbox-');
         let uri = isOnline ?
             this.getUriMapbox(token, api, zoompos) :
             this.getUriOffline(api, zoompos);
+
         const xhrDumpBlob = (uri, api, zoompos) => {
             xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, buffer) => {
-                if (error || response.statusCode === 404) {
+                if (error || !this.isAjaxSuccessful(response.statusCode)) {
                     console.log(`xhrDumpBlob(): failed for uri: ${uri}`);
                     return;
                 }
@@ -507,7 +513,7 @@ class ThreeGeo {
                     // return;
                 }
                 xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, buffer) => {
-                    if (error || response.statusCode === 404) {
+                    if (error || !this.isAjaxSuccessful(response.statusCode)) {
                         cb(null);
                         return;
                     }
@@ -517,7 +523,7 @@ class ThreeGeo {
             } else {
                 xhr({uri: uri, responseType: 'blob'}, (error, response, blob) => {
                     // console.log('error, response, blob:', error, response, blob);
-                    if (error || response.statusCode === 404) {
+                    if (error || !this.isAjaxSuccessful(response.statusCode)) {
                         cb(null);
                         return;
                     }

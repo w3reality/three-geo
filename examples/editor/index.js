@@ -58,6 +58,7 @@ const tgeo = new ThreeGeo({
 const isDebug = 1;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
+    tgeo.setApiVector(`../geo-viewer/cache/eiger/mapbox-terrain-vector`);
     tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
     tgeo.setApiSatellite(`../geo-viewer/cache/eiger/mapbox-satellite`);
     // console.log('tgeo:', tgeo);
@@ -75,9 +76,9 @@ if (tgeo.tokenMapbox.startsWith('****')) {
     const origin = [46.5763, 7.9904];
     const radius = 5.0;
     const {proj, projInv, bbox, unitsPerMeter} = tgeo.getProjection(origin, radius);
-    console.log('proj:', proj);
-    console.log('projInv:', projInv);
-    console.log('unitsPerMeter:', unitsPerMeter);
+    // console.log('proj:', proj);
+    // console.log('projInv:', projInv);
+    // console.log('unitsPerMeter:', unitsPerMeter);
 
     const laser = new Laser({color: 0xff00ff});
     scene.add(laser);
@@ -91,6 +92,9 @@ if (tgeo.tokenMapbox.startsWith('****')) {
     $msg.append(`<div>---- Log ----</div>`);
 
     tgeo.getTerrain(origin, radius, 12, {
+        onVectorDem: (mesh) => {
+            //!!!!!
+        },
         onRgbDem: (meshes) => {
 
             const pt = new THREE.Vector3(0, 0, 0);
