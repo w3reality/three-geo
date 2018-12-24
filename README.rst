@@ -89,21 +89,21 @@ Here is an example of how to build a geographic terrain located at GPS coordinat
 
 For standalone tests, use **examples/simple-viewer** (`source code <https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer>`__).
 
-.. code::
+.. code:: javascript
 
     const tgeo = new ThreeGeo({
-        tokenMapbox: '********', // <---- set your Mapbox API token here
+        tokenMapbox: '********',                  // <---- set your Mapbox API token here
     });
 
     // params: [lat, lng], terrain's radius (km), satellite zoom resolution, callbacks
     // Beware the value of radius; for zoom 12, radius > 5.0 (km) could trigger huge number of tile API calls!!
     tgeo.getTerrain([46.5763, 7.9904], 5.0, 12, {
-        onRgbDem: (meshes) => { // your implementation when the terrain's geometry is obtained
+        onRgbDem: (meshes) => {                   // your implementation when the terrain's geometry is obtained
             meshes.forEach((mesh) => { scene.add(mesh); });
-            render(); // now render scene after dem meshes are added
+            render();                             // now render scene after dem meshes are added
         },
-        onSatelliteMat: (mesh) => { // your implementation when terrain's satellite texture is obtained
-            render(); // now render scene after dem material (satellite texture) is applied
+        onSatelliteMat: (mesh) => {               // your implementation when terrain's satellite texture is obtained
+            render();                             // now render scene after dem material (satellite texture) is applied
         },
     });
 
