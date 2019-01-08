@@ -222,8 +222,8 @@ class ThreeGeo {
     }
     projectCoord(coord, nw, se) { // lng, lat -> px, py
         return [
-            this.constUnitsSide * (1 - (coord[0]-nw[0]) / (se[0]-nw[0])),
-            - this.constUnitsSide *    (coord[1]-se[1]) / (se[1]-nw[1])
+            this.constUnitsSide * (-0.5 + (coord[0]-nw[0]) / (se[0]-nw[0])),
+            this.constUnitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
     }
     // TODO doc
@@ -249,13 +249,7 @@ class ThreeGeo {
         const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
         const _unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);
         return {
-            proj: ll => {
-                const [px, py] = this.projectCoord(ll, [w, n], [e, s]);
-                return [
-                    - px + this.constUnitsSide / 2,
-                    py - this.constUnitsSide / 2
-                ];
-            },
+            proj: ll => this.projectCoord(ll, [w, n], [e, s]),
             projInv: (x, y) => ThreeGeo.projInv(x, y, origin, _unitsPerMeter),
             bbox: [w, s, e, n],
             unitsPerMeter: _unitsPerMeter,
@@ -312,11 +306,11 @@ class ThreeGeo {
         coords[0].forEach((coord, index) => {
             let [px, py] = this.projectCoord(coord, nw, se);
             wireframeContours[0].vertices.push(
-                new THREE.Vector3(px, py, pz));
+                new THREE.Vector3(-px, py, pz));
             if (index === 0) {
-                shadedContour.moveTo(px, py);
+                shadedContour.moveTo(-px, py);
             } else {
-                shadedContour.lineTo(px, py);
+                shadedContour.lineTo(-px, py);
             }
         });
 
@@ -330,11 +324,11 @@ class ThreeGeo {
             for (let j = 0; j < coords[k].length; j++) {
                 let [px, py] = this.projectCoord(coords[k][j], nw, se);
                 wireframeContours[k].vertices.push(
-                    new THREE.Vector3(px, py, pz));
+                    new THREE.Vector3(-px, py, pz));
                 if (j === 0) {
-                    holePath.moveTo(px, py);
+                    holePath.moveTo(-px, py);
                 } else {
-                    holePath.lineTo(px, py);
+                    holePath.lineTo(-px, py);
                 }
             }
             shadedContour.holes.push(holePath);
@@ -350,8 +344,6 @@ class ThreeGeo {
 
             //======== align x-y : east-north
             line.rotation.y = Math.PI;
-            line.position.x = this.constUnitsSide/2;
-            line.position.y = -this.constUnitsSide/2;
             line.name = `dem-vec-line-${contours[h].ele}-${line.uuid}`;
 
             // line.visible = false;
@@ -374,8 +366,6 @@ class ThreeGeo {
 
         //======== align x-y : east-north
         extrudeShade.rotation.y = Math.PI;
-        extrudeShade.position.x = this.constUnitsSide/2;
-        extrudeShade.position.y = -this.constUnitsSide/2;
         extrudeShade.position.z = -pz;
         extrudeShade.name = `dem-vec-shade-${contours[h].ele}-${extrudeShade.uuid}`;
 
@@ -728,10 +718,10 @@ class ThreeGeo {
                         zoompos[2] * 128 + row
                     ], zoompos[0]);
                     // console.log('lonlatPixel:', lonlatPixel);
-                    let [px, py] = this.projectCoord(lonlatPixel,
-                        bbox.northWest, bbox.southEast);
                     // NOTE: do use shift = 1 for computeSeamRows()
-                    array.push(-px, py, elev[dataIndex] * unitsPerMeter);
+                    array.push(
+                        ...this.projectCoord(lonlatPixel, bbox.northWest, bbox.southEast),
+                        elev[dataIndex] * unitsPerMeter);
                     dataIndex++;
                 }
             }
@@ -904,8 +894,6 @@ class ThreeGeo {
                     wireframe: true,
                     color: 0xcccccc,
                 }));
-            plane.position.x = this.constUnitsSide/2;
-            plane.position.y = -this.constUnitsSide/2;
             plane.name = `dem-rgb-${zoompos.join('/')}`;
             // const _toTile = (zp) => { // [z,x,y] to a new [x,y,z]
             //     let tile = zp.slice();

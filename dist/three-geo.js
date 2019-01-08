@@ -15546,7 +15546,7 @@ var src_ThreeGeo = function () {
         key: 'projectCoord',
         value: function projectCoord(coord, nw, se) {
             // lng, lat -> px, py
-            return [this.constUnitsSide * (1 - (coord[0] - nw[0]) / (se[0] - nw[0])), -this.constUnitsSide * (coord[1] - se[1]) / (se[1] - nw[1])];
+            return [this.constUnitsSide * (-0.5 + (coord[0] - nw[0]) / (se[0] - nw[0])), this.constUnitsSide * (-0.5 - (coord[1] - se[1]) / (se[1] - nw[1]))];
         }
         // TODO doc
 
@@ -15568,12 +15568,7 @@ var src_ThreeGeo = function () {
             var _unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);
             return {
                 proj: function proj(ll) {
-                    var _projectCoord = _this.projectCoord(ll, [w, n], [e, s]),
-                        _projectCoord2 = _slicedToArray(_projectCoord, 2),
-                        px = _projectCoord2[0],
-                        py = _projectCoord2[1];
-
-                    return [-px + _this.constUnitsSide / 2, py - _this.constUnitsSide / 2];
+                    return _this.projectCoord(ll, [w, n], [e, s]);
                 },
                 projInv: function projInv(x, y) {
                     return ThreeGeo.projInv(x, y, origin, _unitsPerMeter);
@@ -15599,16 +15594,16 @@ var src_ThreeGeo = function () {
             // iterate through vertices per shape
             // console.log('coords[0]:', coords[0]);
             coords[0].forEach(function (coord, index) {
-                var _projectCoord3 = _this2.projectCoord(coord, nw, se),
-                    _projectCoord4 = _slicedToArray(_projectCoord3, 2),
-                    px = _projectCoord4[0],
-                    py = _projectCoord4[1];
+                var _projectCoord = _this2.projectCoord(coord, nw, se),
+                    _projectCoord2 = _slicedToArray(_projectCoord, 2),
+                    px = _projectCoord2[0],
+                    py = _projectCoord2[1];
 
-                wireframeContours[0].vertices.push(new THREE.Vector3(px, py, pz));
+                wireframeContours[0].vertices.push(new THREE.Vector3(-px, py, pz));
                 if (index === 0) {
-                    shadedContour.moveTo(px, py);
+                    shadedContour.moveTo(-px, py);
                 } else {
-                    shadedContour.lineTo(px, py);
+                    shadedContour.lineTo(-px, py);
                 }
             });
 
@@ -15620,16 +15615,16 @@ var src_ThreeGeo = function () {
 
                 // iterate through hole path vertices
                 for (var j = 0; j < coords[k].length; j++) {
-                    var _projectCoord5 = this.projectCoord(coords[k][j], nw, se),
-                        _projectCoord6 = _slicedToArray(_projectCoord5, 2),
-                        px = _projectCoord6[0],
-                        py = _projectCoord6[1];
+                    var _projectCoord3 = this.projectCoord(coords[k][j], nw, se),
+                        _projectCoord4 = _slicedToArray(_projectCoord3, 2),
+                        px = _projectCoord4[0],
+                        py = _projectCoord4[1];
 
-                    wireframeContours[k].vertices.push(new THREE.Vector3(px, py, pz));
+                    wireframeContours[k].vertices.push(new THREE.Vector3(-px, py, pz));
                     if (j === 0) {
-                        holePath.moveTo(px, py);
+                        holePath.moveTo(-px, py);
                     } else {
-                        holePath.lineTo(px, py);
+                        holePath.lineTo(-px, py);
                     }
                 }
                 shadedContour.holes.push(holePath);
@@ -15643,8 +15638,6 @@ var src_ThreeGeo = function () {
 
                 //======== align x-y : east-north
                 line.rotation.y = Math.PI;
-                line.position.x = _this2.constUnitsSide / 2;
-                line.position.y = -_this2.constUnitsSide / 2;
                 line.name = 'dem-vec-line-' + contours[h].ele + '-' + line.uuid;
 
                 // line.visible = false;
@@ -15663,8 +15656,6 @@ var src_ThreeGeo = function () {
 
             //======== align x-y : east-north
             extrudeShade.rotation.y = Math.PI;
-            extrudeShade.position.x = this.constUnitsSide / 2;
-            extrudeShade.position.y = -this.constUnitsSide / 2;
             extrudeShade.position.z = -pz;
             extrudeShade.name = 'dem-vec-shade-' + contours[h].ele + '-' + extrudeShade.uuid;
 
@@ -15801,15 +15792,8 @@ var src_ThreeGeo = function () {
                     for (var col = 0; col < constVertices; col++) {
                         var lonlatPixel = constTilePixels.ll([zoompos[1] * 128 + col, zoompos[2] * 128 + row], zoompos[0]);
                         // console.log('lonlatPixel:', lonlatPixel);
-
-                        var _projectCoord7 = _this4.projectCoord(lonlatPixel, bbox.northWest, bbox.southEast),
-                            _projectCoord8 = _slicedToArray(_projectCoord7, 2),
-                            px = _projectCoord8[0],
-                            py = _projectCoord8[1];
                         // NOTE: do use shift = 1 for computeSeamRows()
-
-
-                        array.push(-px, py, elev[dataIndex] * unitsPerMeter);
+                        array.push.apply(array, _toConsumableArray(_this4.projectCoord(lonlatPixel, bbox.northWest, bbox.southEast)).concat([elev[dataIndex] * unitsPerMeter]));
                         dataIndex++;
                     }
                 }
@@ -15867,8 +15851,6 @@ var src_ThreeGeo = function () {
                     wireframe: true,
                     color: 0xcccccc
                 }));
-                plane.position.x = _this5.constUnitsSide / 2;
-                plane.position.y = -_this5.constUnitsSide / 2;
                 plane.name = 'dem-rgb-' + zoompos.join('/');
                 // const _toTile = (zp) => { // [z,x,y] to a new [x,y,z]
                 //     let tile = zp.slice();
@@ -15924,7 +15906,7 @@ var src_ThreeGeo = function () {
 
                     count++;
                     if (count === zpEle.length) {
-                        console.log('dataEleCovered:', dataEleCovered);
+                        // console.log('dataEleCovered:', dataEleCovered);
                         if (onRgbDem) {
                             onRgbDem(_this6.getRgbDem(dataEleCovered, apiSatellite, onSatelliteMat));
                         }
@@ -16224,15 +16206,23 @@ var src_ThreeGeo = function () {
             return prefix + '/' + zoompos.join('/') + res + '?access_token=' + token;
         }
     }, {
+        key: 'isAjaxSuccessful',
+        value: function isAjaxSuccessful(stat) {
+            console.log('stat:', stat);
+            // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
+            return stat >= 200 && stat < 300 || stat === 304;
+        }
+    }, {
         key: 'fetchTile',
         value: function fetchTile(zoompos, api, token, cb) {
             var _this8 = this;
 
             var isOnline = api.startsWith('mapbox-');
             var uri = isOnline ? this.getUriMapbox(token, api, zoompos) : this.getUriOffline(api, zoompos);
+
             var xhrDumpBlob = function xhrDumpBlob(uri, api, zoompos) {
                 xhr_default()({ uri: uri, responseType: 'arraybuffer' }, function (error, response, buffer) {
-                    if (error || response.statusCode === 404) {
+                    if (error || !_this8.isAjaxSuccessful(response.statusCode)) {
                         console.log('xhrDumpBlob(): failed for uri: ' + uri);
                         return;
                     }
@@ -16250,7 +16240,7 @@ var src_ThreeGeo = function () {
                         // return;
                     }
                     xhr_default()({ uri: uri, responseType: 'arraybuffer' }, function (error, response, buffer) {
-                        if (error || response.statusCode === 404) {
+                        if (error || !_this8.isAjaxSuccessful(response.statusCode)) {
                             cb(null);
                             return;
                         }
@@ -16260,7 +16250,7 @@ var src_ThreeGeo = function () {
                 } else {
                     xhr_default()({ uri: uri, responseType: 'blob' }, function (error, response, blob) {
                         // console.log('error, response, blob:', error, response, blob);
-                        if (error || response.statusCode === 404) {
+                        if (error || !_this8.isAjaxSuccessful(response.statusCode)) {
                             cb(null);
                             return;
                         }
