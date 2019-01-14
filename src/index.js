@@ -834,6 +834,18 @@ class ThreeGeo {
         return infoNei;
     }
 
+    static createDataFlipY(data, shape) {
+        const [w, h, size] = shape;
+        const out = new Uint8Array(data.length);
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w * size; x += size) {
+                for (let i = 0; i < size; i++) {
+                    out[(h-1-y) * w * size + x + i] = data[y * w * size + x + i];
+                }
+            }
+        }
+        return out;
+    }
     static resolveTex(zoompos, apiSatellite, token, onTex) {
         this.fetchTile(zoompos, apiSatellite, token, (pixels) => {
             let tex = null;
@@ -841,10 +853,26 @@ class ThreeGeo {
                 // console.log("satellite pixels", pixels.shape.slice());
                 // console.log('satellite pixels:', pixels);
                 // https://threejs.org/docs/#api/textures/DataTexture
-                tex = new THREE.DataTexture(pixels.data,
+
+                //========
+                // https://github.com/mrdoob/three.js/blob/f4c54b2064d6e03495d88633488a66067a67ec2e/src/renderers/WebGLRenderer.js#L5850
+                // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
+                // https://github.com/mapbox/mapbox-gl-js/issues/5292
+                // THREE.DataTexture() is based on void gl.texImage2D(target, level, internalformat, width, height, border, format, type, ArrayBufferView? pixels);
+                // On Firefox, calling it with y-flip causes the warning: "Error: WebGL warning: texImage2D: Alpha-premult and y-flip are deprecated for non-DOM-Element uploads."
+                // On Exokit, y-flip is not performed.
+                // So do the workaround below instead.
+                // DEPRECATED ----
+                // tex = new THREE.DataTexture(pixels.data,
+                //     pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
+                // tex.flipY = true;
+                // tex.needsUpdate = true;
+                //========
+                // workaround: do manual y-flip
+                tex = new THREE.DataTexture(createDataFlipY(pixels.data, pixels.shape),
                     pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
-                tex.flipY = true;
                 tex.needsUpdate = true;
+                //========
             } else {
                 console.log(`fetchTile() failed for tex of zp: ${zoompos}`);
             }
