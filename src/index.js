@@ -869,7 +869,7 @@ class ThreeGeo {
                 // tex.needsUpdate = true;
                 //========
                 // workaround: do manual y-flip
-                tex = new THREE.DataTexture(createDataFlipY(pixels.data, pixels.shape),
+                tex = new THREE.DataTexture(ThreeGeo.createDataFlipY(pixels.data, pixels.shape),
                     pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
                 tex.needsUpdate = true;
                 //========
