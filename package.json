@@ -61,7 +61,7 @@
         "uglifyjs-webpack-plugin": "^2.0.1",
         "uniq": "^1.0.1",
         "webpack": "^4.16.5",
-        "webpack-bundle-analyzer": "^3.0.2",
+        "webpack-bundle-analyzer": "^3.3.2",
         "webpack-cli": "^3.1.0",
         "webpack-var2esm-plugin": "^1.2.1",
         "xhr": "^2.5.0",

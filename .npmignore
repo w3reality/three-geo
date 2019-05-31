@@ -1,0 +1,8 @@
+examples/
+lib/
+test/
+webpack.config.js
+README.rst
+.babelrc
+.eslintrc
+
