@@ -9,9 +9,9 @@
     },
     "scripts": {
         "dist": "npm run build && npm run build:esm && rm -rf ./dist && cp -r ./lib ./dist",
-        "build": "webpack --env dev && webpack --env build && npm run test",
-        "build:esm": "webpack --env esm && npm run test",
-        "dev": "webpack --progress --colors --watch --env dev",
+        "build": "webpack --mode development --env dev && webpack --mode production --env build && npm run test",
+        "build:esm": "webpack --mode production --env esm && npm run test",
+        "dev": "webpack --mode development --progress --colors --watch --env dev",
         "test": "mocha --require babel-core/register --colors ./test/*.spec.js",
         "test:watch": "mocha --require babel-core/register --colors -w ./test/*.spec.js"
     },
@@ -42,7 +42,6 @@
         "@turf/intersect": "^6.1.2",
         "@turf/transform-translate": "^5.1.5",
         "@turf/union": "^5.1.5",
-        "babel-cli": "^6.26.0",
         "babel-core": "^6.26.0",
         "babel-eslint": "^8.0.3",
         "babel-loader": "^7.1.2",
