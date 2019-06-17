@@ -54,7 +54,7 @@
         "get-pixels": "^3.3.0",
         "jsts": "^2.0.2",
         "lodash": "^4.17.11",
-        "mocha": "^4.0.1",
+        "mocha": "^6.1.4",
         "pbf": "^3.1.0",
         "three": "^0.97.0",
         "uglifyjs-webpack-plugin": "^2.0.1",
