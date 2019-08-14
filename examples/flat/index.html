@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <title>flat demo</title>
+</head>
+<body>
+    <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
+
+    <script src="../deps/three.min.js"></script>
+    <script src="../deps/OrbitControls.js"></script>
+    <!-- <script src="../deps/stats.min.js"></script> -->
+    <script src="../deps/threelet.min.js"></script>
+
+    <!-- <script src="../../dist/three-geo.min.js"></script> -->
+    <script src="../../lib/three-geo.js"></script>
+
+    <script>
+    const threelet = new Threelet({
+        canvas: document.getElementById("canvas"),
+        // optAxes: false,
+    });
+    threelet.setup('mod-controls', THREE.OrbitControls);
+    // threelet.setup('mod-stats', window.Stats);
+    const render = () => threelet.render();
+    const scene = threelet.scene;
+    render(); // first time
+
+    const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
+    const tgeo = new ThreeGeo({
+        // tokenMapbox: '********', // <---- set your Mapbox API token here
+        tokenMapbox: ioToken,
+    });
+
+    if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
+        const warning = 'Please set your own Mapbox API token in ThreeGeo constructor.';
+        alert(warning);
+    } else {
+        const origin = [46.5763, 7.9904];
+        const radius = 5.0;
+        tgeo.getTerrain(origin, radius, 12, {
+            onRgbDem: (meshes) => {},
+            onSatelliteMat: (mesh) => {
+                const position = mesh.geometry.attributes.position;
+                const arr = position.array;
+                for (let i = 0; i < arr.length; i += 3) {
+                    arr[i+2] = 0; // set z value (height) to zero
+                }
+                position.needsUpdate = true;
+
+                mesh.rotation.x = - Math.PI/2;
+                scene.add(mesh);
+                render();
+            },
+        });
+    }
+    </script>
+</body>
+</html>
