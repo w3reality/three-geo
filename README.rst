@@ -21,7 +21,7 @@ Credits: this library has been made possible thanks to
 Demo
 ----
 
-**1) examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__).
+**1) examples/geo-viewer** (`live <https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer>`__)
 
 This demo app includes features such as
 
@@ -48,13 +48,20 @@ Live:
   .. image:: https://w3reality.github.io/three-geo/examples/img/2.jpg
      :target: https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=36.2058&lng=-112.4413&title=Colorado_River
 
-**2) examples/heightmaps** (`live <https://w3reality.github.io/three-geo/examples/heightmaps/index.io.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/heightmaps>`__).
+**2) examples/heightmaps** (`live <https://w3reality.github.io/three-geo/examples/heightmaps/index.io.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/heightmaps>`__)
 
 This demo illustrates the relationship between a reconstructed 3D terrain and its underlying satellite/DEM tiles.
 
   .. image:: https://w3reality.github.io/three-geo/examples/img/heightmap-demo-2.jpg
      :target: https://w3reality.github.io/three-geo/examples/heightmaps/index.io.html
 
+**3) examples/flat** (`live <https://w3reality.github.io/three-geo/examples/flat/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/flat/index.html>`__)
+
+How to get a flattened view of the terrain by post-editing the underlying geometry.
+
+**4) examples/projection** (`live <https://w3reality.github.io/three-geo/examples/projection/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/projection/index.html>`__)
+
+How to register a new 3D object on top of the terrain based on its geographic location ``[longitude, latitude, elevation]``.
 
 Setup
 -----
@@ -98,11 +105,11 @@ For standalone tests, use **examples/simple-viewer** (`source code <https://gith
     // params: [lat, lng], terrain's radius (km), satellite zoom resolution, callbacks
     // Beware the value of radius; for zoom 12, radius > 5.0 (km) could trigger huge number of tile API calls!!
     tgeo.getTerrain([46.5763, 7.9904], 5.0, 12, {
-        onRgbDem: (meshes) => {                   // your implementation when the terrain's geometry is obtained
-            meshes.forEach((mesh) => { scene.add(mesh); });
+        onRgbDem: meshes => {                     // your implementation when the terrain's geometry is obtained
+            meshes.forEach(mesh => scene.add(mesh));
             render();                             // now render scene after dem meshes are added
         },
-        onSatelliteMat: (mesh) => {               // your implementation when terrain's satellite texture is obtained
+        onSatelliteMat: mesh => {                 // your implementation when terrain's satellite texture is obtained
             render();                             // now render scene after dem material (satellite texture) is applied
         },
     });
