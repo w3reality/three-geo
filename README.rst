@@ -120,7 +120,7 @@ Who is using ``three-geo``?
 ---------------------------
 
 - `jet-wasp <https://jet-wasp.glitch.me/>`__ - Three-geo as A-Frame component (`source code <https://glitch.com/edit/#!/jet-wasp>`__)
-- [locus-pocus.io](https://locus-pocus.io)
+- `locus-pocus <https://locus-pocus.io/>`__ - A webapp to visualise your area using three-geo
 - *Your App* - *PR us!*
 
 API
