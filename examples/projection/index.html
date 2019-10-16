@@ -36,7 +36,7 @@
     });
 
     if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
-        const warning = 'Please set your own Mapbox API token in ThreeGeo constructor.';
+        const warning = 'Please set your own Mapbox API token in the ThreeGeo constructor.';
         alert(warning);
     } else {
         const origin = [46.5763, 7.9904];
@@ -54,7 +54,7 @@
         });
 
         // add a point
-        const {proj, unitsPerMeter} = tgeo.getProjection(origin, radius);
+        const { proj, unitsPerMeter } = tgeo.getProjection(origin, radius);
         const dot = new THREE.Points(
             new THREE.Geometry(),
             new THREE.PointsMaterial({
