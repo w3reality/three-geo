@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 
-//********************************
+//========
 import Laser from 'three-laser-pointer/src'; // ok (npm install version)
 // import Laser from 'three-laser-pointer'; // THREE conflict
 // import Laser from 'three-laser-pointer/lib/three-laser-pointer.js'; // THREE conflict
-//********************************
+//========
 import ThreeGeo from '../../../src'; // for dev; fast compile; works
 // import ThreeGeo from '../../../lib/three-geo.js'; // for dev; slow compile; THREE conflict; broken
-//********************************
+//========
 
 import MapHelper from './map-helper.js';
 import queryString from 'query-string'; // in prod, need webpack-4 to minify this
@@ -100,12 +100,15 @@ class Viewer {
         this.updateTerrain(this._vis);
 
         // ------- leaflet stuff
-        this._unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.unitsSide, this._radius);
+        const projection = this.tgeo.getProjection(this._origin, this._radius);
+
+        this._unitsPerMeter = projection.unitsPerMeter;
         console.log('this._unitsPerMeter:', this._unitsPerMeter);
+
         this.mapHelper = new MapHelper({
             origin: this._origin,
             radius: this._radius,
-            unitsPerMeter: this._unitsPerMeter,
+            projection: projection,
             mapId: 'map',
             enableTiles: env.enableTilesLeaflet === true,
             onBuildTerrain: (ll) => { this.reloadPageWithLocation(ll); },

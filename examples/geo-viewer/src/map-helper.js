@@ -29,19 +29,19 @@ class MapHelper {
         const defaults = {
             origin: null,
             radius: null,
-            unitsPerMeter: null,
+            projection: null,
             mapId: 'map',
             enableTiles: false,
             onBuildTerrain: null,
             onMapZoomEnd: null,
         };
         let actual = Object.assign({}, defaults, options);
-        if (!actual.origin || !actual.radius || !actual.unitsPerMeter) {
-            throw "Invalid origin, radius, or unitsPerMeter";
+        if (!actual.origin || !actual.radius || !actual.projection) {
+            throw "Invalid origin, radius, or projection";
         }
         this.origin = actual.origin;
         this.radius = actual.radius;
-        this.unitsPerMeter = actual.unitsPerMeter;
+        this.projection = actual.projection;
         this.mapId = actual.mapId;
         this.enableTiles = actual.enableTiles;
         this.onBuildTerrain = actual.onBuildTerrain;
@@ -49,7 +49,6 @@ class MapHelper {
 
         let _origin = actual.origin;
         let _radius = actual.radius;
-        let _unitsPerMeter = actual.unitsPerMeter;
         let _mapId = actual.mapId;
         let _enableTiles = actual.enableTiles;
 
@@ -332,7 +331,7 @@ class MapHelper {
     plotCam(cam) {
         // console.log('cam:', cam);
         let lineCam = MapHelper.mkLineCam(
-            cam, this.origin, this.unitsPerMeter, this.map.getZoom());
+            cam, this.origin, this.projection.unitsPerMeter, this.map.getZoom());
         // console.log('lineCam:', lineCam);
 
         let camLatLngs = lineCam.geometry.coordinates.map(ll => MapHelper.swap(ll));
@@ -347,8 +346,6 @@ class MapHelper {
     }
     plotOrbit(orbit) {
         console.log('plotOrbit(): orbit:', orbit);
-        let _origin = this.origin;
-        let _unitsPerMeter = this.unitsPerMeter;
 
         if (this.orbitMarker) {
             this.map.removeLayer(this.orbitMarker);
@@ -360,11 +357,12 @@ class MapHelper {
         }
         if (! orbit) return;
 
+        const { projInv, unitsPerMeter } = this.projection;
+
         // add orbitMarker
-        let target = orbit.userData.target;
-        let llTarget = ThreeGeo.projInv(
-            target.x, target.y, _origin, _unitsPerMeter);
-        // console.log('llTarget:', llTarget);
+        const target = orbit.userData.target;
+        const llTarget = projInv(target.x, target.y);
+        console.log('llTarget:', llTarget);
 
         this.orbitMarker =
             L.marker(llTarget)
@@ -374,8 +372,9 @@ class MapHelper {
                 }).addTo(this.map);
 
         // add orbitCircle
-        let circle = turfCircle(
-            MapHelper.swap(llTarget), orbit.userData.radius / _unitsPerMeter, {
+        const circle = turfCircle(
+            MapHelper.swap(llTarget),
+            orbit.userData.radius / unitsPerMeter, {
                 units: 'meters',
             });
         this.orbitCircle =
