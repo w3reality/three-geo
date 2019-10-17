@@ -1,17 +1,10 @@
 import * as THREE from 'three';
 
 //********************************
-// import Laser from '../../../../three-laser-pointer/src'; // ok (local version)
 import Laser from 'three-laser-pointer/src'; // ok (npm install version)
 // import Laser from 'three-laser-pointer'; // THREE conflict
 // import Laser from 'three-laser-pointer/lib/three-laser-pointer.js'; // THREE conflict
-// console.log('Laser:', Laser);
 //********************************
-// import * as TGEO from '../../../src'; // works with .default; slow; works
-// // import * as TGEO from '../../../lib/three-geo.js'; // works with .default; slow; THREE conflisct
-// console.log('TGEO.default:', TGEO.default);
-// const ThreeGeo = TGEO.default;
-//--------
 import ThreeGeo from '../../../src'; // for dev; fast compile; works
 // import ThreeGeo from '../../../lib/three-geo.js'; // for dev; slow compile; THREE conflict; broken
 //********************************
@@ -333,7 +326,9 @@ class Viewer {
     loadRgbDem(cb=this.nop) {
         if (this._isRgbDemLoaded) { return cb(); }
         if (this.env.tokenMapbox === '********') {
-            console.log('Please set a valid Mapbox token in env.js');
+            const msg = 'Please set a valid Mapbox token in env.js';
+            console.log(msg);
+            alert(msg);
             return cb();
         }
 

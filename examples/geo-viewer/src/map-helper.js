@@ -1,12 +1,10 @@
 
 // if THREE is global (via script-tag loading), use that THREE to prevent
-// conflicts with ES6 version. (Line objects become broken, otherwise...)
+// conflicts with ES6 version (or otherwise, line objects etc. become broken)
 import * as THREE_ES6 from 'three';
-// console.log('window.THREE:', window.THREE);
 const THREE = window.THREE ? window.THREE : THREE_ES6;
 
-import ThreeGeo from '../../../src'; // for dev; fast compile
-// import ThreeGeo from '../../../lib/three-geo.js'; // for dev; slow compile
+import ThreeGeo from '../../../src';
 
 import L from 'leaflet';
 // console.log('L:', L);
