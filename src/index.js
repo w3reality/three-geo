@@ -216,7 +216,7 @@ class ThreeGeo {
 
         return contours;
     }
-    // TODO doc
+    // TODO doc ... directly used in geo-es6/src/index.js
     static getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
     }
@@ -226,8 +226,8 @@ class ThreeGeo {
             this.constUnitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
     }
-    // TODO doc
-    static translate(turfObj, dx, dy, dz, unitsPerMeter, mutate=true) {
+    // TODO doc ... directly used in geo-viewer/src/map-helper.js
+    static translateTurfObject(turfObj, dx, dy, dz, unitsPerMeter, mutate=true) {
         const vec = new THREE.Vector2(dx, dy).divideScalar(unitsPerMeter);
         const theta = 90.0 - vec.angle() * 180.0 / Math.PI;
         return turfTransformTranslate(turfObj, vec.length(), theta, {
@@ -236,15 +236,32 @@ class ThreeGeo {
                 mutate: mutate, // "significant performance increase if true" per doc
             });
     }
-    // TODO doc
+    // TODO doc ... directly used in geo-es6/src/index.js
     static projInv(x, y, origin, unitsPerMeter) {
         const _swap = ll => [ll[1], ll[0]]; // leaflet: ltlg, turf: lglt
-        return _swap(this.translate(
+        return _swap(this.translateTurfObject(
             turfHelpers.point(_swap(origin)),
             x, y, 0, unitsPerMeter).geometry.coordinates);
     }
+
     // TODO doc
-    // TODO add inverse projection; use ThreeGeo.translate()
+    //========
+    // // update `proj()` to be
+    // proj(ll, meshes=null) {
+    //     /*
+    //     meshes should be obtained as
+    //         const meshes = await getTerrain(...);
+    //     so better promisify getTerrain() API too!!!!
+    //     */
+    //     //...
+    //     let z = undefined;
+    //     if (meshes) {
+    //         // cf. _resolveTri() of apps/geo-es6/src/index.js
+    //         // z = ____resolve(x, y, meshes, ...);
+    //     }
+    //     return [x, y, z]
+    // }
+    //========
     getProjection(origin, radius) {
         const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
         const _unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);

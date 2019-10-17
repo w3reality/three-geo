@@ -320,7 +320,7 @@ class MapHelper {
                 mutate: true, // significant performance increase if true
             });
 
-        return ThreeGeo.translate(
+        return ThreeGeo.translateTurfObject(
             lineCam, ...cam.position.toArray(), unitsPerMeter);
     }
 
