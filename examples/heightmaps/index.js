@@ -55,7 +55,7 @@ const tgeo = new ThreeGeo({
     tokenMapbox: '********', // <---- set your Mapbox API token here
 });
 
-const isDebug = 0;
+const isDebug = 1;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
     tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
@@ -115,8 +115,8 @@ const createPanelSprite = (can, pixelsPerUnit=512) => {
 };
 
 const demToObjects = (demUri, demTile, proj) => {
-    const {obj, offset, size} = ThreeGeo.bboxToWireframe(
-        ThreeGeo.tileToBbox(demTile), proj, {
+    const { obj, offset, size } = ThreeGeo.Utils.bboxToWireframe(
+        ThreeGeo.Utils.tileToBbox(demTile), proj, {
             offsetZ: - 0.1,
             color: 0xcc00cc,
         });
@@ -159,7 +159,7 @@ if (tgeo.tokenMapbox.startsWith('****')) {
     // Beware the value of radius; radius > 5.0 (km) could trigger huge number of tile API calls!!
     const origin = [46.5763, 7.9904];
     const radius = 5.0;
-    const {proj, bbox, unitsPerMeter} = tgeo.getProjection(origin, radius);
+    const { proj, bbox, unitsPerMeter } = tgeo.getProjection(origin, radius);
     // console.log('proj:', proj);
     // console.log('unitsPerMeter:', unitsPerMeter);
 
@@ -187,8 +187,8 @@ if (tgeo.tokenMapbox.startsWith('****')) {
 
                 //======== how to visualize constituent tiles of the terrain
                 const tile = mesh.userData.threeGeo.tile;
-                const {obj, offset} = ThreeGeo.bboxToWireframe(
-                    ThreeGeo.tileToBbox(tile), proj, {offsetZ: - 0.05});
+                const { obj, offset } = ThreeGeo.Utils.bboxToWireframe(
+                    ThreeGeo.Utils.tileToBbox(tile), proj, {offsetZ: - 0.05});
                 const sp = createPanelSprite(
                     createTextCanvas(`${tile.join('-')}`, 256, 64, {tfg: '#0ff'}));
                 sp.position.set(offset[0], offset[1], offset[2] + 0.05);
