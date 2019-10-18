@@ -41,6 +41,7 @@
         "@turf/helpers": "^6.1.4",
         "@turf/intersect": "^6.1.2",
         "@turf/transform-translate": "^5.1.5",
+        "@turf/transform-rotate": "^5.1.5",
         "@turf/union": "^5.1.5",
         "babel-core": "^6.26.0",
         "babel-eslint": "^8.0.3",
