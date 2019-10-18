@@ -14,8 +14,6 @@ import L from 'leaflet';
 import * as turfHelpers from '@turf/helpers';
 import turfDistance from '@turf/distance';
 // import turfLineDistance from '@turf/line-distance'; // ?? runtime error about distance()
-import turfTransformTranslate from '@turf/transform-translate';
-import turfTransformRotate from '@turf/transform-rotate';
 import turfCircle from '@turf/circle/index';
 
 import $ from 'jquery';
@@ -295,30 +293,27 @@ class MapHelper {
         // https://stackoverflow.com/questions/12784807/get-euler-rotation-from-quaternion
         // https://threejs.org/docs/#api/math/Euler
         // https://github.com/mrdoob/three.js/issues/11767
-        let qn = new THREE.Quaternion();
-        let rot = new THREE.Euler().setFromQuaternion(
+        const qn = new THREE.Quaternion();
+        const rot = new THREE.Euler().setFromQuaternion(
             cam.getWorldQuaternion(qn), 'ZYX');
-        let deg = - rot.z / Math.PI * 180;
+        const deg = - rot.z / Math.PI * 180;
 
         // resolve cam's horizontal fov
         // https://github.com/mrdoob/three.js/issues/1239
-        let fovRad = cam.fov * Math.PI / 180;
-        let hfov = 2 * Math.atan(Math.tan(fovRad / 2) * cam.aspect);
+        const fovRad = cam.fov * Math.PI / 180;
+        const hfov = 2 * Math.atan(Math.tan(fovRad / 2) * cam.aspect);
         // console.log('fov, aspect, degHfov:',
         //     cam.fov, cam.aspect, hfov / Math.PI * 180);
 
         // construct an oriented polygon for the camera
         // console.log('zoomMap:', zoomMap);
-        let dist = 0.004 * (2**(12 - zoomMap)); // "dist" of the pinhole to the screen
-        let lineCam = turfTransformRotate(
+        const dist = 0.004 * (2**(12 - zoomMap)); // "dist" of the pinhole to the screen
+        const lineCam = ThreeGeo.Utils.rotateTurfObject(
             turfHelpers.lineString([
                 [origin[1] - dist * Math.tan(hfov/2), origin[0] + dist],
                 [origin[1], origin[0]],
                 [origin[1] + dist * Math.tan(hfov/2), origin[0] + dist],
-            ]), deg, {
-                pivot: [origin[1], origin[0]],
-                mutate: true, // significant performance increase if true
-            });
+            ]), deg, origin);
 
         return ThreeGeo.Utils.translateTurfObject(
             lineCam, ...cam.position.toArray(), unitsPerMeter);
