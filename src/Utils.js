@@ -3,6 +3,7 @@ const THREE = window.THREE ? window.THREE : THREE_ES6;
 
 import turfTransformTranslate from '@turf/transform-translate';
 import turfTransformRotate from '@turf/transform-rotate';
+import tilebelt from "@mapbox/tilebelt";
 
 // TODO doc
 class Utils {
@@ -22,5 +23,44 @@ class Utils {
             });
     }
 
+    static bboxToWireframe(wsen, proj, opts={}) {
+        const defaults = {
+            offsetZ: 0.0,
+            color: 0x00cccc,
+            height: 0.001,
+        };
+        const actual = Object.assign({}, defaults, opts);
+
+        const [w, s, e, n] = wsen; // of bbox
+        // console.log('wsen:', wsen);
+        const offset = proj([(w+e)/2, (s+n)/2]); // lng, lat -> x, y
+        // console.log('offset:', offset);
+
+        const [pw, pn, pe, ps] = [...proj([w, n]), ...proj([e, s])];
+        // console.log('pw, pn, pe, ps:', pw, pn, pe, ps);
+        // const sides = [0.05, 0.05]; // show the mid point
+        const sides = [pe - pw, pn - ps];
+
+        const dzBounds = actual.height;
+        const ls = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(
+                ...sides, dzBounds)),
+            new THREE.LineBasicMaterial({color: actual.color}));
+        ls.position.set(...offset, - dzBounds / 2 + actual.offsetZ);
+        ls.name = `bbox-${window.performance.now()}`;
+        return {
+            obj: ls,
+            offset: [...offset, actual.offsetZ],
+            size: [...sides, actual.height],
+        };
+    }
+    static tileToBbox(tile) {
+        return tilebelt.tileToBBOX(tile);
+    }
+    static _consoleLog(...args) {
+        // for eluding uglify
+        const _console = console;
+        _console.log.apply(_console, args);
+    }
 }
 export default Utils;

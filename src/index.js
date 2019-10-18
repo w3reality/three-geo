@@ -1,3 +1,5 @@
+const __version = "1.3.0dev";
+
 // if THREE is global (via script-tag loading), use that THREE to prevent
 // conflicts with ES6 version. (Line objects become broken, otherwise...)
 import * as THREE_ES6 from 'three';
@@ -57,7 +59,6 @@ import xhr from 'xhr';
 import Pbf from 'pbf';
 import { VectorTile } from '@mapbox/vector-tile';
 import uniq from 'uniq';
-import tilebelt from "@mapbox/tilebelt";
 
 // no longer used; see colorRangeNonD3()
 // import * as d3 from 'd3'; // be more selective - https://github.com/d3/d3
@@ -126,14 +127,17 @@ const constSeamRows = computeSeamRows(1);
 
 class ThreeGeo {
     constructor(opts={}) {
-        let defaults = {
+        this.version = __version;
+        Utils._consoleLog(`ThreeGeo ${__version}`);
+
+        const defaults = {
             unitsSide: 1.0,
             tokenMapbox: "",
             apiVector: 'mapbox-terrain-vector',
             apiRgb: 'mapbox-terrain-rgb',
             apiSatellite: 'mapbox-satellite',
         };
-        let actual = Object.assign({}, defaults, opts);
+        const actual = Object.assign({}, defaults, opts);
         this.constUnitsSide = actual.unitsSide;
         this.tokenMapbox = actual.tokenMapbox;
         this.apiVector = actual.apiVector;
@@ -261,43 +265,6 @@ class ThreeGeo {
     //     return [x, y, z]
     // }
     //========
-
-    // TODO doc ... used in examples/heightmaps/index.js
-    static bboxToWireframe(wsen, proj, opts={}) {
-        const defaults = {
-            offsetZ: 0.0,
-            color: 0x00cccc,
-            height: 0.001,
-        };
-        const actual = Object.assign({}, defaults, opts);
-
-        const [w, s, e, n] = wsen; // of bbox
-        // console.log('wsen:', wsen);
-        const offset = proj([(w+e)/2, (s+n)/2]); // lng, lat -> x, y
-        // console.log('offset:', offset);
-
-        const [pw, pn, pe, ps] = [...proj([w, n]), ...proj([e, s])];
-        // console.log('pw, pn, pe, ps:', pw, pn, pe, ps);
-        // const sides = [0.05, 0.05]; // show the mid point
-        const sides = [pe - pw, pn - ps];
-
-        const dzBounds = actual.height;
-        const ls = new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(
-                ...sides, dzBounds)),
-            new THREE.LineBasicMaterial({color: actual.color}));
-        ls.position.set(...offset, - dzBounds / 2 + actual.offsetZ);
-        ls.name = `bbox-${window.performance.now()}`;
-        return {
-            obj: ls,
-            offset: [...offset, actual.offsetZ],
-            size: [...sides, actual.height],
-        };
-    }
-    // TODO doc ... used in examples/heightmaps/index.js
-    static tileToBbox(tile) {
-        return tilebelt.tileToBBOX(tile);
-    }
 
     buildSliceGeometry(coords, iContour, color, contours, nw, se, radius) {
         const shadedContour = new THREE.Shape();
