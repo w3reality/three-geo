@@ -9,8 +9,6 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPl
 const sourcePath = path.join(__dirname, './src');
 const outputPath = path.join(__dirname, './dist');
 
-const ThreeEs6Plugin = require('three-es6-plugin/dist');
-
 let plugins = [], outputFile, minimize;
 if (env === 'build') {
     minimize = true;
@@ -23,21 +21,9 @@ if (env === 'build') {
     outputFile = "[name].js";
 }
 
-plugins.push(new ThreeEs6Plugin([
-    'three/examples/js/controls/OrbitControls.js',
-    'three/examples/js/loaders/OBJLoader.js',
-    'three/examples/js/loaders/MTLLoader.js',
-    'three/examples/js/loaders/DDSLoader.js',
-]));
-// workaround for infinite watch-compile loop...  https://github.com/webpack/watchpack/issues/25
-plugins.push(new webpack.WatchIgnorePlugin([ /three-es6-plugin\/es6\/.*\.js$/, ]));
-
 module.exports = {
     entry: {
         'app': sourcePath + "/index.js",
-    },
-    stats: {
-        warnings: false, // suppress warnings from three-es6-plugin
     },
     output: {
         path: outputPath,

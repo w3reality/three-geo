@@ -1,15 +1,12 @@
-import * as THREE from 'three';
-import Stats from 'stats.js';
 
-import OrbitControls from 'three-es6-plugin/es6/OrbitControls';
-
-import env from './env.js';
-// import env from './envs-ignore/env-dev.js';
+// import env from './env.js';
+import env from './envs-ignore/env-dev.js';
 // import env from './envs-ignore/env-io.js';
 
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
 
+//=======================
 const canvas = document.getElementById("canvas");
 const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.001, 1000);
 camera.position.set(0, 0, 1.5);
@@ -21,7 +18,7 @@ const renderer = new THREE.WebGLRenderer({
     preserveDrawingBuffer: true, // to support .toDataURL()
 });
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 // https://stackoverflow.com/questions/29884485/threejs-canvas-size-based-on-container
 const resizeCanvasToDisplaySize = (force=false) => {
@@ -39,14 +36,17 @@ const resizeCanvasToDisplaySize = (force=false) => {
 };
 resizeCanvasToDisplaySize(true); // first time
 
-
+let stats = new Stats();
+stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom);
+//=======================
+const box = Threelet.Utils.createLineBox([1,2,2]);
+console.log('box:', box);
+//=======================
 const viewer = new Viewer(env, canvas, camera, renderer);
 console.log('viewer:', viewer);
 
 // begin render stuff --------
-let stats = new Stats();
-stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild(stats.dom);
 let render = () => {
     stats.update();
     resizeCanvasToDisplaySize();

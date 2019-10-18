@@ -1,19 +1,9 @@
-import * as THREE from 'three';
+import ThreeGeo from '../../../src';
 
-//========
-import Laser from 'three-laser-pointer/src'; // ok (npm install version)
-// import Laser from 'three-laser-pointer'; // THREE conflict
-// import Laser from 'three-laser-pointer/lib/three-laser-pointer.js'; // THREE conflict
-//========
-import ThreeGeo from '../../../src'; // for dev; fast compile; works
-// import ThreeGeo from '../../../lib/three-geo.js'; // for dev; slow compile; THREE conflict; broken
-//========
+import Laser from 'three-laser-pointer/src';
 
 import MapHelper from './map-helper.js';
 import queryString from 'query-string'; // in prod, need webpack-4 to minify this
-
-import $ from 'jquery';
-// console.log('$:', $);
 
 class Viewer {
     constructor(env, canvas, camera, renderer) {

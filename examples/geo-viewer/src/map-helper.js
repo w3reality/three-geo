@@ -1,9 +1,3 @@
-
-// if THREE is global (via script-tag loading), use that THREE to prevent
-// conflicts with ES6 version (or otherwise, line objects etc. become broken)
-import * as THREE_ES6 from 'three';
-const THREE = window.THREE ? window.THREE : THREE_ES6;
-
 import ThreeGeo from '../../../src';
 
 import L from 'leaflet';
@@ -16,11 +10,7 @@ import turfDistance from '@turf/distance';
 // import turfLineDistance from '@turf/line-distance'; // ?? runtime error about distance()
 import turfCircle from '@turf/circle/index';
 
-import $ from 'jquery';
-// console.log('$:', $);
-
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
-
 
 class MapHelper {
     constructor(options={}) {
