@@ -12,7 +12,6 @@ import Utils from './Utils.js';
 //========
 import * as turfHelpers from '@turf/helpers';
 // console.log('turfHelpers:', turfHelpers);
-import turfTransformTranslate from '@turf/transform-translate';
 
 //======== FIXME try v7 in future??
 // v5 approach introduces jsts.min.js causing bloat (to 482KB)
@@ -218,8 +217,15 @@ class ThreeGeo {
 
         return contours;
     }
+
     static _getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
+    }
+    static _projInv(x, y, origin, unitsPerMeter) {
+        const _swap = ll => [ll[1], ll[0]]; // leaflet: ltlg, turf: lglt
+        return _swap(ThreeGeo.Utils.translateTurfObject(
+            turfHelpers.point(_swap(origin)),
+            x, y, 0, unitsPerMeter).geometry.coordinates);
     }
     _projectCoord(coord, nw, se, unitsSide=this.constUnitsSide) { // lng, lat -> px, py
         return [
@@ -227,7 +233,16 @@ class ThreeGeo {
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
     }
-
+    getProjection(origin, radius, unitsSide=this.constUnitsSide) {
+        const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
+        const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
+        return {
+            proj: ll => this._projectCoord(ll, [w, n], [e, s], unitsSide),
+            projInv: (x, y) => ThreeGeo._projInv(x, y, origin, _unitsPerMeter),
+            bbox: [w, s, e, n],
+            unitsPerMeter: _unitsPerMeter,
+        };
+    }
     // TODO doc
     //========
     // // update `proj()` to be
@@ -246,22 +261,6 @@ class ThreeGeo {
     //     return [x, y, z]
     // }
     //========
-    getProjection(origin, radius, unitsSide=this.constUnitsSide) {
-        const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
-        const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
-        return {
-            proj: ll => this._projectCoord(ll, [w, n], [e, s], unitsSide),
-            projInv: (x, y) => ThreeGeo._projInv(x, y, origin, _unitsPerMeter),
-            bbox: [w, s, e, n],
-            unitsPerMeter: _unitsPerMeter,
-        };
-    }
-    static _projInv(x, y, origin, unitsPerMeter) {
-        const _swap = ll => [ll[1], ll[0]]; // leaflet: ltlg, turf: lglt
-        return _swap(ThreeGeo.Utils.translateTurfObject(
-            turfHelpers.point(_swap(origin)),
-            x, y, 0, unitsPerMeter).geometry.coordinates);
-    }
 
     // TODO doc ... used in examples/heightmaps/index.js
     static bboxToWireframe(wsen, proj, opts={}) {
@@ -300,8 +299,7 @@ class ThreeGeo {
         return tilebelt.tileToBBOX(tile);
     }
 
-    buildSliceGeometry(coords, iContour, color,
-        contours, nw, se, radius) {
+    buildSliceGeometry(coords, iContour, color, contours, nw, se, radius) {
         const shadedContour = new THREE.Shape();
         const wireframeContours = [new THREE.Geometry()];
 
@@ -962,8 +960,7 @@ class ThreeGeo {
         return objs;
     }
 
-    getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite,
-        onRgbDem, onSatelliteMat) {
+    getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite, onRgbDem, onSatelliteMat) {
         let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
         console.log('zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
 
