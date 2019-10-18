@@ -4,6 +4,8 @@ import * as THREE_ES6 from 'three';
 // console.log('window.THREE:', window.THREE);
 const THREE = window.THREE ? window.THREE : THREE_ES6;
 
+import Utils from './Utils.js';
+
 // import * as turf from '@turf/turf'; // need being more selective - http://turfjs.org/getting-started/
 // import { intersect } from '@turf/turf'; // TEST of tree-shaking, not working... FIXME
 // console.log('turf:', turf);
@@ -216,32 +218,14 @@ class ThreeGeo {
 
         return contours;
     }
-    // TODO doc ... directly used in geo-es6/src/index.js
-    static getUnitsPerMeter(unitsSide, radius) {
+    static _getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
     }
-    projectCoord(coord, nw, se) { // lng, lat -> px, py
+    _projectCoord(coord, nw, se, unitsSide=this.constUnitsSide) { // lng, lat -> px, py
         return [
-            this.constUnitsSide * (-0.5 + (coord[0]-nw[0]) / (se[0]-nw[0])),
-            this.constUnitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
+            unitsSide * (-0.5 + (coord[0]-nw[0]) / (se[0]-nw[0])),
+            unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
-    }
-    // TODO doc ... directly used in geo-viewer/src/map-helper.js
-    static translateTurfObject(turfObj, dx, dy, dz, unitsPerMeter, mutate=true) {
-        const vec = new THREE.Vector2(dx, dy).divideScalar(unitsPerMeter);
-        const theta = 90.0 - vec.angle() * 180.0 / Math.PI;
-        return turfTransformTranslate(turfObj, vec.length(), theta, {
-                units: 'meters',
-                zTranslation: dz / unitsPerMeter,
-                mutate: mutate, // "significant performance increase if true" per doc
-            });
-    }
-    // TODO doc ... directly used in geo-es6/src/index.js
-    static projInv(x, y, origin, unitsPerMeter) {
-        const _swap = ll => [ll[1], ll[0]]; // leaflet: ltlg, turf: lglt
-        return _swap(this.translateTurfObject(
-            turfHelpers.point(_swap(origin)),
-            x, y, 0, unitsPerMeter).geometry.coordinates);
     }
 
     // TODO doc
@@ -262,17 +246,24 @@ class ThreeGeo {
     //     return [x, y, z]
     // }
     //========
-    getProjection(origin, radius) {
+    getProjection(origin, radius, unitsSide=this.constUnitsSide) {
         const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
-        const _unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);
+        const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
         return {
-            proj: ll => this.projectCoord(ll, [w, n], [e, s]),
-            projInv: (x, y) => ThreeGeo.projInv(x, y, origin, _unitsPerMeter),
+            proj: ll => this._projectCoord(ll, [w, n], [e, s], unitsSide),
+            projInv: (x, y) => ThreeGeo._projInv(x, y, origin, _unitsPerMeter),
             bbox: [w, s, e, n],
             unitsPerMeter: _unitsPerMeter,
         };
     }
-    // TODO doc
+    static _projInv(x, y, origin, unitsPerMeter) {
+        const _swap = ll => [ll[1], ll[0]]; // leaflet: ltlg, turf: lglt
+        return _swap(ThreeGeo.Utils.translateTurfObject(
+            turfHelpers.point(_swap(origin)),
+            x, y, 0, unitsPerMeter).geometry.coordinates);
+    }
+
+    // TODO doc ... used in examples/heightmaps/index.js
     static bboxToWireframe(wsen, proj, opts={}) {
         const defaults = {
             offsetZ: 0.0,
@@ -304,7 +295,7 @@ class ThreeGeo {
             size: [...sides, actual.height],
         };
     }
-    // TODO doc
+    // TODO doc ... used in examples/heightmaps/index.js
     static tileToBbox(tile) {
         return tilebelt.tileToBBOX(tile);
     }
@@ -315,13 +306,13 @@ class ThreeGeo {
         const wireframeContours = [new THREE.Geometry()];
 
         const h = iContour;
-        const unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);
+        const unitsPerMeter = ThreeGeo._getUnitsPerMeter(this.constUnitsSide, radius);
         const pz = - contours[h].ele * unitsPerMeter;
 
         // iterate through vertices per shape
         // console.log('coords[0]:', coords[0]);
         coords[0].forEach((coord, index) => {
-            let [px, py] = this.projectCoord(coord, nw, se);
+            let [px, py] = this._projectCoord(coord, nw, se);
             wireframeContours[0].vertices.push(
                 new THREE.Vector3(-px, py, pz));
             if (index === 0) {
@@ -339,7 +330,7 @@ class ThreeGeo {
 
             // iterate through hole path vertices
             for (let j = 0; j < coords[k].length; j++) {
-                let [px, py] = this.projectCoord(coords[k][j], nw, se);
+                let [px, py] = this._projectCoord(coords[k][j], nw, se);
                 wireframeContours[k].vertices.push(
                     new THREE.Vector3(-px, py, pz));
                 if (j === 0) {
@@ -710,7 +701,7 @@ class ThreeGeo {
         // 14 [256, 384] [384, 512]
         // 15 [384, 512] [384, 512]
 
-        const unitsPerMeter = ThreeGeo.getUnitsPerMeter(this.constUnitsSide, radius);
+        const unitsPerMeter = ThreeGeo._getUnitsPerMeter(this.constUnitsSide, radius);
         const dataEle = [];
         sixteenths.forEach((zoomposStr, index) => {
             if (! zpCoveredStr.includes(zoomposStr)) return;
@@ -737,7 +728,7 @@ class ThreeGeo {
                     // console.log('lonlatPixel:', lonlatPixel);
                     // NOTE: do use shift = 1 for computeSeamRows()
                     array.push(
-                        ...this.projectCoord(lonlatPixel, bbox.northWest, bbox.southEast),
+                        ...this._projectCoord(lonlatPixel, bbox.northWest, bbox.southEast),
                         elev[dataIndex] * unitsPerMeter);
                     dataIndex++;
                 }
@@ -1123,5 +1114,7 @@ class ThreeGeo {
     setApiRgb(api) { this.apiRgb = api; }
     setApiSatellite(api) { this.apiSatellite = api; }
 }
+
+ThreeGeo.Utils = Utils;
 
 export default ThreeGeo;
