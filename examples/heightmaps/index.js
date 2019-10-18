@@ -1,61 +1,21 @@
-
-const canvas = document.getElementById("canvas");
-const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.001, 1000);
-camera.position.set(0, 0, 1.5);
-camera.up.set(0, 0, 1); // important for OrbitControls
-
-const renderer = new THREE.WebGLRenderer({
-    // alpha: true,
-    canvas: canvas,
+const threelet = new Threelet({
+    canvas: document.getElementById("canvas"),
 });
+threelet.setup('mod-controls', THREE.OrbitControls);
+threelet.setup('mod-stats', window.Stats, {panelType: 1});
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-// https://stackoverflow.com/questions/29884485/threejs-canvas-size-based-on-container
-const resizeCanvasToDisplaySize = (force=false) => {
-    let width = canvas.clientWidth;
-    let height = canvas.clientHeight;
-
-    // adjust displayBuffer size to match
-    if (force || canvas.width != width || canvas.height != height) {
-        // you must pass false here or three.js sadly fights the browser
-        // console.log "resizing: #{canvas.width} #{canvas.height} -> #{width} #{height}"
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-    }
-};
-resizeCanvasToDisplaySize(true); // first time
-
-// object stuff --------
-const scene = new THREE.Scene();
-const walls = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
-    new THREE.LineBasicMaterial({color: 0xcccccc}));
-walls.position.set(0, 0, 0);
-scene.add(walls);
-scene.add(new THREE.AxesHelper(1));
-
-// render stuff --------
-const stats = new Stats();
-stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild(stats.dom);
-const render = () => {
-    stats.update();
-    resizeCanvasToDisplaySize();
-    renderer.render(scene, camera);
-};
-
-
-// main --------
+const { scene, render } = threelet;
 render(); // first time
-controls.addEventListener('change', render);
+
+const group = new THREE.Group();
+group.rotation.x = - Math.PI/2;
+scene.add(group);
 
 const tgeo = new ThreeGeo({
     tokenMapbox: '********', // <---- set your Mapbox API token here
 });
 
-const isDebug = 1;
+const isDebug = 0;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
     tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
@@ -132,7 +92,7 @@ if (tgeo.tokenMapbox.startsWith('****')) {
         onRgbDem: (meshes) => {
             meshes.forEach((mesh) => {
                 console.log('rgb DEM mesh:', mesh);
-                scene.add(mesh);
+                group.add(mesh);
                 console.log('userData:', mesh.userData);
 
                 //======== how to access the post-processed heightmap
@@ -147,7 +107,7 @@ if (tgeo.tokenMapbox.startsWith('****')) {
 
                 const sp = createTextSprite(`${tile.join('-')}`, '#0ff');
                 sp.position.set(offset[0], offset[1], offset[2] + 0.05);
-                scene.add(obj, sp);
+                group.add(obj, sp);
 
                 //======== how to access src DEM being used (grand-parental tile)
                 // ref - https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
@@ -161,7 +121,7 @@ if (tgeo.tokenMapbox.startsWith('****')) {
                     srcDemUris[srcDemUri] = true;
 
                     const {wireframe, plane, sprite} = demToObjects(srcDemUri, srcDemTile, proj);
-                    scene.add(wireframe, plane, sprite);
+                    group.add(wireframe, plane, sprite);
                 }
 
                 $msg.append(`<div><span style="color: #00ffffff;">tile ${tile.join('-')}</span> using <span style="color: #ff00ffff";>DEM ${srcDemTile.join('-')}</span></div>`);
