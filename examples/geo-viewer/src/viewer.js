@@ -677,6 +677,8 @@ class Viewer {
     capture() {
         // Without this, on the Silk browser,
         // the result is blacked out second time in successive captures.
+        //
+        // https://stackoverflow.com/questions/30628064/how-to-toggle-preservedrawingbuffer-in-three-js
         this._render();
 
         Viewer._capture(this.renderer.domElement);

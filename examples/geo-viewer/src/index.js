@@ -1,4 +1,3 @@
-
 // import env from './env.js';
 import env from './envs-ignore/env-dev.js';
 // import env from './envs-ignore/env-io.js';
@@ -6,52 +5,34 @@ import env from './envs-ignore/env-dev.js';
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
 
-//=======================
-const canvas = document.getElementById("canvas");
-const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.001, 1000);
+//
+
+const threelet = new Threelet({
+    canvas: document.getElementById("canvas"),
+});
+const { scene, canvas, camera, renderer } = threelet;
 camera.position.set(0, 0, 1.5);
 camera.up.set(0, 0, 1); // important for OrbitControls
 
-const renderer = new THREE.WebGLRenderer({
-    // alpha: true,
-    canvas: canvas,
-    preserveDrawingBuffer: true, // to support .toDataURL()
-});
-
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-// https://stackoverflow.com/questions/29884485/threejs-canvas-size-based-on-container
-const resizeCanvasToDisplaySize = (force=false) => {
-    let width = canvas.clientWidth;
-    let height = canvas.clientHeight;
-
-    // adjust displayBuffer size to match
-    if (force || canvas.width != width || canvas.height != height) {
-        // you must pass false here or three.js sadly fights the browser
-        // console.log "resizing: #{canvas.width} #{canvas.height} -> #{width} #{height}"
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-    }
-};
-resizeCanvasToDisplaySize(true); // first time
-
-let stats = new Stats();
-stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild(stats.dom);
-//=======================
-const box = Threelet.Utils.createLineBox([1,2,2]);
-console.log('box:', box);
-//=======================
+const stats = threelet.setup('mod-stats', window.Stats, {panelType: 1});
 const viewer = new Viewer(env, canvas, camera, renderer);
 console.log('viewer:', viewer);
 
-// begin render stuff --------
-let render = () => {
+const render = () => {
     stats.update();
-    resizeCanvasToDisplaySize();
+    threelet.resizeCanvas();
     viewer.render();
+    viewer.showMsg(camera);
+    viewer.plotCamInMap(camera);
 };
+threelet.render = render; // override
+const controls = threelet.setup('mod-controls', THREE.OrbitControls);
+
+const group = new THREE.Group();
+group.rotation.x = - Math.PI/2;
+scene.add(group);
+
+//
 
 let _stopAnim = true;
 const _animate = () => {
@@ -70,7 +51,8 @@ const toggleAnimation = (tf) => {
         _stopAnim = true;
     }
 };
-// end render stuff --------
+
+//
 
 const query = Viewer.parseQuery();
 const guiData = { // with defaults
@@ -186,17 +168,10 @@ renderer.domElement.addEventListener("mouseup", e => {
     }
 }, false);
 
+// main
 
-// main --------
 render(); // first time
 viewer.toggleMap(guiData.leaflet);
 viewer.showMsg(camera);
 viewer.plotCamInMap(camera);
 viewer.showMsgTerrain();
-
-controls.addEventListener('change', () => {
-    if (! guiData.autoOrbit) render();
-
-    viewer.showMsg(camera);
-    viewer.plotCamInMap(camera);
-});
