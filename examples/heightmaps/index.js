@@ -63,56 +63,12 @@ if (isDebug) {
     // console.log('tgeo:', tgeo);
 }
 
-// $('body').css('font-family')  // FIXME refactor.....
-const createTextCanvas = (str, width, height, opts={}) => {
-    const defaults = {
-        bg: "#fff",
-        tbg: "#fff",
-        tfg: "#000",
-        fontFamily: "Times", // FIXME refactor.....
-    };
-    const actual = Object.assign({}, defaults, opts);
-
-    const can = document.createElement("canvas");
-    can.width = width;
-    can.height = height;
-
-    const ctx = can.getContext("2d");
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-
-    str = str.replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/, "\"");
-    const [w, h] = [ctx.measureText(str).width + 16, 45];
-
-    // ctx.font = `48px ${actual.fontFamily}`;
-    ctx.font = `36px ${actual.fontFamily}`;
-
-    ctx.fillStyle = actual.bg;
-    ctx.fillRect(0, 0, can.width, can.height);
-
-    ctx.fillStyle = actual.tbg;
-    ctx.fillRect(0, 0, w, 45);
-
-    ctx.fillStyle = actual.tfg;
-    // ctx.fillText(str, 25, 35+25); // ok for 256, 128
-    ctx.fillText(str, 25, 35); // ok for 256, 64
-
-    return can;
-};
-const createPanelSprite = (can, pixelsPerUnit=512) => {
-    const mat = new THREE.SpriteMaterial({
-        map: new THREE.Texture(can),
-        opacity: 0.7,
-        color: 0xffffff,
-    });
-    mat.map.needsUpdate = true;
-    const sp = new THREE.Sprite(mat);
-    sp.scale.set(
-        can.width/pixelsPerUnit, can.height/pixelsPerUnit, 1.0);
-    return sp;
-};
+const createTextSprite = (text, color) => Threelet.Utils.createCanvasSprite(
+    Threelet.Utils.createCanvasFromText(text, 256, 64, {
+        tfg: color,
+        fontSize: '36px',
+        fontFamily: 'Times',
+    }));
 
 const demToObjects = (demUri, demTile, proj) => {
     const { obj, offset, size } = ThreeGeo.Utils.bboxToWireframe(
@@ -137,14 +93,13 @@ const demToObjects = (demUri, demTile, proj) => {
         }));
     plane.position.set(...offset);
 
-    const sprite = createPanelSprite(
-        createTextCanvas(`${demTile.join('-')}`, 256, 64, {tfg: '#f0f'}));
-    sprite.position.set(offset[0], offset[1], offset[2] + 0.1);
+    const sp = createTextSprite(`${demTile.join('-')}`, '#f0f');
+    sp.position.set(offset[0], offset[1], offset[2] + 0.1);
 
     return {
         wireframe: obj,
         plane: plane,
-        sprite: sprite,
+        sprite: sp,
     };
 };
 
@@ -189,8 +144,8 @@ if (tgeo.tokenMapbox.startsWith('****')) {
                 const tile = mesh.userData.threeGeo.tile;
                 const { obj, offset } = ThreeGeo.Utils.bboxToWireframe(
                     ThreeGeo.Utils.tileToBbox(tile), proj, {offsetZ: - 0.05});
-                const sp = createPanelSprite(
-                    createTextCanvas(`${tile.join('-')}`, 256, 64, {tfg: '#0ff'}));
+
+                const sp = createTextSprite(`${tile.join('-')}`, '#0ff');
                 sp.position.set(offset[0], offset[1], offset[2] + 0.05);
                 scene.add(obj, sp);
 
