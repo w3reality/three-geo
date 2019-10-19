@@ -33,14 +33,11 @@ class App extends Threelet {
         viewer.plotCamInMap(this.camera);
         viewer.showMsgTerrain();
 
-        this.setupMouseInterface(viewer);
-        this._appData = { stats, viewer, guiData };
-    }
-
-    setupMouseInterface(viewer) {
         this.on('mouse-move', (mx, my) => viewer.pick(mx, my));
         this.on('mouse-click', (mx, my) => viewer.updateMeasure(mx, my));
         this.on('mouse-click-right', (mx, my) => viewer.updateOrbit(mx, my));
+
+        this._appData = { stats, viewer, guiData };
     }
 
     static createGuiData() {
