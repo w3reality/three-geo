@@ -36,27 +36,29 @@
     });
 
     if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
-        const warning = 'Please set your own Mapbox API token in ThreeGeo constructor.';
+        const warning = 'Please set your own Mapbox API token in the ThreeGeo constructor.';
         alert(warning);
-    } else {
-        const origin = [46.5763, 7.9904];
-        const radius = 5.0;
-        tgeo.getTerrain(origin, radius, 12, {
-            onRgbDem: (meshes) => {},
-            onSatelliteMat: (mesh) => {
-                const position = mesh.geometry.attributes.position;
-                const arr = position.array;
-                for (let i = 0; i < arr.length; i += 3) {
-                    arr[i+2] = 0; // set z value (height) to zero
-                }
-                position.needsUpdate = true;
-
-                mesh.rotation.x = - Math.PI/2;
-                scene.add(mesh);
-                render();
-            },
-        });
+        throw warning;
     }
+
+    const origin = [46.5763, 7.9904];
+    const radius = 5.0;
+    tgeo.getTerrain(origin, radius, 12, {
+        onRgbDem: (meshes) => {},
+        onSatelliteMat: (mesh) => {
+            const position = mesh.geometry.attributes.position;
+            const arr = position.array;
+            for (let i = 0; i < arr.length; i += 3) {
+                arr[i+2] = 0; // set z value (height) to zero
+            }
+            position.needsUpdate = true;
+
+            mesh.rotation.x = - Math.PI/2;
+            mesh.material.side = THREE.DoubleSide;
+            scene.add(mesh);
+            render();
+        },
+    });
     </script>
 </body>
 </html>

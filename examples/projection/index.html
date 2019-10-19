@@ -38,39 +38,40 @@
     if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
         const warning = 'Please set your own Mapbox API token in the ThreeGeo constructor.';
         alert(warning);
-    } else {
-        const origin = [46.5763, 7.9904];
-        const radius = 5.0;
-
-        // add terrain
-        tgeo.getTerrain(origin, radius, 12, {
-            onRgbDem: (meshes) => {},
-            onSatelliteMat: (mesh) => {
-                mesh.rotation.x = - Math.PI/2;
-                mesh.material.wireframe = true;
-                scene.add(mesh);
-                render();
-            },
-        });
-
-        // add a point
-        const { proj, unitsPerMeter } = tgeo.getProjection(origin, radius);
-        const dot = new THREE.Points(
-            new THREE.Geometry(),
-            new THREE.PointsMaterial({
-                size: 8,
-                sizeAttenuation: false,
-                color: 0x00cccc,
-            }));
-
-        // proj: lng, lat -> x, y
-        // const [x, y, z] = [...proj([origin[1], origin[0]]), 4000]; // reprojection test
-        const [x, y, z] = [...proj([8.0052, 46.5775]), 3970]; // Eiger's peak
-        // const [x, y, z] = [...proj([7.9610, 46.5852]), 2100]; // town
-        dot.geometry.vertices.push(new THREE.Vector3(
-            x, z * unitsPerMeter, -y));
-        scene.add(dot);
+        throw warning;
     }
+
+    const origin = [46.5763, 7.9904];
+    const radius = 5.0;
+
+    // add terrain
+    tgeo.getTerrain(origin, radius, 12, {
+        onRgbDem: (meshes) => {},
+        onSatelliteMat: (mesh) => {
+            mesh.rotation.x = - Math.PI/2;
+            mesh.material.wireframe = true;
+            scene.add(mesh);
+            render();
+        },
+    });
+
+    // add a point
+    const { proj, unitsPerMeter } = tgeo.getProjection(origin, radius);
+    const dot = new THREE.Points(
+        new THREE.Geometry(),
+        new THREE.PointsMaterial({
+            size: 8,
+            sizeAttenuation: false,
+            color: 0x00cccc,
+        }));
+
+    // proj: lng, lat -> x, y
+    // const [x, y, z] = [...proj([origin[1], origin[0]]), 4000]; // reprojection test
+    const [x, y, z] = [...proj([8.0052, 46.5775]), 3970]; // Eiger's peak
+    // const [x, y, z] = [...proj([7.9610, 46.5852]), 2100]; // town
+    dot.geometry.vertices.push(new THREE.Vector3(
+        x, z * unitsPerMeter, -y));
+    scene.add(dot);
     </script>
 </body>
 </html>
