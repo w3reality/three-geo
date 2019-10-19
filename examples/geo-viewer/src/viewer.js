@@ -536,6 +536,10 @@ class Viewer {
         this.mapHelper.plotOrbit(this._orbit);
     }
     pick(mx, my) {
+        if (!this._showVrLaser && this.markPair.length !== 1) {
+            return;
+        }
+
         let isect = this._doRaycast(this._laser, mx, my);
         if (isect !== null) {
             // console.log('isect:', isect);
@@ -667,6 +671,9 @@ class Viewer {
     }
     setGuiHelper(helper) {
         this.guiHelper = helper;
+    }
+    closeGui() {
+        this.guiHelper.gui.close();
     }
     _render() {
         this.renderer.clear();
