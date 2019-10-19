@@ -12,7 +12,7 @@ class App extends Threelet {
         this.camera.up.set(0, 0, 1); // The up vector is along +z for this app
 
         const stats = this.setup('mod-stats', window.Stats, {panelType: 1});
-        const viewer = new Viewer(env, this.canvas, this.camera, this.renderer);
+        const viewer = new Viewer(env, this);
 
         this.render = () => { // override
             stats.update();

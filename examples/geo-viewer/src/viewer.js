@@ -6,12 +6,15 @@ import MapHelper from './map-helper.js';
 import queryString from 'query-string'; // in prod, need webpack-4 to minify this
 
 class Viewer {
-    constructor(env, canvas, camera, renderer) {
-        console.log('hello from geov!!');
+    constructor(env, threelet) {
         this.env = env;
+
+        const { canvas, camera, renderer } = threelet;
+        this.threelet = threelet;
         this.canvas = canvas;
         this.camera = camera;
         this.renderer = renderer;
+
         this.guiHelper = null;
 
         this.scene = new THREE.Scene();
@@ -464,15 +467,14 @@ class Viewer {
 
         return output;
     }
-    _doRaycast(laser, mx, my) {
-        return Viewer._applyWithMeshesVisible(this.objsInteractive, (meshes) => {
-            return laser.raycastFromCamera(
-                mx, my, this.canvas.width, this.canvas.height, this.camera, meshes);
-        });
+    _doRaycast(mx, my) {
+        return Viewer._applyWithMeshesVisible(
+            this.objsInteractive, (meshes) =>
+                this.threelet.raycastFromMouse(mx, my, meshes));
     }
 
     updateMeasure(mx, my) {
-        let isect = this._doRaycast(this._laserMarker, mx, my);
+        let isect = this._doRaycast(mx, my);
         if (isect !== null) {
             // console.log('isect:', isect);
             let pt = isect.point;
@@ -504,7 +506,7 @@ class Viewer {
         this.showMeasureStats(this.markPair);
     }
     updateOrbit(mx, my) {
-        let isect = this._doRaycast(this._laserMarker, mx, my);
+        let isect = this._doRaycast(mx, my);
         if (isect !== null) {
             // console.log('isect:', isect);
             let pt = isect.point;
@@ -540,7 +542,7 @@ class Viewer {
             return;
         }
 
-        let isect = this._doRaycast(this._laser, mx, my);
+        let isect = this._doRaycast(mx, my);
         if (isect !== null) {
             // console.log('isect:', isect);
             let pt = isect.point;
@@ -551,9 +553,9 @@ class Viewer {
             if (this._showVrLaser) {
                 // this._laser.point(pt, 0xffffff);
                 //----
-                Viewer._applyWithMeshesVisible(this.objsInteractive, (meshes) => {
-                    this._laser.pointWithRaytrace(pt, meshes, 0xffffff, 16);
-                });
+                Viewer._applyWithMeshesVisible(
+                    this.objsInteractive, (meshes) =>
+                        this._laser.pointWithRaytrace(pt, meshes, 0xffffff, 16));
             }
 
             if (this.markPair.length === 1) {
