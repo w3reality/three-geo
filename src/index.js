@@ -929,7 +929,7 @@ class ThreeGeo {
 
     getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite, onRgbDem, onSatelliteMat) {
         let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
-        console.log('zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
+        console.log('(for rgb dem) zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
 
         let dataEleCovered = [];
         let count = 0; // TODO use Promise() instead ??
@@ -958,7 +958,7 @@ class ThreeGeo {
 
     getVectorTiles(zpCovered, bbox, radius, apiVector, onVectorDem) {
         let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
-        console.log('zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
+        console.log('(for vector dem) zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
 
         let bottomTiles = []; // will get reduced
         let geojson = { // will get reduced
@@ -1022,56 +1022,59 @@ class ThreeGeo {
         };
     }
 
-    // tiles to cover a 5km-radius:  - processing
+
+    static debugZp(zpCovered) {
+        console.warn('zpCovered mods enabled for debug...');
+        zpCovered.length = 1;
+        // zpCovered.length = 2;
+        // zpCovered.length = 4;
+        // zpCovered.length = 8;
+        // zpCovered.length = 12;
+        // zpCovered.length = 16;
+
+        // debug with eiger
+        // zpCovered.length = 19; // eiger snow ok
+        // zpCovered.length = 20; // eiger snow NG <- fixed by dataEle.sort()
+        // zpCovered = [[14, 8555, 5792], [14, 8556, 5792]]; // OK
+        // zpCovered = [[14, 8555, 5792], [14, 8556, 5792], [14, 8557, 5792]]; // NG <- fixed by dataEle.sort()
+
+        // zpCovered = [ // for checking seams
+        //     [14, 3073, 6421], [14, 3074, 6421],
+        //     [14, 3073, 6422], [14, 3074, 6422],
+        // ];
+        // zpCovered = [[14, 3072, 6420],]; // debug, to one elem
+        // zpCovered = [                  [14, 3073, 6420],];
+        // zpCovered = [[14, 3072, 6420], [14, 3073, 6420],];
+        // zpCovered = [
+        //     [14, 3072, 6420], [14, 3074, 6420], [14, 3076, 6420],
+        //     [14, 3073, 6421], [14, 3075, 6421],
+        //     [14, 3072, 6422], [14, 3074, 6422], [14, 3076, 6422],
+        //     [14, 3073, 6423], [14, 3075, 6423],
+        // ];
+    }
+
+    // tiles to cover a 5km-radius:  - processing (approx.)
     // zoom: 15, // 64  <= 8x8 tiles - 8s
     // zoom: 14, // 20  <= 5x5 tiles - 4s (high resolution)
     // zoom: 13, // 6-9 <= 3x3 tiles - 2s (default)
     // zoom: 12, // 2-4 <= 2x2 tiles - 1s
     // zoom: 11, // 1 tile           - 0s
-    getTerrain(origin, radius, zoom, callbacks={}) {
-        let bbox = ThreeGeo.getBbox(origin, radius);
+    getTerrain(origin, radius, zoom, cbs={}) {
+        const bbox = ThreeGeo.getBbox(origin, radius);
         console.log('bbox:', bbox);
 
-        let zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
-        console.log('zpCovered:', zpCovered);
-        if (0) { //!!!!!!!! for debug
-            console.log('zpCovered mods enabled for debug!!!!');
-            // zpCovered.length = 1;
-            // zpCovered.length = 2;
-            zpCovered.length = 4;
-            // zpCovered.length = 8;
-            // zpCovered.length = 12;
-            // zpCovered.length = 16;
+        const zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
+        // ThreeGeo.debugZp(zpCovered); // dev only
+        console.log('(for satellite mat) zpCovered:', zpCovered);
 
-            // debug with eiger
-            // zpCovered.length = 19; // eiger snow ok
-            // zpCovered.length = 20; // eiger snow NG <- fixed by dataEle.sort()
-            // zpCovered = [[14, 8555, 5792], [14, 8556, 5792]]; // OK
-            // zpCovered = [[14, 8555, 5792], [14, 8556, 5792], [14, 8557, 5792]]; // NG <- fixed by dataEle.sort()
-
-            // zpCovered = [ // for checking seams
-            //     [14, 3073, 6421], [14, 3074, 6421],
-            //     [14, 3073, 6422], [14, 3074, 6422],
-            // ];
-            // zpCovered = [[14, 3072, 6420],]; // debug, to one elem
-            // zpCovered = [                  [14, 3073, 6420],];
-            // zpCovered = [[14, 3072, 6420], [14, 3073, 6420],];
-            // zpCovered = [
-            //     [14, 3072, 6420], [14, 3074, 6420], [14, 3076, 6420],
-            //     [14, 3073, 6421], [14, 3075, 6421],
-            //     [14, 3072, 6422], [14, 3074, 6422], [14, 3076, 6422],
-            //     [14, 3073, 6423], [14, 3075, 6423],
-            // ];
-        }
-
-        if (callbacks.onVectorDem) {
+        if (cbs.onVectorDem) {
             this.getVectorTiles(zpCovered, bbox, radius,
-                this.apiVector, callbacks.onVectorDem);
+                this.apiVector, cbs.onVectorDem);
         }
-        if (callbacks.onRgbDem) {
+        if (cbs.onRgbDem) {
             this.getRgbTiles(zpCovered, bbox, radius,
                 this.apiRgb, this.apiSatellite,
-                callbacks.onRgbDem, callbacks.onSatelliteMat);
+                cbs.onRgbDem, cbs.onSatelliteMat);
         }
     }
     setApiVector(api) { this.apiVector = api; }
