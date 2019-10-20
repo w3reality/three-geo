@@ -91,16 +91,13 @@ class Viewer {
 
         this.updateTerrain(this._vis);
 
+        this._projection = this.tgeo.getProjection(this._origin, this._radius);
+
         // ------- leaflet stuff
-        const projection = this.tgeo.getProjection(this._origin, this._radius);
-
-        this._unitsPerMeter = projection.unitsPerMeter;
-        console.log('this._unitsPerMeter:', this._unitsPerMeter);
-
         this.mapHelper = new MapHelper({
             origin: this._origin,
             radius: this._radius,
-            projection: projection,
+            projection: this._projection,
             mapId: 'map',
             enableTiles: env.enableTilesLeaflet === true,
             onBuildTerrain: (ll) => { this.reloadPageWithLocation(ll); },
@@ -132,7 +129,7 @@ class Viewer {
         this._isOrbiting = false;
 
         this._showVrLaser = false;
-    } // constructor()
+    } // end constructor()
 
     static parseQuery() {
         let _parsedQ = queryString.parse(location.search);
@@ -261,7 +258,8 @@ class Viewer {
             }
 
             // update leaflet
-            this.mapHelper.update(ll);
+            this.mapHelper.update(
+                ll, this.tgeo.getProjection(ll, this._radius));
             this.plotCamInMap(this.camera);
 
             // update terrain
@@ -620,23 +618,25 @@ class Viewer {
         return pt.clone().divideScalar(unitsPerMeter * 1000);
     }
     showMsg(cam) {
+        const { unitsPerMeter } = this._projection;
         this.$msg.empty();
-        this.$msg.append(`<div>pos [km]: ${Viewer.toCoords(Viewer.m2km(cam.position, this._unitsPerMeter))}</div>`);
+        this.$msg.append(`<div>pos [km]: ${Viewer.toCoords(Viewer.m2km(cam.position, unitsPerMeter))}</div>`);
         this.$msg.append(`<div>rot [rad]: ${Viewer.toCoords(cam.rotation)}</div>`);
     }
     showMeasureStats(_markPair) {
+        const { unitsPerMeter } = this._projection;
         this.$msgMeasure.empty();
         if (_markPair.length === 1) {
-            this.$msgMeasure.append(`<div>points: ${Viewer.toCoords(Viewer.m2km(_markPair[0], this._unitsPerMeter))} -> </div>`);
+            this.$msgMeasure.append(`<div>points: ${Viewer.toCoords(Viewer.m2km(_markPair[0], unitsPerMeter))} -> </div>`);
         } else if (_markPair.length === 2) {
-            let p0km = Viewer.m2km(_markPair[0], this._unitsPerMeter);
-            let p1km = Viewer.m2km(_markPair[1], this._unitsPerMeter);
+            const p0km = Viewer.m2km(_markPair[0], unitsPerMeter);
+            const p1km = Viewer.m2km(_markPair[1], unitsPerMeter);
             this.$msgMeasure.append(`<div>points: ${Viewer.toCoords(p0km)} -> ${Viewer.toCoords(p1km)}</div>`);
             this.$msgMeasure.append(`<div>euclidean dist: ${p0km.distanceTo(p1km).toFixed(3)}</div>`);
         }
     }
     showMsgTerrain() {
-        let ll = this._origin;
+        const ll = this._origin;
         this.$msgTerrain.empty();
         this.$msgTerrain.append(`<div>lat lng: (${ll[0].toFixed(4)}, ${ll[1].toFixed(4)})</div>`);
         this.$msgTerrain.append(`<div>satellite zoom resolution [11-17]: ${this._zoom}</div>`);

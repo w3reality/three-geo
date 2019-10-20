@@ -25,7 +25,7 @@ class MapHelper {
         };
         let actual = Object.assign({}, defaults, options);
         if (!actual.origin || !actual.radius || !actual.projection) {
-            throw "Invalid origin, radius, or projection";
+            throw "Invalid origin, radius or projection";
         }
         this.origin = actual.origin;
         this.radius = actual.radius;
@@ -35,13 +35,13 @@ class MapHelper {
         this.onBuildTerrain = actual.onBuildTerrain;
         this.onMapZoomEnd = actual.onMapZoomEnd;
 
-        let _origin = actual.origin;
-        let _radius = actual.radius;
-        let _mapId = actual.mapId;
-        let _enableTiles = actual.enableTiles;
+        const _origin = actual.origin;
+        const _radius = actual.radius;
+        const _mapId = actual.mapId;
+        const _enableTiles = actual.enableTiles;
 
 
-        // let this.map = L.map(_mapId, {center: latlng, zoom: 13});
+        // this.map = L.map(_mapId, {center: latlng, zoom: 13});
         this.map = L.map(_mapId).setView(_origin, 12);
 
         MapHelper.addSearchControl(this.map, (ll) => { // latlng
@@ -60,7 +60,7 @@ class MapHelper {
         //--------
         this._bboxLayers = [];
 
-        let _bbox = ThreeGeo.getBbox(_origin, _radius);
+        const _bbox = ThreeGeo.getBbox(_origin, _radius);
         console.log('_bbox:', _bbox);
         this.updateBboxLayers(_origin, _bbox.feature); // first time
 
@@ -131,7 +131,8 @@ class MapHelper {
             let e2 = turf.envelope(c2);
             L.geoJson(e2).addTo(_map);
         }
-    }
+
+    } // end constructor()
 
     static addSearchControl(map, onLocationSelected) {
         // https://github.com/smeijer/leaflet-geosearch#geosearchcontrol
@@ -385,7 +386,9 @@ class MapHelper {
         this._bboxLayers.forEach(layer => { layer.addTo(this.map); });
     }
 
-    update(ll) {
+    update(ll, projection) {
+        this.projection = projection;
+
         console.log('ll:', ll);
         this.origin = ll;
         this.map.panTo(ll);

@@ -34,6 +34,10 @@ class GuiHelper extends DatGuiDefaults {
             controller = gui.add(params, 'isDev').name("isDev: true !!!!");
             controller.onChange((value) => {
                 console.log('this.env:', this.env);
+                if (1) {
+                    const { origin, pathname } = window.location;
+                    window.location.href = `${origin}${pathname}`;
+                }
             });
         }
 
