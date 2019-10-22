@@ -6,6 +6,8 @@ import * as THREE_ES6 from 'three';
 // console.log('window.THREE:', window.THREE);
 const THREE = window.THREE ? window.THREE : THREE_ES6;
 
+import 'regenerator-runtime/runtime.js';
+
 import Utils from './Utils.js';
 
 // import * as turf from '@turf/turf'; // need being more selective - http://turfjs.org/getting-started/
@@ -344,8 +346,8 @@ class ThreeGeo {
 
         return [lines, extrudeShade];
     }
-    getVectorDem(contours, northWest, southEast, radius) {
-        // console.log('getVectorDem():', contours, northWest, southEast, radius);
+    _getVectorDem(contours, northWest, southEast, radius) {
+        // console.log('_getVectorDem():', contours, northWest, southEast, radius);
 
         // deprecated to remove the d3 dependency (save ~125KB)
         // const colorRange = d3.scaleLinear()
@@ -855,7 +857,7 @@ class ThreeGeo {
         });
     }
 
-    getRgbDem(dataEle, apiSatellite, onSatelliteMat) {
+    _getRgbDem(dataEle, apiSatellite, _onSatelliteMat) {
         console.log('apiSatellite:', apiSatellite);
 
         // dataEle should be sorted so that ThreeGeo.resolveSeams() is applied
@@ -919,20 +921,19 @@ class ThreeGeo {
                         map: tex,
                     });
                 }
-                if (onSatelliteMat) {
-                    onSatelliteMat(plane);
-                }
+                if (_onSatelliteMat) _onSatelliteMat(plane, objs);
             });
         });
         return objs;
     }
 
-    getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite, onRgbDem, onSatelliteMat) {
+    _getRgbTiles(zpCovered, bbox, radius, apiRgb, apiSatellite,
+        onRgbDem, onSatelliteMat, watcher) {
         let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
         console.log('(for rgb dem) zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
 
         let dataEleCovered = [];
-        let count = 0; // TODO use Promise() instead ??
+        let count = 0;
         zpEle.forEach((zoompos) => {
             // console.log('ele zoompos', zoompos);
             ThreeGeo.fetchTile(zoompos, apiRgb, this.tokenMapbox, (pixels) => {
@@ -946,17 +947,33 @@ class ThreeGeo {
 
                 count++;
                 if (count === zpEle.length) {
-                    // console.log('dataEleCovered:', dataEleCovered);
-                    if (onRgbDem) {
-                        onRgbDem(this.getRgbDem(
-                            dataEleCovered, apiSatellite, onSatelliteMat));
+                    console.log('dataEleCovered:', dataEleCovered);
+
+                    if (onSatelliteMat) {
+                        let _count = 0; // for satellite processing
+                        const _onSatelliteMat = (mesh, meshesAcc) => {
+                            _count++;
+                            onSatelliteMat(mesh);
+                            if (_count === dataEleCovered.length) {
+                                watcher({what: 'dem-rgb', data: meshesAcc});
+                            }
+                        };
+                        const meshes = this._getRgbDem(
+                            dataEleCovered, apiSatellite, _onSatelliteMat);
+                        onRgbDem(meshes);
+                    } else {
+                        const meshes = this._getRgbDem(
+                            dataEleCovered, apiSatellite, null);
+                        onRgbDem(meshes);
+                        watcher({what: 'dem-rgb', data: meshes});
                     }
                 }
             });
         });
     }
 
-    getVectorTiles(zpCovered, bbox, radius, apiVector, onVectorDem) {
+    _getVectorTiles(zpCovered, bbox, radius, apiVector,
+        onVectorDem, watcher) {
         let zpEle = ThreeGeo.getZoomposEle(zpCovered); // e.g. satellite's zoom: 14
         console.log('(for vector dem) zpEle:', zpEle); // e.g. dem's zoom: 12 (=14-2)
 
@@ -965,7 +982,7 @@ class ThreeGeo {
             type: "FeatureCollection",
             features: [],
         };
-        let count = 0; // TODO use Promise() instead ??
+        let count = 0;
         zpEle.forEach((zoompos) => {
             ThreeGeo.fetchTile(zoompos, apiVector, this.tokenMapbox, (tile) => {
                 if (tile) {
@@ -976,10 +993,12 @@ class ThreeGeo {
 
                 count++;
                 if (count === zpEle.length) {
-                    let contours = ThreeGeo.processVectorGeojson(
+                    const contours = ThreeGeo.processVectorGeojson(
                         geojson, bottomTiles, bbox.feature, radius);
-                    onVectorDem(this.getVectorDem(
-                        contours, bbox.northWest, bbox.southEast, radius));
+                    const objs = this._getVectorDem(
+                        contours, bbox.northWest, bbox.southEast, radius);
+                    onVectorDem(objs);
+                    watcher({what: 'dem-vec', data: objs});
                 }
             });
         });
@@ -1053,6 +1072,56 @@ class ThreeGeo {
         // ];
     }
 
+    static _createWatcher(cbs, res) {
+        let isVecPending = cbs.onVectorDem ? true : false;
+        let isRgbPending = cbs.onRgbDem ? true : false;
+        const ret = {vectorDem: [], rgbDem: []};
+
+        const isDone = () => !isVecPending && !isRgbPending;
+
+        if (isDone()) {
+            res(ret);
+            return null;
+        }
+
+        return payload => {
+            // console.log('payload:', payload);
+            const { what, data } = payload;
+            if (what === 'dem-vec') {
+                isVecPending = false;
+                ret.vectorDem = data;
+            }
+            if (what === 'dem-rgb') {
+                isRgbPending = false;
+                ret.rgbDem = data;
+            }
+            if (isDone()) { // both callbacks are complete
+                res(ret);
+            }
+        };
+    }
+    _getTerrain(zpCovered, bbox, radius, cbs) {
+        return new Promise((res, rej) => {
+            const watcher = ThreeGeo._createWatcher(cbs, res);
+            if (!watcher) return;
+
+            try {
+                if (cbs.onVectorDem) {
+                    this._getVectorTiles(zpCovered, bbox, radius,
+                        this.apiVector, cbs.onVectorDem, watcher);
+                }
+                if (cbs.onRgbDem) {
+                    this._getRgbTiles(zpCovered, bbox, radius,
+                        this.apiRgb, this.apiSatellite,
+                        cbs.onRgbDem, cbs.onSatelliteMat, watcher);
+                }
+            } catch (err) {
+                console.error('err:', err);
+                rej(null);
+            }
+        });
+    }
+
     // tiles to cover a 5km-radius:  - processing (approx.)
     // zoom: 15, // 64  <= 8x8 tiles - 8s
     // zoom: 14, // 20  <= 5x5 tiles - 4s (high resolution)
@@ -1060,23 +1129,35 @@ class ThreeGeo {
     // zoom: 12, // 2-4 <= 2x2 tiles - 1s
     // zoom: 11, // 1 tile           - 0s
     getTerrain(origin, radius, zoom, cbs={}) {
-        const bbox = ThreeGeo.getBbox(origin, radius);
-        console.log('bbox:', bbox);
+        return new Promise(async (res, rej) => {
+            try {
+                const bbox = ThreeGeo.getBbox(origin, radius);
+                console.log('bbox:', bbox);
 
-        const zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
-        // ThreeGeo.debugZp(zpCovered); // dev only
-        console.log('(for satellite mat) zpCovered:', zpCovered);
+                const zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
+                // ThreeGeo.debugZp(zpCovered); // dev only
+                console.log('(for satellite) zpCovered:', zpCovered);
 
-        if (cbs.onVectorDem) {
-            this.getVectorTiles(zpCovered, bbox, radius,
-                this.apiVector, cbs.onVectorDem);
-        }
-        if (cbs.onRgbDem) {
-            this.getRgbTiles(zpCovered, bbox, radius,
-                this.apiRgb, this.apiSatellite,
-                cbs.onRgbDem, cbs.onSatelliteMat);
-        }
+                res(await this._getTerrain(zpCovered, bbox, radius, cbs));
+            } catch (err) {
+                console.error('err:', err);
+                rej(null);
+            }
+        });
     }
+    async getTerrainRgb(origin, radius, zoom, cb=undefined) {
+        const _cbs = {onRgbDem: () => {}, onSatelliteMat: () => {}}; // to trigger rgb fetching
+        const { rgbDem } = await this.getTerrain(origin, radius, zoom, _cbs);
+        if (cb) cb(rgbDem);
+        return rgbDem;
+    }
+    async getTerrainVector(origin, radius, zoom, cb=undefined) {
+        const _cbs = {onVectorDem: () => {}}; // to trigger vector fetching
+        const { vectorDem } = await this.getTerrain(origin, radius, zoom, _cbs);
+        if (cb) cb(vectorDem);
+        return vectorDem;
+    }
+
     setApiVector(api) { this.apiVector = api; }
     setApiRgb(api) { this.apiRgb = api; }
     setApiSatellite(api) { this.apiSatellite = api; }

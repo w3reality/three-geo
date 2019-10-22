@@ -56,6 +56,7 @@
         "jsts": "^2.0.2",
         "lodash": "^4.17.14",
         "mocha": "^6.1.4",
+        "regenerator": "^0.14.1",
         "pbf": "^3.1.0",
         "three": "^0.109.0",
         "uglifyjs-webpack-plugin": "^2.0.1",
