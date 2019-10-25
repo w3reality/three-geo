@@ -148,19 +148,18 @@ class ThreeGeo {
     }
 
     static getEleList(geojson) {
-        let mapper = (feature) => { return feature.properties.ele; };
-        return uniq(geojson.features.map(mapper))
-            .sort((a, b) => { return a - b; });
+        return uniq(geojson.features.map(feat => feat.properties.ele))
+            .sort((a, b) => a - b);
     }
     static addBottomEle(geojson, bottomTiles, eleList) {
         bottomTiles.forEach((bottom) => {
-            let tileBottomEle = bottom.properties.ele;
-            for (let k = eleList[0]; k < tileBottomEle; k += 10) {
+            const tileBottomEle = bottom.properties.ele;
+            for (let _ele = eleList[0]; _ele < tileBottomEle; _ele += 10) {
                 // console.log('k:', k);
                 geojson.features.push({
                     type: "Feature",
                     geometry: bottom.geometry,
-                    properties: {ele: k},
+                    properties: {ele: _ele},
                 });
             }
         });
