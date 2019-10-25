@@ -33,10 +33,11 @@ class Utils {
 
         const [w, s, e, n] = wsen; // of bbox
         // console.log('wsen:', wsen);
-        const offset = proj([(w+e)/2, (s+n)/2]); // lng, lat -> x, y
+        const offset = proj([(s+n)/2, (w+e)/2]); // lat, lng -> x, y
         // console.log('offset:', offset);
 
-        const [pw, pn, pe, ps] = [...proj([w, n]), ...proj([e, s])];
+        const [pw, pn] = proj([n, w]);
+        const [pe, ps] = proj([s, e]);
         // console.log('pw, pn, pe, ps:', pw, pn, pe, ps);
         // const sides = [0.05, 0.05]; // show the mid point
         const sides = [pe - pw, pn - ps];

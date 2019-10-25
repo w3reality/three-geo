@@ -59,7 +59,7 @@ This demo illustrates the relationship between a reconstructed 3D terrain and it
 
 How to get a flattened view of the terrain by post-editing the underlying geometry.
 
-**4) examples/projection** (`live <https://w3reality.github.io/three-geo/examples/projection/index.html>`__ | `source code <https://github.com/w3reality/three-geo/tree/master/examples/projection/index.html>`__)
+**4) examples/projection** (`live <https://w3reality.github.io/three-geo/examples/projection/index.html>`__ | 🔵 `source code <https://github.com/w3reality/three-geo/tree/master/examples/projection/index.html>`__)
 
 How to register a new 3D object on top of the terrain based on its geographic location ``[longitude, latitude, elevation]``.
 

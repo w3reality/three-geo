@@ -65,10 +65,14 @@
             color: 0x00cccc,
         }));
 
-    // proj: lat, lng -> x, y
-    // const [x, y, z] = [...proj(origin), 4000]; // reprojection test
-    const [x, y, z] = [...proj([46.5775, 8.0052]), 3970]; // Eiger's peak
-    // const [x, y, z] = [...proj([46.5852, 7.9610]), 2100]; // town
+    // 🔵 API signature has changed
+    // proj([lng, lat]) -> [x, y]  (three-geo <= 1.2.5)
+    // proj([lat, lng]) -> [x, y]  (three-geo > 1.3.0dev)
+
+    // const [x, y] = proj(origin), z = 4000; // reprojection test
+    // const [x, y] = proj([46.5775, 8.0052]), z = 3970; // Eiger's peak
+    const [x, y] = proj([46.5852, 7.9610]), z = 2100; // town
+
     dot.geometry.vertices.push(new THREE.Vector3(
         x, z * unitsPerMeter, -y));
     scene.add(dot);

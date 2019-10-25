@@ -1,4 +1,4 @@
-const __version = "1.3.0dev";
+const __version = "1.3.0dev-a";
 
 // if THREE is global (via script-tag loading), use that THREE to prevent
 // conflicts with ES6 version. (Line objects become broken, otherwise...)
@@ -247,6 +247,8 @@ class ThreeGeo {
 
         console.log('meshes for ele:', meshes);
 
+        // **** WIP ****
+
         // !!!! https://github.com/mapbox/sphericalmercator
 
         // TODO 2) this should narrow down to the only
@@ -285,10 +287,10 @@ class ThreeGeo {
 
         // resolve elevation in case the optional `meshes` is provided
         const ele = meshes ?
-            this._resolveElevation(lat, lng, meshes, wsen) :
+            this._resolveElevation(lat, lng, meshes, wsen) : // maybe `undefined`
             undefined;
 
-        return [x, y, ele];
+        return ele !== undefined ? [x, y, ele] : [x, y];
     }
     static _projInv(x, y, origin, unitsPerMeter) {
         const _swap = ll => [ll[1], ll[0]];
