@@ -227,13 +227,11 @@ class ThreeGeo {
     static _getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
     }
-    static _projInv(x, y, origin, unitsPerMeter) {
-        const _swap = ll => [ll[1], ll[0]]; // leaflet: ltlg, turf: lglt
-        return _swap(ThreeGeo.Utils.translateTurfObject(
-            turfHelpers.point(_swap(origin)),
-            x, y, 0, unitsPerMeter).geometry.coordinates);
+    _projectCoord(coord, nw, se, unitsSide=this.constUnitsSide) {
+        return ThreeGeo._projectCoordStatic(coord, nw, se, unitsSide);
     }
-    _projectCoord(coord, nw, se, unitsSide=this.constUnitsSide) { // lng, lat -> px, py
+    static _projectCoordStatic(coord, nw, se, unitsSide) {
+        // lng, lat -> px, py
         return [
             unitsSide * (-0.5 + (coord[0]-nw[0]) / (se[0]-nw[0])),
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
@@ -280,25 +278,38 @@ class ThreeGeo {
 
         return 1200;//!!!!!!!!
     }
+    static _proj(ll, meshes, wsen, unitsSide) {
+        const [lat, lng] = ll;
+        const [w, s, e, n] = wsen;
+        const [x, y] = this._projectCoordStatic(
+            [lng, lat], [w, n], [e, s], unitsSide);
+
+        // resolve elevation in case the optional `meshes` is provided
+        const ele = meshes ?
+            this._resolveElevation(lat, lng, meshes, wsen) :
+            undefined;
+
+        return [x, y, ele];
+    }
+    static _projInv(x, y, origin, unitsPerMeter) {
+        const _swap = ll => [ll[1], ll[0]];
+        return _swap(ThreeGeo.Utils.translateTurfObject(
+            turfHelpers.point(_swap(origin)),
+            x, y, 0, unitsPerMeter).geometry.coordinates); // latlng
+    }
+    // ll-notation
+    //   latlng: three-geo, leaflet
+    //   lnglat: turf
     getProjection(origin, radius, unitsSide=this.constUnitsSide) {
         const wsen = ThreeGeo.originRadiusToBbox(origin, radius);
         // console.log('origin:', origin);
         // console.log('wsen:', wsen);
         const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
         return {
-            proj: (ll /* latlng */, meshes=undefined /* rgbDem */) => {
-                const [lat, lng] = ll;
-                const [w, s, e, n] = wsen;
-                const [x, y] = this._projectCoord([lng, lat], [w, n], [e, s], unitsSide);
-
-                // resolve elevation in case the optional `meshes` is provided
-                const ele = meshes ?
-                    ThreeGeo._resolveElevation(lat, lng, meshes, wsen) :
-                    undefined;
-
-                return [x, y, ele];
-            },
-            projInv: (x, y) => ThreeGeo._projInv(x, y, origin, _unitsPerMeter),
+            proj: (latlng, meshes=undefined) => // `meshes`: rgbDem
+                ThreeGeo._proj(latlng, meshes, wsen, unitsSide),
+            projInv: (x, y) =>
+                ThreeGeo._projInv(x, y, origin, _unitsPerMeter), // latlng
             bbox: wsen,
             unitsPerMeter: _unitsPerMeter,
         };
