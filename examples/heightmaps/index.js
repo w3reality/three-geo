@@ -15,7 +15,7 @@ const tgeo = new ThreeGeo({
     tokenMapbox: '********', // <---- set your Mapbox API token here
 });
 
-const isDebug = 1;
+const isDebug = 0;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
     tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
