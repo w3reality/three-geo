@@ -239,13 +239,67 @@ class ThreeGeo {
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
     }
+    static _resolveElevation(lat, lng, meshes, wsen) {
+        // First, a very basic check: Is latlng within `wsen`?
+        // console.log(`check lat: ${s} gt ${lat} gt ${n}`);
+        // console.log(`check lng: ${w} gt ${lng} gt ${e}`);
+        const [w, s, e, n] = wsen;
+        const isInWsen = s < lat && lat < n && w < lng && lng < e;
+        console.log('isInWsen:', isInWsen);
+        if (!isInWsen) return undefined;
+
+        console.log('meshes for ele:', meshes);
+
+        // !!!! https://github.com/mapbox/sphericalmercator
+
+        // TODO 2) this should narrow down to the only
+        //   one corresp mesh: `meshCorresp`
+        // wsen = sphericalmercator.bbox(x, y, zoom, tms_style, srs)
+        // if `ll` is not within `wsen`: mesh.visible = false // outttt
+        // ....
+
+        // TODO *) raycast-based estimation for at least comparison with 3)
+
+        // TODO 3) now find the pixel for `ll` on `meshCorresp`
+        //   using sphericalmercator.px(ll, zoom)
+        //   cf. processRgbTile() dealing with `constTilePixels.ll()`
+        // ...
+
+        if (0) { // deprecated; bsphere stuff going too far ----
+            // filter by boundingSphere.......
+            // for (let mesh of meshes) {
+            //     const bs = mesh.geometry.boundingSphere;
+            //     console.log('bs:', bs);
+            //     const distQuad = (x - bs.center.x)**2 + (y - bs.center.y)**2;
+            //     if (distQuad > bs.radius**2 ) {
+            //         console.log('outttttt');
+            //         mesh.visible = false;
+            //     }
+            // }
+        }
+
+        return 1200;//!!!!!!!!
+    }
     getProjection(origin, radius, unitsSide=this.constUnitsSide) {
-        const [w, s, e, n] = ThreeGeo.originRadiusToBbox(origin, radius);
+        const wsen = ThreeGeo.originRadiusToBbox(origin, radius);
+        // console.log('origin:', origin);
+        // console.log('wsen:', wsen);
         const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
         return {
-            proj: ll => this._projectCoord(ll, [w, n], [e, s], unitsSide),
+            proj: (ll /* latlng */, meshes=undefined /* rgbDem */) => {
+                const [lat, lng] = ll;
+                const [w, s, e, n] = wsen;
+                const [x, y] = this._projectCoord([lng, lat], [w, n], [e, s], unitsSide);
+
+                // resolve elevation in case the optional `meshes` is provided
+                const ele = meshes ?
+                    ThreeGeo._resolveElevation(lat, lng, meshes, wsen) :
+                    undefined;
+
+                return [x, y, ele];
+            },
             projInv: (x, y) => ThreeGeo._projInv(x, y, origin, _unitsPerMeter),
-            bbox: [w, s, e, n],
+            bbox: wsen,
             unitsPerMeter: _unitsPerMeter,
         };
     }

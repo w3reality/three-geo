@@ -65,10 +65,10 @@
             color: 0x00cccc,
         }));
 
-    // proj: lng, lat -> x, y
-    // const [x, y, z] = [...proj([origin[1], origin[0]]), 4000]; // reprojection test
-    const [x, y, z] = [...proj([8.0052, 46.5775]), 3970]; // Eiger's peak
-    // const [x, y, z] = [...proj([7.9610, 46.5852]), 2100]; // town
+    // proj: lat, lng -> x, y
+    // const [x, y, z] = [...proj(origin), 4000]; // reprojection test
+    const [x, y, z] = [...proj([46.5775, 8.0052]), 3970]; // Eiger's peak
+    // const [x, y, z] = [...proj([46.5852, 7.9610]), 2100]; // town
     dot.geometry.vertices.push(new THREE.Vector3(
         x, z * unitsPerMeter, -y));
     scene.add(dot);
