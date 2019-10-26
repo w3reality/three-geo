@@ -236,48 +236,42 @@ class ThreeGeo {
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
     }
-    static _resolveElevation(lat, lng, meshes, wsen) {
-        // First, a very basic check: Is latlng within `wsen`?
-        // console.log(`check lat: ${s} gt ${lat} gt ${n}`);
-        // console.log(`check lng: ${w} gt ${lng} gt ${e}`);
-        const [w, s, e, n] = wsen;
-        const isInWsen = s < lat && lat < n && w < lng && lng < e;
-        console.log('isInWsen:', isInWsen);
-        if (!isInWsen) return undefined;
+    static _resolveElevation(lat, lng, meshes) {
+
+        // 1) find the corresponding mesh based on bbox info
 
         console.log('meshes for ele:', meshes);
+        const candidates = [];
+        for (let mesh of meshes) {
+            const tile = mesh.userData.threeGeo.tile;
+            console.log('tile:', tile);
+            const [w, s, e, n] = this.Utils.tileToBbox(tile);
+            const isInBbox = s < lat && lat < n && w < lng && lng < e;
+            console.log('isInBbox:', isInBbox);
+            if (isInBbox) candidates.push(mesh);
+        }
+        if (candidates.length === 0) return undefined;
+
+        const target = candidates[0];
+        console.log('target:', target);
+        target.material.wireframe = true; // debug
+
+        // 2) raycast-based estimation (at least for precision checks)
+
+        // TODO refactor _resolveTri() ........
+        // TODO refactor apps/geo-es6/src/index.js
 
         // **** WIP ****
 
         // !!!! https://github.com/mapbox/sphericalmercator
 
-        // TODO 2) this should narrow down to the only
-        //   one corresp mesh: `meshCorresp`
-        // wsen = sphericalmercator.bbox(x, y, zoom, tms_style, srs)
-        // if `ll` is not within `wsen`: mesh.visible = false // outttt
-        // ....
-
-        // TODO *) raycast-based estimation for at least comparison with 3)
-
-        // TODO 3) now find the pixel for `ll` on `meshCorresp`
+        // TODO 3) find the pixel for `ll` on `meshCorresp`
+        // TODO 4) interpolate the elevation based on nearby pixels
         //   using sphericalmercator.px(ll, zoom)
         //   cf. processRgbTile() dealing with `constTilePixels.ll()`
         // ...
 
-        if (0) { // deprecated; bsphere stuff going too far ----
-            // filter by boundingSphere.......
-            // for (let mesh of meshes) {
-            //     const bs = mesh.geometry.boundingSphere;
-            //     console.log('bs:', bs);
-            //     const distQuad = (x - bs.center.x)**2 + (y - bs.center.y)**2;
-            //     if (distQuad > bs.radius**2 ) {
-            //         console.log('outttttt');
-            //         mesh.visible = false;
-            //     }
-            // }
-        }
-
-        return 1200;//!!!!!!!!
+        return 1200; // !!!!!!!! stub
     }
     static _proj(ll, meshes, wsen, unitsSide) {
         const [lat, lng] = ll;
@@ -287,7 +281,7 @@ class ThreeGeo {
 
         // resolve elevation in case the optional `meshes` is provided
         const ele = meshes ?
-            this._resolveElevation(lat, lng, meshes, wsen) : // maybe `undefined`
+            this._resolveElevation(lat, lng, meshes) : // maybe `undefined`
             undefined;
 
         return ele !== undefined ? [x, y, ele] : [x, y];
@@ -315,24 +309,6 @@ class ThreeGeo {
             unitsPerMeter: _unitsPerMeter,
         };
     }
-    // TODO doc
-    //========
-    // // update `proj()` to be
-    // proj(ll, meshes=null) {
-    //     /*
-    //     meshes should be obtained as
-    //         const meshes = await getTerrain(...);
-    //     so better promisify getTerrain() API too!!!!
-    //     */
-    //     //...
-    //     let z = undefined;
-    //     if (meshes) {
-    //         // cf. _resolveTri() of apps/geo-es6/src/index.js
-    //         // z = ____resolve(x, y, meshes, ...);
-    //     }
-    //     return [x, y, z]
-    // }
-    //========
 
     buildSliceGeometry(coords, iContour, color, contours, nw, se, radius) {
         const shadedContour = new THREE.Shape();
