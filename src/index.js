@@ -9,6 +9,7 @@ const THREE = window.THREE ? window.THREE : THREE_ES6;
 import 'regenerator-runtime/runtime.js';
 
 import Utils from './Utils.js';
+import Laser from 'three-laser-pointer/src';
 
 // import * as turf from '@turf/turf'; // need being more selective - http://turfjs.org/getting-started/
 // import { intersect } from '@turf/turf'; // TEST of tree-shaking, not working... FIXME
@@ -1206,5 +1207,6 @@ class ThreeGeo {
 }
 
 ThreeGeo.Utils = Utils;
+ThreeGeo.Laser = Laser;
 
 export default ThreeGeo;

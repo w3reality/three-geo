@@ -1,7 +1,5 @@
 import ThreeGeo from '../../../src';
 
-import Laser from 'three-laser-pointer/src';
-
 import MapHelper from './map-helper.js';
 import queryString from 'query-string'; // in prod, need webpack-4 to minify this
 
@@ -50,7 +48,7 @@ class Viewer {
         this.scene.add(axes);
 
         //======== add laser
-        this._laser = new Laser({
+        this._laser = new ThreeGeo.Laser({
             color: 0xffffff,
         });
         this._laser.name = 'singleton-laser-vr';
@@ -111,7 +109,7 @@ class Viewer {
         this.$msgTerrain = $('#msgTerrain');
 
         // tmp laser for measurement
-        this._laserMarkTmp = new Laser({maxPoints: 2});
+        this._laserMarkTmp = new ThreeGeo.Laser({maxPoints: 2});
         this._laserMarkTmp.name = 'singleton-measure-mark-tmp';
         this.sceneMeasure.add(this._laserMarkTmp);
 
@@ -119,7 +117,7 @@ class Viewer {
         this._laserMarkColor = null;
 
         // ------- marker stuff
-        this._laserMarker = new Laser({maxPoints: 2});
+        this._laserMarker = new ThreeGeo.Laser({maxPoints: 2});
         this._laserMarker.visible = false;
         this._laserMarker.name = 'singleton-marker';
         this.scene.add(this._laserMarker);
@@ -479,7 +477,7 @@ class Viewer {
             if (this.markPair.length === 1) {
                 this.markPair.push(pt); // now this.markPair.length === 2
                 // console.log('registering this.markPair:', this.markPair);
-                let laser = new Laser({
+                let laser = new ThreeGeo.Laser({
                     maxPoints: 2,
                     color: this._laserMarkColor,
                 });
