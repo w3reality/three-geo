@@ -237,7 +237,35 @@ class ThreeGeo {
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
     }
-    static _resolveElevation(lat, lng, meshes) {
+    static _resolveTri(x, y, meshes, scale, shiftZ) {
+        const isect = (new Laser()).raycast(
+            new THREE.Vector3(x, y, 12000), // ray origin
+            new THREE.Vector3(0, 0, -1), // ray direction
+            meshes);
+        // console.log('isect:', isect);
+        if (! isect) return null;
+
+        // console.log('isect:', isect);
+        // console.log('isect.point.z:', isect.point.z);
+        // console.log('isect.faceIndex:', isect.faceIndex);
+        // https://stackoverflow.com/questions/41540313/three-buffergeometry-accessing-face-indices-and-face-normals
+        const faceIndex = isect.faceIndex;
+        const indexArr = isect.object.geometry.index.array;
+        const attrPos = isect.object.geometry.attributes.position;
+        const tri = [0, 1, 2].map(i => (new THREE.Vector3())
+            .fromBufferAttribute(attrPos, indexArr[3 * faceIndex + i])
+            .multiplyScalar(scale)
+            // z's of tri is relative to the isect point
+            .add(new THREE.Vector3(0, 0, shiftZ ? shiftZ : -isect.point.z)));
+        // console.log('isect tri (z-shifted):', tri);
+        return { // return new objects to remain pure
+            tri: tri,
+            faceIndex: isect.faceIndex,
+            isectPoint: isect.point.clone(),
+            normal: isect.face.normal.clone(),
+        };
+    }
+    static _resolveElevation(x, y, lat, lng, meshes) {
 
         // 1) find the corresponding mesh based on bbox info
 
@@ -245,22 +273,70 @@ class ThreeGeo {
         const candidates = [];
         for (let mesh of meshes) {
             const tile = mesh.userData.threeGeo.tile;
-            console.log('tile:', tile);
-            const [w, s, e, n] = this.Utils.tileToBbox(tile);
+            // console.log('tile:', tile);
+            const [w, s, e, n] = Utils.tileToBbox(tile);
             const isInBbox = s < lat && lat < n && w < lng && lng < e;
-            console.log('isInBbox:', isInBbox);
+            // console.log('isInBbox:', isInBbox);
             if (isInBbox) candidates.push(mesh);
         }
         if (candidates.length === 0) return undefined;
 
         const target = candidates[0];
         console.log('target:', target);
-        target.material.wireframe = true; // debug
+        // target.material.wireframe = true; // debug
 
         // 2) raycast-based estimation (at least for precision checks)
 
-        // TODO refactor _resolveTri() ........
-        // TODO refactor apps/geo-es6/src/index.js
+        console.log('x, y:', x, y); // pixel coords
+        // TODO do sth with `target` whose up-vector is not (0, 0, 1)
+        if (0) { // this way mutates meshes, and also slowwwwww
+            console.log('target.rotation:', target.rotation);
+            target.rotation.x = 0; //!!!!!!!!!!!!!!!!! force align the pixel coords
+            target.updateMatrixWorld(); // https://stackoverflow.com/questions/48662643/raycasting-after-dynamically-changing-mesh-in-three-js
+
+            const laser = new Laser();
+            laser.setSource(new THREE.Vector3(x, y, 12000));
+            laser.point(new THREE.Vector3(x, y, 0));
+            window._scene.add(laser); //!!!!!!!!!
+
+            const triInfo = ThreeGeo._resolveTri(x, y, [target], 1, null);
+            console.log('triInfo:', triInfo); // maybe `null`
+        } else { // TODO !!!!!!!!!
+            // R := target's rotation w.r.t the world
+            // TODO R * (x, y, 12000) -> (xGL, yGL, zGL)
+            //      isectGL = laser.raycastFrom(xGL, yGL, zGL)
+            // TODO adapt _resolveTri() for this (while compat with app-es6-geo) ......
+
+            let rayOriginWorld, rayDirectionWorld;
+            { // ray origin: pixel coords -> world coords
+                const vecPixel = new THREE.Vector3(x, y, 1);
+                const vecWorld = vecPixel.clone().applyMatrix4(target.matrixWorld);
+                console.log('ray origin:', vecPixel, '->', vecWorld);
+                rayOriginWorld = vecWorld;
+
+                const laser = new Laser();
+                laser.setSource(vecPixel);
+                laser.point(vecWorld, 0xcc00cc);
+                window._scene.add(laser); //!!!!!!!!!
+            }
+            { // ray direction: pixel coords -> world coords
+                const vecPixel = new THREE.Vector3(0, 0, -1);
+                const vecWorld = vecPixel.clone().applyMatrix4(target.matrixWorld);
+                console.log('ray direction:', vecPixel, '->', vecWorld);
+                rayDirectionWorld = vecWorld;
+            }
+            {
+                const laser = new Laser();
+                laser.setSource(rayOriginWorld);
+                laser.point(rayOriginWorld.clone().add(rayDirectionWorld));
+                window._scene.add(laser); //!!!!!!!!!
+
+                const isect = (new Laser()).raycast(
+                    rayOriginWorld, rayDirectionWorld, [target]);
+                console.log('isect:', isect);
+                // TODO generalize _resolveTri() so that it uses this `isect`
+            }
+        }
 
         // **** WIP ****
 
@@ -282,14 +358,14 @@ class ThreeGeo {
 
         // resolve elevation in case the optional `meshes` is provided
         const ele = meshes ?
-            this._resolveElevation(lat, lng, meshes) : // maybe `undefined`
+            this._resolveElevation(x, y, lat, lng, meshes) : // maybe `undefined`
             undefined;
 
         return ele !== undefined ? [x, y, ele] : [x, y];
     }
     static _projInv(x, y, origin, unitsPerMeter) {
         const _swap = ll => [ll[1], ll[0]];
-        return _swap(ThreeGeo.Utils.translateTurfObject(
+        return _swap(Utils.translateTurfObject(
             turfHelpers.point(_swap(origin)),
             x, y, 0, unitsPerMeter).geometry.coordinates); // latlng
     }
