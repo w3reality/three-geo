@@ -259,9 +259,9 @@ class ThreeGeo {
             .add(new THREE.Vector3(0, 0, shiftZ ? shiftZ : -isect.point.z)));
         // console.log('isect tri (z-shifted):', tri);
         return { // return new objects to remain pure
-            tri: tri,
             faceIndex: isect.faceIndex,
             isectPoint: isect.point.clone(),
+            tri: tri,
             normal: isect.face.normal.clone(),
         };
     }
@@ -307,6 +307,7 @@ class ThreeGeo {
             //      isectGL = laser.raycastFrom(xGL, yGL, zGL)
             // TODO adapt _resolveTri() for this (while compat with app-es6-geo) ......
 
+            //======== x, y, target -> rayOriginWorld, rayDirectionWorld
             let rayOriginWorld, rayDirectionWorld;
             { // ray origin: pixel coords -> world coords
                 const vecPixel = new THREE.Vector3(x, y, 1);
@@ -323,6 +324,11 @@ class ThreeGeo {
                 console.log('ray direction:', vecPixel, '->', vecWorld);
                 rayDirectionWorld = vecWorld;
             }
+
+            //======== rayOriginWorld, rayDirectionWorld, target ->
+            // { faceIndex,
+            //   pointWorld, triWorld, normalWorld,
+            //   pointPixel, triPixel, normalPixel }
             {
                 const isect = (new Laser()).raycast(
                     rayOriginWorld, rayDirectionWorld, [target]);
@@ -331,19 +337,40 @@ class ThreeGeo {
 
                 if (isect) {
                     // viz raycasting in the world coords
+                    const pointWorld = isect.point;
                     window._scene.add( //!!!!!!!!!
-                        Utils.createLine([rayOriginWorld, isect.point]));
+                        Utils.createLine([rayOriginWorld, pointWorld], {color: 0x00ffff}));
 
                     // viz raycasting in the pixel coords [ok]
                     const matrixWorldInv = new THREE.Matrix4().getInverse(target.matrixWorld);
+                    const pointPixel = pointWorld.clone().applyMatrix4(matrixWorldInv);
                     window._scene.add( //!!!!!!!!!
                         Utils.createLine([
                             rayOriginWorld.clone().applyMatrix4(matrixWorldInv),
-                            isect.point.clone().applyMatrix4(matrixWorldInv),
+                            pointPixel,
                         ]));
                     const targetInv = target.clone();
                     targetInv.rotation.x = 0;//!!!!
                     window._scene.add(targetInv);
+
+                    // check triPixel and triWorld
+                    const faceIndex = isect.faceIndex;
+                    const indexArr = isect.object.geometry.index.array;
+                    const attrPos = isect.object.geometry.attributes.position;
+                    const triPixel = [0, 1, 2].map(i => (new THREE.Vector3())
+                        .fromBufferAttribute(attrPos, indexArr[3 * faceIndex + i]));
+                    console.log('isect -> triPixel:', triPixel);
+                    window._scene.add(Utils.createLine(triPixel)); //!!!!!!!!!
+
+                    const triWorld = triPixel.map(vec => vec.applyMatrix4(target.matrixWorld));
+                    console.log('triPixel -> triWorld:', triWorld);
+                    window._scene.add(Utils.createLine(triWorld, {color: 0x00ffff})); //!!!!!!!!!
+
+                    // check normalPixel and normalWorld
+                    const normalPixel = isect.face.normal.clone();
+                    const normalWorld = normalPixel.clone().applyMatrix4(target.matrixWorld);
+                    window._scene.add(Utils.createLine([pointPixel, pointPixel.clone().add(normalPixel)])); //!!!!!!!!!
+                    window._scene.add(Utils.createLine([pointWorld, pointWorld.clone().add(normalWorld)], {color: 0x00ffff})); //!!!!!!!!!
                 }
             }
         }
