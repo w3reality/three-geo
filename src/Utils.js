@@ -4,9 +4,16 @@ const THREE = window.THREE ? window.THREE : THREE_ES6;
 import turfTransformTranslate from '@turf/transform-translate';
 import turfTransformRotate from '@turf/transform-rotate';
 import tilebelt from "@mapbox/tilebelt";
+import Laser from 'three-laser-pointer/src';
 
 // TODO doc
 class Utils {
+    static createLine(arr, opts={color: 0xff0000, maxPoints: 256}) {
+        const laser = new Laser(opts);
+        laser.updatePoints(arr);
+        return laser;
+    }
+
     static translateTurfObject(turfObj, dx, dy, dz, unitsPerMeter, mutate=true) {
         const vec = new THREE.Vector2(dx, dy).divideScalar(unitsPerMeter);
         const theta = 90.0 - vec.angle() * 180.0 / Math.PI;
