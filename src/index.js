@@ -294,10 +294,10 @@ class ThreeGeo {
             target.rotation.x = 0; //!!!!!!!!!!!!!!!!! force align the pixel coords
             target.updateMatrixWorld(); // https://stackoverflow.com/questions/48662643/raycasting-after-dynamically-changing-mesh-in-three-js
 
-            const laser = new Laser();
-            laser.setSource(new THREE.Vector3(x, y, 12000));
-            laser.point(new THREE.Vector3(x, y, 0));
-            window._scene.add(laser); //!!!!!!!!!
+            window._scene.add(Utils.createLine([
+                new THREE.Vector3(x, y, 12000),
+                new THREE.Vector3(x, y, 0),
+            ]));
 
             const triInfo = ThreeGeo._resolveTri(x, y, [target], 1, null);
             console.log('triInfo:', triInfo); // maybe `null`
