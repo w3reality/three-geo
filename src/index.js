@@ -314,10 +314,8 @@ class ThreeGeo {
                 console.log('ray origin:', vecPixel, '->', vecWorld);
                 rayOriginWorld = vecWorld;
 
-                const laser = new Laser();
-                laser.setSource(vecPixel);
-                laser.point(vecWorld, 0xcc00cc);
-                window._scene.add(laser); //!!!!!!!!!
+                window._scene.add( //!!!!!!!!!
+                    Utils.createLine([vecPixel, vecWorld], {color: 0x00ff00}));
             }
             { // ray direction: pixel coords -> world coords
                 const vecPixel = new THREE.Vector3(0, 0, -1);
@@ -326,15 +324,27 @@ class ThreeGeo {
                 rayDirectionWorld = vecWorld;
             }
             {
-                const laser = new Laser();
-                laser.setSource(rayOriginWorld);
-                laser.point(rayOriginWorld.clone().add(rayDirectionWorld));
-                window._scene.add(laser); //!!!!!!!!!
-
                 const isect = (new Laser()).raycast(
                     rayOriginWorld, rayDirectionWorld, [target]);
                 console.log('isect:', isect);
                 // TODO generalize _resolveTri() so that it uses this `isect`
+
+                if (isect) {
+                    // viz raycasting in the world coords
+                    window._scene.add( //!!!!!!!!!
+                        Utils.createLine([rayOriginWorld, isect.point]));
+
+                    // viz raycasting in the pixel coords [ok]
+                    const matrixWorldInv = new THREE.Matrix4().getInverse(target.matrixWorld);
+                    window._scene.add( //!!!!!!!!!
+                        Utils.createLine([
+                            rayOriginWorld.clone().applyMatrix4(matrixWorldInv),
+                            isect.point.clone().applyMatrix4(matrixWorldInv),
+                        ]));
+                    const targetInv = target.clone();
+                    targetInv.rotation.x = 0;//!!!!
+                    window._scene.add(targetInv);
+                }
             }
         }
 
