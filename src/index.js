@@ -287,11 +287,11 @@ class ThreeGeo {
 
         // 2) raycast-based estimation (at least for precision checks)
 
-        console.log('x, y:', x, y); // pixel coords
+        console.log('x, y:', x, y); // terrain coords
         // TODO do sth with `target` whose up-vector is not (0, 0, 1)
         if (0) { // this way mutates meshes, and also slowwwwww
             console.log('target.rotation:', target.rotation);
-            target.rotation.x = 0; //!!!!!!!!!!!!!!!!! force align the pixel coords
+            target.rotation.x = 0; //!!!!!!!!!!!!!!!!! force align the terrain coords
             target.updateMatrixWorld(); // https://stackoverflow.com/questions/48662643/raycasting-after-dynamically-changing-mesh-in-three-js
 
             window._scene.add(Utils.createLine([
@@ -309,26 +309,26 @@ class ThreeGeo {
 
             //======== x, y, target -> rayOriginWorld, rayDirectionWorld
             let rayOriginWorld, rayDirectionWorld;
-            { // ray origin: pixel coords -> world coords
-                const vecPixel = new THREE.Vector3(x, y, 1);
-                const vecWorld = vecPixel.clone().applyMatrix4(target.matrixWorld);
-                console.log('ray origin:', vecPixel, '->', vecWorld);
+            { // ray origin: terrain coords -> world coords
+                const vecTerrain = new THREE.Vector3(x, y, 1);
+                const vecWorld = vecTerrain.clone().applyMatrix4(target.matrixWorld);
+                console.log('ray origin:', vecTerrain, '->', vecWorld);
                 rayOriginWorld = vecWorld;
 
                 window._scene.add( //!!!!!!!!!
-                    Utils.createLine([vecPixel, vecWorld], {color: 0x00ff00}));
+                    Utils.createLine([vecTerrain, vecWorld], {color: 0x00ff00}));
             }
-            { // ray direction: pixel coords -> world coords
-                const vecPixel = new THREE.Vector3(0, 0, -1);
-                const vecWorld = vecPixel.clone().applyMatrix4(target.matrixWorld);
-                console.log('ray direction:', vecPixel, '->', vecWorld);
+            { // ray direction: terrain coords -> world coords
+                const vecTerrain = new THREE.Vector3(0, 0, -1);
+                const vecWorld = vecTerrain.clone().applyMatrix4(target.matrixWorld);
+                console.log('ray direction:', vecTerrain, '->', vecWorld);
                 rayDirectionWorld = vecWorld;
             }
 
             //======== rayOriginWorld, rayDirectionWorld, target ->
-            // { faceIndex,
+            // { faceIndex, elevation,
             //   pointWorld, triWorld, normalWorld,
-            //   pointPixel, triPixel, normalPixel }
+            //   pointTerrain, triTerrain, normalTerrain }
             {
                 const isect = (new Laser()).raycast(
                     rayOriginWorld, rayDirectionWorld, [target]);
@@ -341,36 +341,41 @@ class ThreeGeo {
                     window._scene.add( //!!!!!!!!!
                         Utils.createLine([rayOriginWorld, pointWorld], {color: 0x00ffff}));
 
-                    // viz raycasting in the pixel coords [ok]
+                    // viz raycasting in the terrain coords [ok]
                     const matrixWorldInv = new THREE.Matrix4().getInverse(target.matrixWorld);
-                    const pointPixel = pointWorld.clone().applyMatrix4(matrixWorldInv);
+                    const rayOriginTerrain = rayOriginWorld.clone().applyMatrix4(matrixWorldInv);
+                    const pointTerrain = pointWorld.clone().applyMatrix4(matrixWorldInv);
+                    console.log('pointTerrain:', pointTerrain);
                     window._scene.add( //!!!!!!!!!
-                        Utils.createLine([
-                            rayOriginWorld.clone().applyMatrix4(matrixWorldInv),
-                            pointPixel,
-                        ]));
-                    const targetInv = target.clone();
-                    targetInv.rotation.x = 0;//!!!!
-                    window._scene.add(targetInv);
+                        Utils.createLine([rayOriginTerrain, pointTerrain]));
 
-                    // check triPixel and triWorld
+                    const targetTerrain = target.clone();
+                    targetTerrain.rotation.x = 0;//!!!!
+                    window._scene.add(targetTerrain);
+
+                    // check triTerrain and triWorld
                     const faceIndex = isect.faceIndex;
                     const indexArr = isect.object.geometry.index.array;
                     const attrPos = isect.object.geometry.attributes.position;
-                    const triPixel = [0, 1, 2].map(i => (new THREE.Vector3())
+                    const triTerrain = [0, 1, 2].map(i => (new THREE.Vector3())
                         .fromBufferAttribute(attrPos, indexArr[3 * faceIndex + i]));
-                    console.log('isect -> triPixel:', triPixel);
-                    window._scene.add(Utils.createLine(triPixel)); //!!!!!!!!!
+                    console.log('isect -> triTerrain:', triTerrain);
+                    window._scene.add(Utils.createLine(triTerrain)); //!!!!!!!!!
 
-                    const triWorld = triPixel.map(vec => vec.applyMatrix4(target.matrixWorld));
-                    console.log('triPixel -> triWorld:', triWorld);
+                    const triWorld = triTerrain.map(vec => vec.applyMatrix4(target.matrixWorld));
+                    console.log('triTerrain -> triWorld:', triWorld);
                     window._scene.add(Utils.createLine(triWorld, {color: 0x00ffff})); //!!!!!!!!!
 
-                    // check normalPixel and normalWorld
-                    const normalPixel = isect.face.normal.clone();
-                    const normalWorld = normalPixel.clone().applyMatrix4(target.matrixWorld);
-                    window._scene.add(Utils.createLine([pointPixel, pointPixel.clone().add(normalPixel)])); //!!!!!!!!!
+                    // check normalTerrain and normalWorld
+                    const normalTerrain = isect.face.normal.clone();
+                    const normalWorld = normalTerrain.clone().applyMatrix4(target.matrixWorld);
+                    window._scene.add(Utils.createLine([pointTerrain, pointTerrain.clone().add(normalTerrain)])); //!!!!!!!!!
                     window._scene.add(Utils.createLine([pointWorld, pointWorld.clone().add(normalWorld)], {color: 0x00ffff})); //!!!!!!!!!
+
+                    //!!!!!!!!!!!!!!!!!!!!!!!
+                    return pointTerrain.z; // (elevation)
+                } else {
+                    return undefined; // (elevation)
                 }
             }
         }
@@ -390,15 +395,17 @@ class ThreeGeo {
     static _proj(ll, meshes, wsen, unitsSide) {
         const [lat, lng] = ll;
         const [w, s, e, n] = wsen;
+
+        // [x, y, z]: terrain coordinates
         const [x, y] = this._projectCoordStatic(
             [lng, lat], [w, n], [e, s], unitsSide);
 
-        // resolve elevation in case the optional `meshes` is provided
-        const ele = meshes ?
+        // resolve z (elevation) in case the optional `meshes` is provided
+        const z = meshes ?
             this._resolveElevation(x, y, lat, lng, meshes) : // maybe `undefined`
             undefined;
 
-        return ele !== undefined ? [x, y, ele] : [x, y];
+        return z !== undefined ? [x, y, z] : [x, y];
     }
     static _projInv(x, y, origin, unitsPerMeter) {
         const _swap = ll => [ll[1], ll[0]];
