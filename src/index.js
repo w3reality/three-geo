@@ -314,55 +314,48 @@ class ThreeGeo {
 for elevation   <-              pointTerrain,  v            v
 for triInfo     <-                             triWorld,    normalWorld
 */
-        {
-            const isect = (new Laser()).raycast(
-                rayOriginWorld, rayDirectionWorld, [target]);
-            console.log('isect:', isect);
-            // TODO generalize _resolveTri() so that it uses this `isect`
+        const isect = (new Laser()).raycast(
+            rayOriginWorld, rayDirectionWorld, [target]);
+        console.log('isect:', isect);
+        if (!isect) return undefined; // (elevation)
 
-            if (isect) {
-                // viz raycasting in the world coords
-                const pointWorld = isect.point;
-                window._scene.add( //!!!!!!!!!
-                    Utils.createLine([rayOriginWorld, pointWorld], {color: 0x00ffff}));
+        // viz raycasting in the world coords
+        const pointWorld = isect.point;
+        window._scene.add( //!!!!!!!!!
+            Utils.createLine([rayOriginWorld, pointWorld], {color: 0x00ffff}));
 
-                // viz raycasting in the terrain coords [ok]
-                const matrixWorldInv = new THREE.Matrix4().getInverse(target.matrixWorld);
-                const rayOriginTerrain = rayOriginWorld.clone().applyMatrix4(matrixWorldInv);
-                const pointTerrain = pointWorld.clone().applyMatrix4(matrixWorldInv);
-                console.log('pointTerrain:', pointTerrain);
-                window._scene.add( //!!!!!!!!!
-                    Utils.createLine([rayOriginTerrain, pointTerrain]));
+        // viz raycasting in the terrain coords [ok]
+        const matrixWorldInv = new THREE.Matrix4().getInverse(target.matrixWorld);
+        const rayOriginTerrain = rayOriginWorld.clone().applyMatrix4(matrixWorldInv);
+        const pointTerrain = pointWorld.clone().applyMatrix4(matrixWorldInv);
+        console.log('pointTerrain:', pointTerrain);
+        window._scene.add( //!!!!!!!!!
+            Utils.createLine([rayOriginTerrain, pointTerrain]));
 
-                const targetTerrain = target.clone();
-                targetTerrain.rotation.x = 0;//!!!!
-                window._scene.add(targetTerrain);
+        const targetTerrain = target.clone();
+        targetTerrain.rotation.x = 0;//!!!!
+        window._scene.add(targetTerrain);
 
-                // check triTerrain and triWorld
-                const faceIndex = isect.faceIndex;
-                const indexArr = isect.object.geometry.index.array;
-                const attrPos = isect.object.geometry.attributes.position;
-                const triTerrain = [0, 1, 2].map(i => (new THREE.Vector3())
-                    .fromBufferAttribute(attrPos, indexArr[3 * faceIndex + i]));
-                console.log('isect -> triTerrain:', triTerrain);
-                window._scene.add(Utils.createLine(triTerrain)); //!!!!!!!!!
+        // check triTerrain and triWorld
+        const faceIndex = isect.faceIndex;
+        const indexArr = isect.object.geometry.index.array;
+        const attrPos = isect.object.geometry.attributes.position;
+        const triTerrain = [0, 1, 2].map(i => (new THREE.Vector3())
+            .fromBufferAttribute(attrPos, indexArr[3 * faceIndex + i]));
+        console.log('isect -> triTerrain:', triTerrain);
+        window._scene.add(Utils.createLine(triTerrain)); //!!!!!!!!!
 
-                const triWorld = triTerrain.map(vec => vec.applyMatrix4(target.matrixWorld));
-                console.log('triTerrain -> triWorld:', triWorld);
-                window._scene.add(Utils.createLine(triWorld, {color: 0x00ffff})); //!!!!!!!!!
+        const triWorld = triTerrain.map(vec => vec.applyMatrix4(target.matrixWorld));
+        console.log('triTerrain -> triWorld:', triWorld);
+        window._scene.add(Utils.createLine(triWorld, {color: 0x00ffff})); //!!!!!!!!!
 
-                // check normalTerrain and normalWorld
-                const normalTerrain = isect.face.normal.clone();
-                const normalWorld = normalTerrain.clone().applyMatrix4(target.matrixWorld);
-                window._scene.add(Utils.createLine([pointTerrain, pointTerrain.clone().add(normalTerrain)])); //!!!!!!!!!
-                window._scene.add(Utils.createLine([pointWorld, pointWorld.clone().add(normalWorld)], {color: 0x00ffff})); //!!!!!!!!!
+        // check normalTerrain and normalWorld
+        const normalTerrain = isect.face.normal.clone();
+        const normalWorld = normalTerrain.clone().applyMatrix4(target.matrixWorld);
+        window._scene.add(Utils.createLine([pointTerrain, pointTerrain.clone().add(normalTerrain)])); //!!!!!!!!!
+        window._scene.add(Utils.createLine([pointWorld, pointWorld.clone().add(normalWorld)], {color: 0x00ffff})); //!!!!!!!!!
 
-                //!!!!!!!!!!!!!!!!!!!!!!!
-                return pointTerrain.z; // (elevation)
-            } else {
-                return undefined; // (elevation)
-            }
-        }
+        return pointTerrain.z; // (elevation)
     }
 
     // **** WIP **** not sure going this direction........
