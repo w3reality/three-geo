@@ -325,10 +325,14 @@ class ThreeGeo {
                 rayDirectionWorld = vecWorld;
             }
 
-            //======== rayOriginWorld, rayDirectionWorld, target ->
-            // { faceIndex, elevation,
-            //   pointWorld, triWorld, normalWorld,
-            //   pointTerrain, triTerrain, normalTerrain }
+/*
+                    rayOriginWorld, rayDirectionWorld, target
+                ->  [isect..............................................]
+                ->  faceIndex,  pointWorld,    triTerrain,  normalTerrain
+                                v              v            v
+for elevation   <-              pointTerrain,  v            v
+for triInfo     <-                             triWorld,    normalWorld
+*/
             {
                 const isect = (new Laser()).raycast(
                     rayOriginWorld, rayDirectionWorld, [target]);
