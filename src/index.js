@@ -237,6 +237,8 @@ class ThreeGeo {
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
     }
+
+    // TODO to be deprecated ........
     static _resolveTri(x, y, meshes, scale, shiftZ) {
         const isect = (new Laser()).raycast(
             new THREE.Vector3(x, y, 12000), // ray origin
@@ -265,6 +267,8 @@ class ThreeGeo {
             normal: isect.face.normal.clone(),
         };
     }
+
+
     static _resolveElevation(x, y, lat, lng, meshes) {
 
         // 1) find the corresponding mesh based on bbox info
@@ -306,6 +310,12 @@ class ThreeGeo {
             rayDirectionWorld = vecWorld;
         }
 
+        // TODO maybe cache this laser object inside `target.userData.threeGeo` ??
+        const isect = (new Laser()).raycast(
+            rayOriginWorld, rayDirectionWorld, [target]);
+        console.log('isect:', isect);
+        if (!isect) return undefined; // (elevation)
+
 /*
                     rayOriginWorld, rayDirectionWorld, target
                 ->  [isect..............................................]
@@ -314,10 +324,6 @@ class ThreeGeo {
 for elevation   <-              pointTerrain,  v            v
 for triInfo     <-                             triWorld,    normalWorld
 */
-        const isect = (new Laser()).raycast(
-            rayOriginWorld, rayDirectionWorld, [target]);
-        console.log('isect:', isect);
-        if (!isect) return undefined; // (elevation)
 
         // viz raycasting in the world coords
         const pointWorld = isect.point;
