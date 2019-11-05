@@ -268,10 +268,9 @@ class ThreeGeo {
         };
     }
 
+    static _findIsect(x, y, lat, lng, meshes) {
 
-    static _resolveElevation(x, y, lat, lng, meshes) {
-
-        // 1) find the corresponding mesh based on bbox info
+        //---- find the corresponding mesh based on bbox info
 
         console.log('meshes for ele:', meshes);
         const candidates = [];
@@ -283,24 +282,24 @@ class ThreeGeo {
             // console.log('isInBbox:', isInBbox);
             if (isInBbox) candidates.push(mesh);
         }
-        if (candidates.length === 0) return undefined;
+        if (candidates.length === 0) return null;
 
         const target = candidates[0];
         console.log('target:', target);
         // target.material.wireframe = true; // debug
 
-        // 2) raycast-based estimation (at least for precision checks)
+        //---- x, y, target -> rayOriginWorld, rayDirectionWorld
 
         console.log('x, y:', x, y); // terrain coords
-        //======== x, y, target -> rayOriginWorld, rayDirectionWorld
+
         let rayOriginWorld, rayDirectionWorld;
         { // ray origin: terrain coords -> world coords
-            const vecTerrain = new THREE.Vector3(x, y, 1); // TODO z should be high enough
+            const vecTerrain = new THREE.Vector3(x, y, 4); // TODO z should be high enough
             const vecWorld = vecTerrain.clone().applyMatrix4(target.matrixWorld);
             console.log('ray origin:', vecTerrain, '->', vecWorld);
             rayOriginWorld = vecWorld;
 
-            window._scene.add( //!!!!!!!!!
+            window._scene.add( // debug viz: ray origin correspondence
                 Utils.createLine([vecTerrain, vecWorld], {color: 0x00ff00}));
         }
         { // ray direction: terrain coords -> world coords
@@ -310,34 +309,26 @@ class ThreeGeo {
             rayDirectionWorld = vecWorld;
         }
 
-        // TODO maybe cache this laser object inside `target.userData.threeGeo` ??
+        //---- raycasting to the `target` mesh
+
         const isect = (new Laser()).raycast(
             rayOriginWorld, rayDirectionWorld, [target]);
         console.log('isect:', isect);
-        if (!isect) return undefined; // (elevation)
 
-/*
-                    rayOriginWorld, rayDirectionWorld, target
-                ->  [isect..............................................]
-                ->  faceIndex,  pointWorld,    triTerrain,  normalTerrain
-                                v              v            v
-for elevation   <-              pointTerrain,  v            v
-for triInfo     <-                             triWorld,    normalWorld
-*/
+        if (1 && isect) {
+            window._scene.add( // debug viz: raycasting in world coords
+                Utils.createLine([rayOriginWorld, isect.point], {color: 0x00ffff}));
+        }
 
-        // viz raycasting in the world coords
+        return isect ? { isect, target } : null;
+    }
+    static _isectToPoints(isect, target) {
         const pointWorld = isect.point;
-        window._scene.add( //!!!!!!!!!
-            Utils.createLine([rayOriginWorld, pointWorld], {color: 0x00ffff}));
-
-        // viz raycasting in the terrain coords [ok]
         const matrixWorldInv = new THREE.Matrix4().getInverse(target.matrixWorld);
-        const rayOriginTerrain = rayOriginWorld.clone().applyMatrix4(matrixWorldInv);
         const pointTerrain = pointWorld.clone().applyMatrix4(matrixWorldInv);
-        console.log('pointTerrain:', pointTerrain);
-        window._scene.add( //!!!!!!!!!
-            Utils.createLine([rayOriginTerrain, pointTerrain]));
-
+        return { pointWorld, pointTerrain };
+    }
+    static _isectToTriInfo(isect, target) {
         const targetTerrain = target.clone();
         targetTerrain.rotation.x = 0;//!!!!
         window._scene.add(targetTerrain);
@@ -355,11 +346,58 @@ for triInfo     <-                             triWorld,    normalWorld
         console.log('triTerrain -> triWorld:', triWorld);
         window._scene.add(Utils.createLine(triWorld, {color: 0x00ffff})); //!!!!!!!!!
 
+        const _triInfo = null; // TODO !!!!
+        return _triInfo;
+    }
+    static _resolveTri2(x, y, meshes) {
+        // TODO handle when `target` is scaled !!!! ********
+
+        // TODO [x, y] -> [lat, lng]
+        const ret = this._findIsect(x, y, lat, lng, meshes);
+        if (!ret) return null; // triInfo
+
+        const { isect, target } = ret;
+
+        const _triInfo = this._isectToTriInfo(isect, target);
+
         // check normalTerrain and normalWorld
         const normalTerrain = isect.face.normal.clone();
         const normalWorld = normalTerrain.clone().applyMatrix4(target.matrixWorld);
-        window._scene.add(Utils.createLine([pointTerrain, pointTerrain.clone().add(normalTerrain)])); //!!!!!!!!!
-        window._scene.add(Utils.createLine([pointWorld, pointWorld.clone().add(normalWorld)], {color: 0x00ffff})); //!!!!!!!!!
+        if (1) { // FIXME: not showing !!!!
+            const { pointWorld, pointTerrain } = this._isectToPoints(isect, target);
+            window._scene.add(Utils.createLine([pointTerrain, pointTerrain.clone().add(normalTerrain)])); //!!!!!!!!!
+            window._scene.add(Utils.createLine([pointWorld, pointWorld.clone().add(normalWorld)], {color: 0x00ffff})); //!!!!!!!!!
+        }
+
+        const triInfo = { _triInfo, normalTerrain, normalWorld }; // TODO !!!!!
+        return triInfo;
+    }
+    static _resolveElevation(x, y, lat, lng, meshes) {
+        // TODO handle when `target` is scaled !!!! ********
+
+        const ret = this._findIsect(x, y, lat, lng, meshes);
+        if (!ret) return undefined; // (elevation)
+
+        const { isect, target } = ret;
+
+/*
+                    rayOriginWorld, rayDirectionWorld, target
+                ->  [isect..............................................]
+                ->  faceIndex,  pointWorld,    triTerrain,  normalTerrain
+                                v              v            v
+for elevation   <-              pointTerrain,  v            v
+for triInfo     <-                             triWorld,    normalWorld
+*/
+
+        const { pointWorld, pointTerrain } = this._isectToPoints(isect, target);
+        console.log('pointTerrain:', pointTerrain);
+
+        if (1) {
+            window._scene.add( // debug viz: raycasting in terrain coords
+                Utils.createLine([new THREE.Vector3(x, y, 4), pointTerrain]));
+        }
+
+        this._isectToTriInfo(isect, target); // test !!!!!!!!
 
         return pointTerrain.z; // (elevation)
     }
