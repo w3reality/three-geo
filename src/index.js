@@ -607,25 +607,24 @@ for triInfo     <-                             triWorld,    normalWorld
             case 'mapbox-terrain-vector':
                 prefix = 'https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2';
                 res = '.vector.pbf';
-                break;
+                return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
             case 'mapbox-terrain-rgb':
                 prefix = `https://api.mapbox.com/v4/mapbox.terrain-rgb`;
                 res = '@2x.pngraw';
-                break;
+                return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
             case 'mapbox-satellite':
-                prefix = `https://api.mapbox.com/v4/mapbox.streets-satellite`;
+                prefix = `https://khms0.google.com/kh/v=860`;
                 // https://www.mapbox.com/api-documentation/#retrieve-tiles
                 // mapbox-satellite-14-3072-6420.blob
                 // res = '@2x.png'; // 176813 (will get a jpg by spec)
                 // res = '@2x.jpg90'; // 132759
                 // res = '@2x.jpg80';
                 res = '@2x.jpg70'; // 72828
-                break;
+                return `${prefix}?x=${zoompos[1]}&y=${zoompos[2]}&z=${zoompos[0]}`;
             default:
                 console.log('unsupported api:', api);
                 return '';
         }
-        return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
     }
 
     static isAjaxSuccessful(stat) {

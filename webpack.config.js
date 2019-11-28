@@ -37,7 +37,7 @@ if (env === 'build') {
 const config = {
     entry: __dirname + '/src/index.js',
     externals: { // https://webpack.js.org/configuration/externals/
-        three: 'THREE'
+        three: 'three'
     },
     output: {
         path: __dirname + '/lib',
