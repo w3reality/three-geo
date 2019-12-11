@@ -5,9 +5,9 @@
 
 const webpack = require('webpack');
 const path = require('path');
-const env = require('yargs').argv.env; // use --env with webpack 2
+const env = require('yargs').argv.env;
 const pkg = require('./package.json');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const Var2EsmPlugin = require('webpack-var2esm-plugin');
 
@@ -50,8 +50,8 @@ const config = {
     optimization: {
         minimize: minimize,
         minimizer: [
-            new UglifyJSPlugin({
-                uglifyOptions: {
+            new TerserPlugin({
+                terserOptions: {
                     compress: {
                         drop_console: true
                     }
