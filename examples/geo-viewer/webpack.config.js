@@ -46,20 +46,27 @@ module.exports = {
             {
                 test: /(\.jsx|\.js)$/,
                 loader: 'babel-loader',
+                options: { // instead of .babelrc -- https://github.com/babel/babel-loader#usage
+                    presets: [['@babel/preset-env', {modules: false}]]
+                },
                 exclude: /(node_modules|bower_components)/
             },
             {
                 test: /(\.jsx|\.js)$/,
                 loader: 'eslint-loader',
+                options: { // instead of .eslintrc -- https://eslint.org/docs/developer-guide/nodejs-api#cliengine
+                    globals: ['THREE', '$', 'Threelet'],
+                    parser: 'babel-eslint'
+                },
                 exclude: /node_modules/
             }
         ]
     },
     resolve: {
         modules: [
-            path.resolve('./node_modules'),
             path.resolve('./src'),
-            path.resolve('../../node_modules'), // need this in case: import ThreeGeo from '../../../src'; // for dev; fast comile
+            path.resolve('./node_modules'),
+            path.resolve('../../node_modules'), // need this in case: import ThreeGeo from '../../../src'; // for dev
         ],
         extensions: ['.json', '.js']
     },

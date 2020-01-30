@@ -82,55 +82,55 @@ class MapHelper {
         this.orbitMarker = null;
         this.orbitCircle = null;
 
-        if (0) { // turf experiments...
-            const _map = this.map;
-            let nw = MapHelper.swap(_bbox.northWest); // latlng
-            let se = MapHelper.swap(_bbox.southEast);
-            // L.marker(nw).addTo(_map);
-            // L.marker(se).addTo(_map);
-
-            let ptOrigin = MapHelper.mkGeoJsonPoint(_origin);
-            let ptNw = MapHelper.mkGeoJsonPoint(nw);
-            let ptSe = MapHelper.mkGeoJsonPoint(se);
-
-            let dist = turf.distance(ptNw, ptSe, {units: "kilometers"});
-            console.log('dist:', dist);
-            let ttOpts = {permanent: true, direction: 'right'};
-            L.geoJson(ptNw).addTo(_map).bindTooltip(`nw: ${MapHelper.llToString(nw)}`, ttOpts);
-            L.geoJson(ptSe).addTo(_map).bindTooltip(`se: ${MapHelper.llToString(nw)} dist: ${dist.toFixed(3)} km`, ttOpts);
-
-            if (0) {
-                // FIXME why turf.buffer's circle too small??????
-                // related ?? https://github.com/Turfjs/turf/issues/801
-
-                // let buffered = turf.buffer(ptOrigin, 5, {units: "kilometers"});
-                // let result = turf.featureCollection([buffered, ptOrigin]);
-                // L.geoJson(buffered).addTo(_map).bindPopup("<h2>5 km</h2>");
-                // L.geoJson(result).addTo(_map).bindPopup("<h2>5 km</h2>");
-                //----
-                // var point = turf.point([-90.548630, 14.616599]);
-                // var buffered = turf.buffer(point, 500, {units: 'miles'});
-                let point = turf.point([_origin[1], _origin[0]]);
-                var buffered = turf.buffer(point, 5, {units: 'kilometers'});
-                L.geoJson(buffered).addTo(_map).bindPopup("<h2>5 km</h2>");
-
-                let e1 = turf.envelope(buffered);
-                let l2 = turf.lineString([
-                    e1.geometry.coordinates[0][0],
-                    e1.geometry.coordinates[0][1]]
-                );
-                let d2 = turf.lineDistance(l2, {units: 'kilometers'});
-                // L.geoJson(e1).addTo(_map);
-                L.geoJson(l2).addTo(_map);
-                console.log('d2:', d2);
-            }
-
-            let c1 = turf.circle(ptOrigin, 5, {units: 'kilometers'});
-            let c2 = turf.circle(ptOrigin, 5 / Math.sqrt(2), {units: 'kilometers'});
-            L.geoJson(c1).addTo(_map);
-            let e2 = turf.envelope(c2);
-            L.geoJson(e2).addTo(_map);
-        }
+        // if (0) { // turf experiments...
+        //     const _map = this.map;
+        //     let nw = MapHelper.swap(_bbox.northWest); // latlng
+        //     let se = MapHelper.swap(_bbox.southEast);
+        //     // L.marker(nw).addTo(_map);
+        //     // L.marker(se).addTo(_map);
+        //
+        //     let ptOrigin = MapHelper.mkGeoJsonPoint(_origin);
+        //     let ptNw = MapHelper.mkGeoJsonPoint(nw);
+        //     let ptSe = MapHelper.mkGeoJsonPoint(se);
+        //
+        //     let dist = turf.distance(ptNw, ptSe, {units: "kilometers"});
+        //     console.log('dist:', dist);
+        //     let ttOpts = {permanent: true, direction: 'right'};
+        //     L.geoJson(ptNw).addTo(_map).bindTooltip(`nw: ${MapHelper.llToString(nw)}`, ttOpts);
+        //     L.geoJson(ptSe).addTo(_map).bindTooltip(`se: ${MapHelper.llToString(nw)} dist: ${dist.toFixed(3)} km`, ttOpts);
+        //
+        //     if (0) {
+        //         // FIXME why turf.buffer's circle too small??????
+        //         // related ?? https://github.com/Turfjs/turf/issues/801
+        //
+        //         // let buffered = turf.buffer(ptOrigin, 5, {units: "kilometers"});
+        //         // let result = turf.featureCollection([buffered, ptOrigin]);
+        //         // L.geoJson(buffered).addTo(_map).bindPopup("<h2>5 km</h2>");
+        //         // L.geoJson(result).addTo(_map).bindPopup("<h2>5 km</h2>");
+        //         //----
+        //         // var point = turf.point([-90.548630, 14.616599]);
+        //         // var buffered = turf.buffer(point, 500, {units: 'miles'});
+        //         let point = turf.point([_origin[1], _origin[0]]);
+        //         var buffered = turf.buffer(point, 5, {units: 'kilometers'});
+        //         L.geoJson(buffered).addTo(_map).bindPopup("<h2>5 km</h2>");
+        //
+        //         let e1 = turf.envelope(buffered);
+        //         let l2 = turf.lineString([
+        //             e1.geometry.coordinates[0][0],
+        //             e1.geometry.coordinates[0][1]]
+        //         );
+        //         let d2 = turf.lineDistance(l2, {units: 'kilometers'});
+        //         // L.geoJson(e1).addTo(_map);
+        //         L.geoJson(l2).addTo(_map);
+        //         console.log('d2:', d2);
+        //     }
+        //
+        //     let c1 = turf.circle(ptOrigin, 5, {units: 'kilometers'});
+        //     let c2 = turf.circle(ptOrigin, 5 / Math.sqrt(2), {units: 'kilometers'});
+        //     L.geoJson(c1).addTo(_map);
+        //     let e2 = turf.envelope(c2);
+        //     L.geoJson(e2).addTo(_map);
+        // }
 
     } // end constructor()
 
@@ -414,7 +414,7 @@ class MapHelper {
         //-------- update temporary marker/bbox
         this.clearTmpLayers();
         let onBuild = () => {
-            this.buildTerrain(ll)
+            this.buildTerrain(ll);
         };
         let onCancel = () => {
             this.clearTmpLayers();
