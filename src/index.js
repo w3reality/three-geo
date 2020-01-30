@@ -352,7 +352,7 @@ class ThreeGeo {
     static _resolveTri2(x, y, meshes) {
         // TODO handle when `target` is scaled !!!! ********
 
-        // TODO [x, y] -> [lat, lng]
+        const [lat, lng] = [-1, -1]; // TODO [x, y] -> [lat, lng]
         const ret = this._findIsect(x, y, lat, lng, meshes);
         if (!ret) return null; // triInfo
 

@@ -4,16 +4,14 @@
     "description": "Geographic visualization with three.js",
     "main": "dist/three-geo.js",
     "directories": {
-        "example": "examples",
-        "test": "test"
+        "example": "examples"
     },
     "scripts": {
-        "dist": "npm run build && npm run build:esm && rm -rf ./dist && cp -r ./lib ./dist",
-        "build": "webpack --mode development --env dev && webpack --mode production --env build && npm run test",
-        "build:esm": "webpack --mode production --env esm && npm run test",
-        "dev": "webpack --mode development --progress --colors --watch --env dev",
-        "test": "mocha --require babel-core/register --colors ./test/*.spec.js",
-        "test:watch": "mocha --require babel-core/register --colors -w ./test/*.spec.js"
+        "dist": "npm run build && npm run build:esm && npm run build:esm:compat && mkdir -p ./dist && cp ./lib/*.js ./dist/",
+        "build": "webpack --mode production --modtype umd",
+        "build:esm": "webpack --mode production --modtype esm",
+        "build:esm:compat": "webpack --mode production --modtype esm:compat",
+        "dev": "webpack --mode development --progress --colors --watch --modtype dev"
     },
     "repository": {
         "type": "git",
@@ -32,6 +30,8 @@
     "homepage": "https://github.com/w3reality/three-geo",
     "dependencies": {},
     "devDependencies": {
+        "@babel/core": "^7.5.5",
+        "@babel/preset-env": "^7.5.5",
         "@mapbox/sphericalmercator": "^1.1.0",
         "@mapbox/tile-cover": "^3.0.2",
         "@mapbox/tilebelt": "^1.0.1",
@@ -43,30 +43,25 @@
         "@turf/transform-rotate": "^5.1.5",
         "@turf/transform-translate": "^5.1.5",
         "@turf/union": "^5.1.5",
-        "babel-core": "^6.26.0",
-        "babel-eslint": "^8.0.3",
-        "babel-loader": "^7.1.2",
+        "acorn": "^7.1.0",
+        "babel-eslint": "^9.0.0",
+        "babel-loader": "^8.0.6",
         "babel-plugin-add-module-exports": "^0.2.1",
-        "babel-preset-env": "^1.6.1",
-        "chai": "^4.1.2",
-        "d3": "^5.4.0",
         "eslint": "^6.2.2",
-        "eslint-loader": "^2.1.0",
+        "eslint-loader": "^3.0.0",
         "get-pixels": "^3.3.0",
         "jsts": "^2.0.2",
-        "lodash": "^4.17.14",
-        "mocha": "^6.1.4",
         "pbf": "^3.1.0",
-        "regenerator": "^0.14.1",
+        "regenerator": "^0.14.2",
+        "terser-webpack-plugin": "^2.2.2",
         "three": "^0.109.0",
         "three-laser-pointer": "^1.1.2",
-        "terser-webpack-plugin": "^2.2.2",
         "uniq": "^1.0.1",
         "webpack": "^4.41.2",
         "webpack-bundle-analyzer": "^3.3.2",
-        "webpack-cli": "^3.1.0",
+        "webpack-cli": "^3.3.9",
         "webpack-var2esm-plugin": "^1.2.1",
         "xhr": "^2.5.0",
-        "yargs": "^13.2.4"
+        "yargs": "^15.0.2"
     }
 }
