@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <title></title>
+</head>
+<body>
+    <script src="../deps/three.min.js"></script>
+    <script type="module">
+        import ThreeGeo from '../../dist/three-geo.esm.js';
+        console.log('ThreeGeo:', ThreeGeo);
+
+        const tgeo = new ThreeGeo({tokenMapbox: 'foo'});
+        console.log('tgeo:', tgeo);
+    </script>
+</body>
+</html>
