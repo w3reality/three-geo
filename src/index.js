@@ -1,4 +1,4 @@
-const __version = "1.3.1";
+const __version = "1.3.3dev";
 
 // if THREE is global (via script-tag loading), use that THREE to prevent
 // conflicts with ES6 version. (Line objects become broken, otherwise...)
