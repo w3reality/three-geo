@@ -74,18 +74,18 @@ Setup
 
 **Loading**
 
-Via script tags: use ``ThreeGeo`` after
+Script tag: use ``ThreeGeo`` after
 
 .. code::
 
-   <script src="three.min.js"></script>
    <script src="dist/three-geo.min.js"></script>
 
-Via the ES6 module system: use ``ThreeGeo`` after
-   
+ES6:
+
 .. code::
 
-   import ThreeGeo from 'three-geo/src';
+   import ThreeGeo from 'dist/three-geo.esm.js';
+
 
 Usage
 -----
