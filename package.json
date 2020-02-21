@@ -55,7 +55,7 @@
         "regenerator": "^0.14.2",
         "terser-webpack-plugin": "^2.2.2",
         "three": "^0.109.0",
-        "three-laser-pointer": "^1.1.2",
+        "three-laser-pointer": "^1.1.3",
         "uniq": "^1.0.1",
         "webpack": "^4.41.2",
         "webpack-bundle-analyzer": "^3.3.2",

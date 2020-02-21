@@ -91,4 +91,5 @@ const config = createConfig({
     outdir: './lib'
 });
 config['externals'] = {three: 'THREE'};
+config['performance'] = {hints: false};
 module.exports = config;

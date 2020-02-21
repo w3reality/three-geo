@@ -1,5 +1,4 @@
-import * as THREE_ES6 from 'three';
-const THREE = window.THREE ? window.THREE : THREE_ES6;
+import * as THREE from 'three';
 
 import turfTransformTranslate from '@turf/transform-translate';
 import turfTransformRotate from '@turf/transform-rotate';
