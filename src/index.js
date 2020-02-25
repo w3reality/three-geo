@@ -1,4 +1,6 @@
-const __version = "1.3.3dev";
+import { version as __version } from '../package.json';
+// const __version = 'n/a';
+
 
 import * as THREE from 'three';
 
