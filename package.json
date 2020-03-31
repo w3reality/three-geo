@@ -1,17 +1,20 @@
 {
     "name": "three-geo",
-    "version": "1.3.3-dev.0",
+    "version": "1.4.0-dev.0",
     "description": "Geographic visualization with three.js",
     "main": "dist/three-geo.min.js",
     "directories": {
         "example": "examples"
     },
     "scripts": {
-        "dist": "npm run build && npm run build:esm && npm run build:esm:compat && mkdir -p ./dist && cp ./lib/*{min,esm,compat}.js ./dist/",
-        "build": "webpack --mode production --modtype umd",
-        "build:esm": "webpack --mode production --modtype esm",
-        "build:esm:compat": "webpack --mode production --modtype esm:compat",
-        "dev": "webpack --mode development --progress --colors --watch --modtype dev"
+        "dist": "es-pack build -d ./dist -m umd esm esm-compat",
+        "build": "es-pack build -m umd",
+        "build:esm": "es-pack build -m esm",
+        "build:esm:compat": "es-pack build -m esm-compat",
+        "test": "npm run test:verify && npm run test:main",
+        "test:verify": "es-pack build -m umd esm esm-compat --verify",
+        "test:main": "es-pack test --node --browser",
+        "dev": "es-pack build --dev"
     },
     "repository": {
         "type": "git",
@@ -30,8 +33,6 @@
     "homepage": "https://github.com/w3reality/three-geo",
     "dependencies": {},
     "devDependencies": {
-        "@babel/core": "^7.5.5",
-        "@babel/preset-env": "^7.5.5",
         "@mapbox/sphericalmercator": "^1.1.0",
         "@mapbox/tile-cover": "^3.0.2",
         "@mapbox/tilebelt": "^1.0.1",
@@ -43,25 +44,14 @@
         "@turf/transform-rotate": "^5.1.5",
         "@turf/transform-translate": "^5.1.5",
         "@turf/union": "^5.1.5",
-        "acorn": "^7.1.0",
-        "babel-eslint": "^9.0.0",
-        "babel-loader": "^8.0.6",
-        "babel-plugin-add-module-exports": "^0.2.1",
-        "eslint": "^6.2.2",
-        "eslint-loader": "^3.0.0",
+        "es-pack-js": "0.3.5",
         "get-pixels": "^3.3.0",
         "jsts": "^2.0.2",
         "pbf": "^3.1.0",
         "regenerator": "^0.14.2",
-        "terser-webpack-plugin": "^2.2.2",
-        "three": "^0.109.0",
-        "three-laser-pointer": "^1.1.3",
+        "three": "^0.115.0",
+        "three-laser-pointer": "^1.2.0",
         "uniq": "^1.0.1",
-        "webpack": "^4.41.2",
-        "webpack-bundle-analyzer": "^3.3.2",
-        "webpack-cli": "^3.3.9",
-        "webpack-var2esm-plugin": "^1.2.1",
-        "xhr": "^2.5.0",
-        "yargs": "^15.0.2"
+        "xhr": "^2.5.0"
     }
 }

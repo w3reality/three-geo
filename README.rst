@@ -155,5 +155,5 @@ Build
 
 .. code::
 
-   $ npm install  # set up build tools
-   $ npm run build  # generate module files in lib/
+   $ npm i
+   $ npm run build
