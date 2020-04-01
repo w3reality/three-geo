@@ -57,18 +57,12 @@ import turfIntersect from '@turf/intersect';
 // console.log('turfIntersect:', turfIntersect);
 
 import cover from '@mapbox/tile-cover';
-import xhr from 'xhr';
-import Pbf from 'pbf';
-import { VectorTile } from '@mapbox/vector-tile';
 import uniq from 'uniq';
 
 // no longer used; see colorRangeNonD3()
 // import * as d3 from 'd3'; // be more selective - https://github.com/d3/d3
 // import { scaleLinear, interpolateRgb } from 'd3'; // not much difference...
 // console.log('d3:', d3);
-
-// For NodeJs case, we load `get-pixels` dynamically (see `ThreeGeo._resolveGetPixels()`)
-import getPixelsDom from 'get-pixels/dom-pixels';
 
 import SphericalMercator from '@mapbox/sphericalmercator';
 
@@ -582,162 +576,6 @@ for triInfo     <-                             triWorld,    normalWorld
         return objs;
     }
 
-    static dumpBufferAsBlob(buffer, name) {
-        // https://discourse.threejs.org/t/how-to-create-a-new-file-and-save-it-with-arraybuffer-content/628/2
-        let file = new Blob([buffer], {type: "application/octet-stream"});
-        let anc = document.createElement("a");
-        anc.href = URL.createObjectURL(file);
-        anc.download = name;
-        document.body.appendChild(anc);
-        anc.click();
-    }
-    static blobToBuffer(blob, cb) {
-        // https://stackoverflow.com/questions/15341912/how-to-go-from-blob-to-arraybuffer
-        let fr = new FileReader();
-        fr.onload = (e) => {
-            let buffer = e.target.result;
-            cb(buffer);
-        };
-        fr.readAsArrayBuffer(blob);
-    }
-
-    static getUriCustom(api, zoompos) {
-        // Resolve the api type
-        // e.g. `../data/${name}/custom-terrain-rgb` -> `custom-terrain-rgb`
-        let _api = api.split('/');
-        _api = _api.length ? _api[_api.length - 1] : 'woops';
-
-        let extension;
-        switch (_api) {
-            case 'custom-terrain-vector':
-                extension = 'pbf';
-                break;
-            case 'custom-terrain-rgb':
-                extension = 'png';
-                break;
-            case 'custom-satellite':
-                extension = 'jpg';
-                break;
-            default:
-                console.log('getUriCustom(): unsupported api:', api);
-                return '';
-        }
-        return `${api}-${zoompos.join('-')}.${extension}`;
-    }
-    static getUriMapbox(token, api, zoompos) {
-        let prefix, res;
-        switch (api) {
-            case 'mapbox-terrain-vector':
-                prefix = 'https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2';
-                res = '.vector.pbf';
-                break;
-            case 'mapbox-terrain-rgb':
-                prefix = `https://api.mapbox.com/v4/mapbox.terrain-rgb`;
-                res = '@2x.pngraw';
-                break;
-            case 'mapbox-satellite':
-                prefix = `https://api.mapbox.com/v4/mapbox.streets-satellite`;
-                // https://www.mapbox.com/api-documentation/#retrieve-tiles
-                // mapbox-satellite-14-3072-6420.blob
-                // res = '@2x.png'; // 176813 (will get a jpg by spec)
-                // res = '@2x.jpg90'; // 132759
-                // res = '@2x.jpg80';
-                res = '@2x.jpg70'; // 72828
-                break;
-            default:
-                console.log('getUriMapbox(): unsupported api:', api);
-                return '';
-        }
-        return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
-    }
-
-    static isAjaxSuccessful(stat) {
-        console.log('stat:', stat);
-        // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
-        return stat >= 200 && stat < 300 || stat === 304;
-    }
-
-    static xhrDumpBlob(uri, api, zoompos) {
-        xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, abuf) => {
-            if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                console.log(`xhrDumpBlob(): failed for uri: ${uri}`);
-                return;
-            }
-
-            this.dumpBufferAsBlob(abuf, `${api}-${zoompos.join('-')}.blob`);
-        });
-    }
-
-    static xhrGetBlob(uri, cb) { this._xhrGet('blob')(uri, cb); }
-    static xhrGetArrayBuffer(uri, cb) { this._xhrGet('arraybuffer')(uri, cb); }
-    static _xhrGet(type) {
-        return (uri, cb) => {
-            xhr({uri: uri, responseType: type}, (error, response, data) => {
-                if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                    return cb(null);
-                }
-
-                switch (type) {
-                    case 'blob': {
-                        this.blobToBuffer(data, abuf =>
-                            cb(new VectorTile(new Pbf(abuf))));
-                        break;
-                    }
-                    case 'arraybuffer': {
-                        cb(new VectorTile(new Pbf(data)));
-                        break;
-                    }
-                    default: cb(null);
-                }
-            });
-        };
-    }
-
-    static fetchTile(zoompos, api, token, getPixels, cb) {
-        let isMapbox = api.startsWith('mapbox-');
-        let uri = isMapbox ?
-            this.getUriMapbox(token, api, zoompos) :
-            this.getUriCustom(api, zoompos);
-        console.log('fetchTile(): uri:', uri);
-
-        const dumpBlobForDebug = 0;
-
-        if (api.includes('mapbox-terrain-vector') ||
-            api.includes('custom-terrain-vector')) {
-            if (isMapbox) {
-                if (dumpBlobForDebug) {
-                    this.xhrDumpBlob(uri, api, zoompos); // return;
-                }
-                this.xhrGetArrayBuffer(uri, cb);
-            } else {
-                this.xhrGetBlob(uri, cb);
-            }
-        } else if (api.includes('mapbox-terrain-rgb') ||
-                api.includes('mapbox-satellite') ||
-                api.includes('custom-terrain-rgb') ||
-                api.includes('custom-satellite')) {
-
-            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-terrain-rgb')) {
-            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-satellite')) {
-            if (isMapbox && dumpBlobForDebug) {
-                this.xhrDumpBlob(uri, api, zoompos); // return;
-            }
-
-            // console.log('uri:', uri);
-            getPixels(uri, (err, pixels) => {
-                if (err) {
-                    console.log("Bad image uri:", uri);
-                    cb(null);
-                    return;
-                }
-                // console.log("got pixels", pixels.shape.slice(0));
-                cb(pixels);
-            });
-        } else {
-            console.log('nop, unsupported api:', api);
-        }
-    }
-
     // Zoom extent - https://www.mapbox.com/studio/tilesets/
     // satellite:  z0 ~ z22
     // rgb dem:    z0 ~ z15
@@ -1030,7 +868,7 @@ for triInfo     <-                             triWorld,    normalWorld
         return out;
     }
     static resolveTex(zoompos, apiSatellite, token, getPixels, onTex) {
-        this.fetchTile(zoompos, apiSatellite, token, getPixels, (pixels) => {
+        Fetch.fetchTile(zoompos, apiSatellite, token, getPixels, (pixels) => {
             let tex = null;
             if (pixels) {
                 // console.log("satellite pixels", pixels.shape.slice(0));
@@ -1111,7 +949,7 @@ for triInfo     <-                             triWorld,    normalWorld
                 tile: _toTile(zoompos),
                 srcDem: {
                     tile: _toTile(zoomposEle),
-                    uri: ThreeGeo.getUriMapbox('', 'mapbox-terrain-rgb', zoomposEle),
+                    uri: `resolveme/${_toTile(zoomposEle).join('/')}`,
                 },
             };
             objs.push(plane);
@@ -1139,7 +977,7 @@ for triInfo     <-                             triWorld,    normalWorld
         let count = 0;
         zpEle.forEach((zoompos) => {
             // console.log('ele zoompos', zoompos);
-            ThreeGeo.fetchTile(zoompos, apiRgb, this.tokenMapbox, this._getPixels, (pixels) => {
+            Fetch.fetchTile(zoompos, apiRgb, this.tokenMapbox, this._getPixels, (pixels) => {
                 if (pixels) {
                     dataEleCovered = dataEleCovered.concat(this.processRgbTile(
                         pixels, zoompos, zpCovered, bbox, radius));
@@ -1187,7 +1025,7 @@ for triInfo     <-                             triWorld,    normalWorld
         };
         let count = 0;
         zpEle.forEach((zoompos) => {
-            ThreeGeo.fetchTile(zoompos, apiVector, this.tokenMapbox, this._getPixels, (tile) => {
+            Fetch.fetchTile(zoompos, apiVector, this.tokenMapbox, this._getPixels, (tile) => {
                 if (tile) {
                     ThreeGeo.processVectorTile(tile, zoompos, geojson, bottomTiles);
                 } else {
@@ -1338,7 +1176,7 @@ for triInfo     <-                             triWorld,    normalWorld
         return new Promise(async (res, rej) => {
             try {
                 if (!this._getPixels) {
-                    this._getPixels = await ThreeGeo._resolveGetPixels();
+                    this._getPixels = await Fetch.resolveGetPixels();
                 }
 
                 const bbox = ThreeGeo.getBbox(origin, radius);
@@ -1366,23 +1204,6 @@ for triInfo     <-                             triWorld,    normalWorld
         const { vectorDem } = await this.getTerrain(origin, radius, zoom, _cbs);
         if (cb) cb(vectorDem);
         return vectorDem;
-    }
-
-    static async _resolveGetPixels() {
-        let fn;
-        if (typeof __non_webpack_require__ !== 'undefined') { // is node?
-            const nodePixels = 'get-pixels/node-pixels';
-            fn = (typeof global.require !== 'function') ?
-                (await global.import(nodePixels)).default :
-                global.require(nodePixels);
-        } else {
-            fn = getPixelsDom; // the statically imported
-        }
-
-        if (typeof fn !== 'function') {
-            throw new Error('Failed to resolve `get-pixels`');
-        }
-        return fn;
     }
 
     setApiVector(api) { this.apiVector = api; }

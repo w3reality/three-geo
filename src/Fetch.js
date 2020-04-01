@@ -1,4 +1,187 @@
-class Fetch {
+import xhr from 'xhr';
+import Pbf from 'pbf';
+import { VectorTile } from '@mapbox/vector-tile';
 
+// For NodeJs case, we load `get-pixels` dynamically (see `resolveGetPixels()`)
+import __getPixelsDom from 'get-pixels/dom-pixels';
+
+class Fetch {
+    static dumpBufferAsBlob(buffer, name) {
+        // https://discourse.threejs.org/t/how-to-create-a-new-file-and-save-it-with-arraybuffer-content/628/2
+        let file = new Blob([buffer], {type: "application/octet-stream"});
+        let anc = document.createElement("a");
+        anc.href = URL.createObjectURL(file);
+        anc.download = name;
+        document.body.appendChild(anc);
+        anc.click();
+    }
+    static blobToBuffer(blob, cb) {
+        // https://stackoverflow.com/questions/15341912/how-to-go-from-blob-to-arraybuffer
+        let fr = new FileReader();
+        fr.onload = (e) => {
+            let buffer = e.target.result;
+            cb(buffer);
+        };
+        fr.readAsArrayBuffer(blob);
+    }
+
+    static getUriCustom(api, zoompos) {
+        // Resolve the api type
+        // e.g. `../data/${name}/custom-terrain-rgb` -> `custom-terrain-rgb`
+        let _api = api.split('/');
+        _api = _api.length ? _api[_api.length - 1] : 'woops';
+
+        let extension;
+        switch (_api) {
+            case 'custom-terrain-vector':
+                extension = 'pbf';
+                break;
+            case 'custom-terrain-rgb':
+                extension = 'png';
+                break;
+            case 'custom-satellite':
+                extension = 'jpg';
+                break;
+            default:
+                console.log('getUriCustom(): unsupported api:', api);
+                return '';
+        }
+        return `${api}-${zoompos.join('-')}.${extension}`;
+    }
+    static getUriMapbox(token, api, zoompos) {
+        let prefix, res;
+        switch (api) {
+            case 'mapbox-terrain-vector':
+                prefix = 'https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2';
+                res = '.vector.pbf';
+                break;
+            case 'mapbox-terrain-rgb':
+                prefix = `https://api.mapbox.com/v4/mapbox.terrain-rgb`;
+                res = '@2x.pngraw';
+                break;
+            case 'mapbox-satellite':
+                prefix = `https://api.mapbox.com/v4/mapbox.streets-satellite`;
+                // https://www.mapbox.com/api-documentation/#retrieve-tiles
+                // mapbox-satellite-14-3072-6420.blob
+                // res = '@2x.png'; // 176813 (will get a jpg by spec)
+                // res = '@2x.jpg90'; // 132759
+                // res = '@2x.jpg80';
+                res = '@2x.jpg70'; // 72828
+                break;
+            default:
+                console.log('getUriMapbox(): unsupported api:', api);
+                return '';
+        }
+        return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
+    }
+
+    static isAjaxSuccessful(stat) {
+        console.log('stat:', stat);
+        // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
+        return stat >= 200 && stat < 300 || stat === 304;
+    }
+
+    static xhrDumpBlob(uri, api, zoompos) {
+        xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, abuf) => {
+            if (error || !this.isAjaxSuccessful(response.statusCode)) {
+                console.log(`xhrDumpBlob(): failed for uri: ${uri}`);
+                return;
+            }
+
+            this.dumpBufferAsBlob(abuf, `${api}-${zoompos.join('-')}.blob`);
+        });
+    }
+
+    static xhrGetBlob(uri, cb) { this._xhrGet('blob')(uri, cb); }
+    static xhrGetArrayBuffer(uri, cb) { this._xhrGet('arraybuffer')(uri, cb); }
+    static _xhrGet(type) {
+        return (uri, cb) => {
+            xhr({uri: uri, responseType: type}, (error, response, data) => {
+                if (error || !this.isAjaxSuccessful(response.statusCode)) {
+                    return cb(null);
+                }
+
+                switch (type) {
+                    case 'blob': {
+                        this.blobToBuffer(data, abuf =>
+                            cb(new VectorTile(new Pbf(abuf))));
+                        break;
+                    }
+                    case 'arraybuffer': {
+                        cb(new VectorTile(new Pbf(data)));
+                        break;
+                    }
+                    default: cb(null);
+                }
+            });
+        };
+    }
+
+    static getImage(uri, getPixels, cb) {
+        getPixels(uri, (err, pixels) => {
+            if (err) {
+                console.log("Bad image uri:", uri);
+                return cb(null);
+            }
+            cb(pixels);
+        });
+    }
+
+    static async resolveGetPixels() {
+        let fn;
+        if (typeof __non_webpack_require__ !== 'undefined') { // is node?
+            const nodePixels = 'get-pixels/node-pixels';
+            fn = (typeof global.require !== 'function') ?
+                (await global.import(nodePixels)).default :
+                global.require(nodePixels);
+        } else {
+            fn = __getPixelsDom; // the statically imported
+        }
+
+        if (typeof fn !== 'function') {
+            throw new Error('Failed to resolve `get-pixels`');
+        }
+        return fn;
+    }
+
+    static fetchTile(zoompos, api, token, getPixels, cb) {
+        let isMapbox = api.startsWith('mapbox-');
+        let uri = isMapbox ?
+            this.getUriMapbox(token, api, zoompos) :
+            this.getUriCustom(api, zoompos);
+        console.log('fetchTile(): uri:', uri);
+
+        const dumpBlobForDebug = 0;
+
+        if (api.includes('mapbox-terrain-vector') ||
+            api.includes('custom-terrain-vector')) {
+
+            // TODO: generalize this to pass `getTerrainVector()` in `test:main`
+            if (isMapbox) {
+                if (dumpBlobForDebug) {
+                    this.xhrDumpBlob(uri, api, zoompos); // return;
+                }
+                this.xhrGetArrayBuffer(uri, cb);
+            } else {
+                this.xhrGetBlob(uri, cb);
+            }
+        } else if (api.includes('mapbox-terrain-rgb') ||
+                api.includes('mapbox-satellite') ||
+                api.includes('custom-terrain-rgb') ||
+                api.includes('custom-satellite')) {
+
+            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-terrain-rgb')) {
+            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-satellite')) {
+            if (isMapbox && dumpBlobForDebug) {
+                this.xhrDumpBlob(uri, api, zoompos); // return;
+            }
+
+            // console.log('uri:', uri);
+            this.getImage(uri, getPixels, cb);
+        } else {
+            console.log('nop, unsupported api:', api);
+        }
+    }
 }
+
 export default Fetch;
