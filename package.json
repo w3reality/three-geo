@@ -31,7 +31,6 @@
         "url": "https://github.com/w3reality/three-geo/issues"
     },
     "homepage": "https://github.com/w3reality/three-geo",
-    "dependencies": {},
     "devDependencies": {
         "@mapbox/sphericalmercator": "^1.1.0",
         "@mapbox/tile-cover": "^3.0.2",

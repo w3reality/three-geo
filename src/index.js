@@ -66,7 +66,9 @@ import uniq from 'uniq';
 // import { scaleLinear, interpolateRgb } from 'd3'; // not much difference...
 // console.log('d3:', d3);
 
-import getPixels from 'get-pixels';
+// For NodeJs case, we load `get-pixels` dynamically (see `ThreeGeo._resolveGetPixels()`)
+import getPixelsDom from 'get-pixels/dom-pixels';
+
 import SphericalMercator from '@mapbox/sphericalmercator';
 
 const sixteenthPixelRanges = (() => {
@@ -144,6 +146,8 @@ class ThreeGeo {
         this.apiVector = actual.apiVector;
         this.apiRgb = actual.apiRgb;
         this.apiSatellite = actual.apiSatellite;
+
+        this._getPixels = null;
     }
 
     static getEleList(geojson) {
@@ -596,8 +600,28 @@ for triInfo     <-                             triWorld,    normalWorld
         fr.readAsArrayBuffer(blob);
     }
 
-    static getUriOffline(api, zoompos) {
-        return `${api}-${zoompos.join('-')}.blob`;
+    static getUriCustom(api, zoompos) {
+        // Resolve the api type
+        // e.g. `../data/${name}/custom-terrain-rgb` -> `custom-terrain-rgb`
+        let _api = api.split('/');
+        _api = _api.length ? _api[_api.length - 1] : 'woops';
+
+        let extension;
+        switch (_api) {
+            case 'custom-terrain-vector':
+                extension = 'pbf';
+                break;
+            case 'custom-terrain-rgb':
+                extension = 'png';
+                break;
+            case 'custom-satellite':
+                extension = 'jpg';
+                break;
+            default:
+                console.log('getUriCustom(): unsupported api:', api);
+                return '';
+        }
+        return `${api}-${zoompos.join('-')}.${extension}`;
     }
     static getUriMapbox(token, api, zoompos) {
         let prefix, res;
@@ -620,7 +644,7 @@ for triInfo     <-                             triWorld,    normalWorld
                 res = '@2x.jpg70'; // 72828
                 break;
             default:
-                console.log('unsupported api:', api);
+                console.log('getUriMapbox(): unsupported api:', api);
                 return '';
         }
         return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
@@ -631,11 +655,12 @@ for triInfo     <-                             triWorld,    normalWorld
         // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
         return stat >= 200 && stat < 300 || stat === 304;
     }
-    static fetchTile(zoompos, api, token, cb) {
-        let isOnline = api.startsWith('mapbox-');
-        let uri = isOnline ?
+    static fetchTile(zoompos, api, token, getPixels, cb) {
+        let isMapbox = api.startsWith('mapbox-');
+        let uri = isMapbox ?
             this.getUriMapbox(token, api, zoompos) :
-            this.getUriOffline(api, zoompos);
+            this.getUriCustom(api, zoompos);
+        console.log('fetchTile(): uri:', uri);
 
         const xhrDumpBlob = (uri, api, zoompos) => {
             xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, buffer) => {
@@ -650,8 +675,9 @@ for triInfo     <-                             triWorld,    normalWorld
         };
         const dumpBlobForDebug = 0;
 
-        if (api.includes('mapbox-terrain-vector')) {
-            if (isOnline) {
+        if (api.includes('mapbox-terrain-vector') ||
+            api.includes('custom-terrain-vector')) {
+            if (isMapbox) {
                 if (dumpBlobForDebug) {
                     xhrDumpBlob(uri, api, zoompos);
                     // return;
@@ -685,11 +711,13 @@ for triInfo     <-                             triWorld,    normalWorld
                 });
             }
         } else if (api.includes('mapbox-terrain-rgb') ||
-                api.includes('mapbox-satellite')) {
+                api.includes('mapbox-satellite') ||
+                api.includes('custom-terrain-rgb') ||
+                api.includes('custom-satellite')) {
 
-            // if (isOnline && dumpBlobForDebug && api.includes('mapbox-terrain-rgb')) {
-            // if (isOnline && dumpBlobForDebug && api.includes('mapbox-satellite')) {
-            if (isOnline && dumpBlobForDebug) {
+            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-terrain-rgb')) {
+            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-satellite')) {
+            if (isMapbox && dumpBlobForDebug) {
                 xhrDumpBlob(uri, api, zoompos);
                 // return;
             }
@@ -701,7 +729,7 @@ for triInfo     <-                             triWorld,    normalWorld
                     cb(null);
                     return;
                 }
-                // console.log("got pixels", pixels.shape.slice());
+                // console.log("got pixels", pixels.shape.slice(0));
                 cb(pixels);
             });
         } else {
@@ -1000,11 +1028,11 @@ for triInfo     <-                             triWorld,    normalWorld
         }
         return out;
     }
-    static resolveTex(zoompos, apiSatellite, token, onTex) {
-        this.fetchTile(zoompos, apiSatellite, token, (pixels) => {
+    static resolveTex(zoompos, apiSatellite, token, getPixels, onTex) {
+        this.fetchTile(zoompos, apiSatellite, token, getPixels, (pixels) => {
             let tex = null;
             if (pixels) {
-                // console.log("satellite pixels", pixels.shape.slice());
+                // console.log("satellite pixels", pixels.shape.slice(0));
                 // console.log('satellite pixels:', pixels);
                 // https://threejs.org/docs/#api/textures/DataTexture
 
@@ -1077,11 +1105,6 @@ for triInfo     <-                             triWorld,    normalWorld
                     color: 0xcccccc,
                 }));
             plane.name = `dem-rgb-${zoompos.join('/')}`;
-            // const _toTile = (zp) => { // [z,x,y] to a new [x,y,z]
-            //     let tile = zp.slice();
-            //     tile.push(tile.shift());
-            //     return tile;
-            // };
             const _toTile = zp => [zp[1], zp[2], zp[0]];
             plane.userData.threeGeo = {
                 tile: _toTile(zoompos),
@@ -1092,7 +1115,7 @@ for triInfo     <-                             triWorld,    normalWorld
             };
             objs.push(plane);
 
-            ThreeGeo.resolveTex(zoompos, apiSatellite, this.tokenMapbox, (tex) => {
+            ThreeGeo.resolveTex(zoompos, apiSatellite, this.tokenMapbox, this._getPixels, (tex) => {
                 if (tex) {
                     plane.material = new THREE.MeshBasicMaterial({
                         side: THREE.FrontSide,
@@ -1115,7 +1138,7 @@ for triInfo     <-                             triWorld,    normalWorld
         let count = 0;
         zpEle.forEach((zoompos) => {
             // console.log('ele zoompos', zoompos);
-            ThreeGeo.fetchTile(zoompos, apiRgb, this.tokenMapbox, (pixels) => {
+            ThreeGeo.fetchTile(zoompos, apiRgb, this.tokenMapbox, this._getPixels, (pixels) => {
                 if (pixels) {
                     dataEleCovered = dataEleCovered.concat(this.processRgbTile(
                         pixels, zoompos, zpCovered, bbox, radius));
@@ -1163,7 +1186,7 @@ for triInfo     <-                             triWorld,    normalWorld
         };
         let count = 0;
         zpEle.forEach((zoompos) => {
-            ThreeGeo.fetchTile(zoompos, apiVector, this.tokenMapbox, (tile) => {
+            ThreeGeo.fetchTile(zoompos, apiVector, this.tokenMapbox, this._getPixels, (tile) => {
                 if (tile) {
                     ThreeGeo.processVectorTile(tile, zoompos, geojson, bottomTiles);
                 } else {
@@ -1251,6 +1274,9 @@ for triInfo     <-                             triWorld,    normalWorld
         // ];
     }
 
+
+
+
     static _createWatcher(cbs, res) {
         let isVecPending = cbs.onVectorDem ? true : false;
         let isRgbPending = cbs.onRgbDem ? true : false;
@@ -1310,6 +1336,10 @@ for triInfo     <-                             triWorld,    normalWorld
     getTerrain(origin, radius, zoom, cbs={}) {
         return new Promise(async (res, rej) => {
             try {
+                if (!this._getPixels) {
+                    this._getPixels = await ThreeGeo._resolveGetPixels();
+                }
+
                 const bbox = ThreeGeo.getBbox(origin, radius);
                 console.log('bbox:', bbox);
 
@@ -1335,6 +1365,23 @@ for triInfo     <-                             triWorld,    normalWorld
         const { vectorDem } = await this.getTerrain(origin, radius, zoom, _cbs);
         if (cb) cb(vectorDem);
         return vectorDem;
+    }
+
+    static async _resolveGetPixels() {
+        let fn;
+        if (typeof __non_webpack_require__ !== 'undefined') { // is node?
+            const nodePixels = 'get-pixels/node-pixels';
+            fn = (typeof global.require !== 'function') ?
+                (await global.import(nodePixels)).default :
+                global.require(nodePixels);
+        } else {
+            fn = getPixelsDom; // the statically imported
+        }
+
+        if (typeof fn !== 'function') {
+            throw new Error('Failed to resolve `get-pixels`');
+        }
+        return fn;
     }
 
     setApiVector(api) { this.apiVector = api; }
