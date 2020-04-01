@@ -308,9 +308,9 @@ class Viewer {
         if (title.includes('Eiger')) _location = 'eiger';
         if (title.includes('River')) _location = 'river';
         if (title.includes('Akagi')) _location = 'akagi';
-        tgeo.setApiVector(`../cache/${_location}/mapbox-terrain-vector`);
-        tgeo.setApiRgb(`../cache/${_location}/mapbox-terrain-rgb`);
-        tgeo.setApiSatellite(`../cache/${_location}/mapbox-satellite`);
+        tgeo.setApiVector(`../cache/${_location}/custom-terrain-vector`);
+        tgeo.setApiRgb(`../cache/${_location}/custom-terrain-rgb`);
+        tgeo.setApiSatellite(`../cache/${_location}/custom-satellite`);
     }
 
     nop() { /* nop */ }
