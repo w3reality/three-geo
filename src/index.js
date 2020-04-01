@@ -1082,7 +1082,6 @@ for triInfo     <-                             triWorld,    normalWorld
         };
     }
 
-
     static debugZp(zpCovered) {
         console.warn('zpCovered mods enabled for debug...');
         zpCovered.length = 1;
@@ -1112,9 +1111,6 @@ for triInfo     <-                             triWorld,    normalWorld
         //     [14, 3073, 6423], [14, 3075, 6423],
         // ];
     }
-
-
-
 
     static _createWatcher(cbs, res) {
         let isVecPending = cbs.onVectorDem ? true : false;

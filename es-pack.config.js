@@ -6,7 +6,7 @@ module.exports = {
         webpackConfig.externals = {'three': 'THREE'};
         webpackConfig.performance = {hints: false};
     },
-    onVerify: (preloadJs) => {
+    onVerify: (preloadJs, units) => {
         const pathUpper = path.resolve(__dirname, './node_modules/THREE');
         if (!fs.existsSync(pathUpper)) { // can be true on linux (case-sensitive fs)
             // ├── node_modules

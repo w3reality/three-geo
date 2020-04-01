@@ -29,6 +29,7 @@ module.exports = {
         path: outputPath,
         filename: outputFile,
     },
+    performance: {hints: false},
     optimization: {
         minimize: minimize,
         minimizer: [
