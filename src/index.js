@@ -6,6 +6,7 @@ import * as THREE from 'three';
 
 import 'regenerator-runtime/runtime.js';
 
+import Fetch from './Fetch.js';
 import Utils from './Utils.js';
 import Laser from 'three-laser-pointer/src';
 
@@ -655,6 +656,43 @@ for triInfo     <-                             triWorld,    normalWorld
         // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
         return stat >= 200 && stat < 300 || stat === 304;
     }
+
+    static xhrDumpBlob(uri, api, zoompos) {
+        xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, abuf) => {
+            if (error || !this.isAjaxSuccessful(response.statusCode)) {
+                console.log(`xhrDumpBlob(): failed for uri: ${uri}`);
+                return;
+            }
+
+            this.dumpBufferAsBlob(abuf, `${api}-${zoompos.join('-')}.blob`);
+        });
+    }
+
+    static xhrGetBlob(uri, cb) { this._xhrGet('blob')(uri, cb); }
+    static xhrGetArrayBuffer(uri, cb) { this._xhrGet('arraybuffer')(uri, cb); }
+    static _xhrGet(type) {
+        return (uri, cb) => {
+            xhr({uri: uri, responseType: type}, (error, response, data) => {
+                if (error || !this.isAjaxSuccessful(response.statusCode)) {
+                    return cb(null);
+                }
+
+                switch (type) {
+                    case 'blob': {
+                        this.blobToBuffer(data, abuf =>
+                            cb(new VectorTile(new Pbf(abuf))));
+                        break;
+                    }
+                    case 'arraybuffer': {
+                        cb(new VectorTile(new Pbf(data)));
+                        break;
+                    }
+                    default: cb(null);
+                }
+            });
+        };
+    }
+
     static fetchTile(zoompos, api, token, getPixels, cb) {
         let isMapbox = api.startsWith('mapbox-');
         let uri = isMapbox ?
@@ -662,53 +700,17 @@ for triInfo     <-                             triWorld,    normalWorld
             this.getUriCustom(api, zoompos);
         console.log('fetchTile(): uri:', uri);
 
-        const xhrDumpBlob = (uri, api, zoompos) => {
-            xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, buffer) => {
-                if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                    console.log(`xhrDumpBlob(): failed for uri: ${uri}`);
-                    return;
-                }
-
-                let name = `${api}-${zoompos.join('-')}.blob`;
-                this.dumpBufferAsBlob(buffer, name);
-            });
-        };
         const dumpBlobForDebug = 0;
 
         if (api.includes('mapbox-terrain-vector') ||
             api.includes('custom-terrain-vector')) {
             if (isMapbox) {
                 if (dumpBlobForDebug) {
-                    xhrDumpBlob(uri, api, zoompos);
-                    // return;
+                    this.xhrDumpBlob(uri, api, zoompos); // return;
                 }
-                xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, buffer) => {
-                    if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                        cb(null);
-                        return;
-                    }
-                    // console.log('mapbox -> buffer:', buffer); // ArrayBuffer(39353) {}
-                    cb(new VectorTile(new Pbf(buffer)));
-                });
+                this.xhrGetArrayBuffer(uri, cb);
             } else {
-                xhr({uri: uri, responseType: 'blob'}, (error, response, blob) => {
-                    // console.log('error, response, blob:', error, response, blob);
-                    if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                        cb(null);
-                        return;
-                    }
-                    this.blobToBuffer(blob, (buffer) => {
-                        // console.log('blob -> buffer:', buffer); // ArrayBuffer(39353) {}
-                        try {
-                            let pbf = new Pbf(buffer);
-                            cb(new VectorTile(pbf));
-                        } catch (e) {
-                            // console.log('e:', e);
-                            cb(null);
-                            return;
-                        }
-                    });
-                });
+                this.xhrGetBlob(uri, cb);
             }
         } else if (api.includes('mapbox-terrain-rgb') ||
                 api.includes('mapbox-satellite') ||
@@ -718,8 +720,7 @@ for triInfo     <-                             triWorld,    normalWorld
             // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-terrain-rgb')) {
             // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-satellite')) {
             if (isMapbox && dumpBlobForDebug) {
-                xhrDumpBlob(uri, api, zoompos);
-                // return;
+                this.xhrDumpBlob(uri, api, zoompos); // return;
             }
 
             // console.log('uri:', uri);
@@ -790,7 +791,7 @@ for triInfo     <-                             triWorld,    normalWorld
             return;
         }
 
-        //populate geoJSON
+        // populate geoJSON
         for (let i = 0; i < tile.layers.contour.length; i++) {
             // convert each feature (within #population) into a geoJSON polygon,
             // and push it into our variable
