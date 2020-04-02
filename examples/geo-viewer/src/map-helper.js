@@ -1,5 +1,7 @@
 import ThreeGeo from '../../../src';
 
+const { THREE, jQuery: $ } = window;
+
 import L from 'leaflet';
 // console.log('L:', L);
 

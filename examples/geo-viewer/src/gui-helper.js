@@ -1,4 +1,4 @@
-import DatGuiDefaults from '../node_modules/dat-gui-defaults/src';
+const { DatGuiDefaults } = window;
 
 class GuiHelper extends DatGuiDefaults {
     constructor(env, data, callbacks={}) {

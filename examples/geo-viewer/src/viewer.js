@@ -1,5 +1,7 @@
 import ThreeGeo from '../../../src';
 
+const { THREE, jQuery: $ } = window;
+
 import MapHelper from './map-helper.js';
 import queryString from 'query-string'; // in prod, need webpack-4 to minify this
 

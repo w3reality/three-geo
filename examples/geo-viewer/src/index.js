@@ -2,6 +2,8 @@ import env from './env.js';
 // import env from './envs-ignore/env-dev.js';
 // import env from './envs-ignore/env-io.js';
 
+const { THREE, Threelet, Stats } = window;
+
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
 
@@ -11,7 +13,7 @@ class App extends Threelet {
         this.camera.position.set(0, 0, 1.5);
         this.camera.up.set(0, 0, 1); // The up vector is along +z for this app
 
-        const stats = this.setup('mod-stats', window.Stats, {panelType: 1});
+        const stats = this.setup('mod-stats', Stats, {panelType: 1});
         const viewer = new Viewer(env, this);
 
         this.render = () => { // override
