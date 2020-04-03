@@ -13,8 +13,7 @@ export default {
 Then, build the app as follows:
 
 ```
-$ cd ../.. && npm i && cd -  # set up three-geo build (required)
-$ npm i                      # set up geo-viewer build
+$ cd ../.. && npm i && cd -  # set up build
 $ npm run dev
 ```
 

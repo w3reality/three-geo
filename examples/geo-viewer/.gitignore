@@ -1,4 +1,4 @@
 cache
-dist/*.js
+dist/*.js*
 src/envs-ignore
 target
