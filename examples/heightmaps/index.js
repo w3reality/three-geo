@@ -11,8 +11,10 @@ const group = new THREE.Group();
 group.rotation.x = - Math.PI/2;
 scene.add(group);
 
+const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
 const tgeo = new ThreeGeo({
-    tokenMapbox: '********', // <---- set your Mapbox API token here
+    // tokenMapbox: '********', // <---- set your Mapbox API token here
+    tokenMapbox: ioToken,
 });
 
 const isDebug = 0;
