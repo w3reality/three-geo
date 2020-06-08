@@ -61,9 +61,9 @@ class Fetch {
                 break;
             case 'mapbox-satellite':
                 prefix = `https://api.mapbox.com/v4/mapbox.satellite`;
-                // https://www.mapbox.com/api-documentation/#retrieve-tiles
-                // mapbox-satellite-14-3072-6420.blob
-                // res = '@2x.png'; // 176813 (will get a jpg by spec)
+                // [doc](https://docs.mapbox.com/api/#retrieve-tiles)
+                // test: mapbox-satellite-14-3072-6420.blob
+                // res = '@2x.png'; // 176813; gets a jpg per [spec](https://docs.mapbox.com/api/maps/#retrieve-raster-tiles)
                 // res = '@2x.jpg90'; // 132759
                 // res = '@2x.jpg80';
                 res = '@2x.jpg70'; // 72828
