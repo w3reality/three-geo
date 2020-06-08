@@ -60,7 +60,7 @@ class Fetch {
                 res = '@2x.pngraw';
                 break;
             case 'mapbox-satellite':
-                prefix = `https://api.mapbox.com/v4/mapbox.streets-satellite`;
+                prefix = `https://api.mapbox.com/v4/mapbox.satellite`;
                 // https://www.mapbox.com/api-documentation/#retrieve-tiles
                 // mapbox-satellite-14-3072-6420.blob
                 // res = '@2x.png'; // 176813 (will get a jpg by spec)
