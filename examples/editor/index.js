@@ -81,7 +81,7 @@ if (tgeo.tokenMapbox.startsWith('****')) {
     // console.log('projInv:', projInv);
     // console.log('unitsPerMeter:', unitsPerMeter);
 
-    const laser = new Laser({color: 0xff00ff});
+    const laser = new ThreeGeo.Laser({color: 0xff00ff});
     scene.add(laser);
 
     $msg.empty();
