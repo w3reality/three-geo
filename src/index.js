@@ -1192,14 +1192,27 @@ for triInfo     <-                             triWorld,    normalWorld
     async getTerrainRgb(origin, radius, zoom, cb=undefined) {
         const _cbs = {onRgbDem: () => {}, onSatelliteMat: () => {}}; // to trigger rgb fetching
         const { rgbDem } = await this.getTerrain(origin, radius, zoom, _cbs);
-        if (cb) cb(rgbDem);
-        return rgbDem;
+        if (cb) { // Emulate the classic API
+            cb(rgbDem); // Array<THREE.Mesh>
+            return null;
+        } else {
+            const group = new THREE.Group();
+            group.add(...rgbDem);
+            return group;
+        }
     }
     async getTerrainVector(origin, radius, zoom, cb=undefined) {
         const _cbs = {onVectorDem: () => {}}; // to trigger vector fetching
         const { vectorDem } = await this.getTerrain(origin, radius, zoom, _cbs);
-        if (cb) cb(vectorDem);
-        return vectorDem;
+        if (cb) { // Emulate the classic API
+            cb(vectorDem); // Array<THREE.Object3D>
+            return null;
+        } else {
+            const group = new THREE.Group();
+            // Not doing `group.add(...vecorDem)`; `vectorDem.length` can be 'large'.
+            for (let obj of vectorDem) { group.add(obj); }
+            return group;
+        }
     }
 
     setApiVector(api) { this.apiVector = api; }
