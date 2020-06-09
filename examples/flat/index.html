@@ -46,6 +46,7 @@
     tgeo.getTerrain(origin, radius, 12, {
         onRgbDem: (meshes) => {},
         onSatelliteMat: (mesh) => {
+            // To get more 'lightweight' flat terrain, you might want to try [this](https://github.com/w3reality/three-geo/issues/19#issuecomment-640161898)
             const position = mesh.geometry.attributes.position;
             const arr = position.array;
             for (let i = 0; i < arr.length; i += 3) {
