@@ -1,8 +1,9 @@
 
+THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
+
 const canvas = document.getElementById("canvas");
 const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.001, 1000);
 camera.position.set(0, 0, 1.5);
-camera.up.set(0, 0, 1); // important for OrbitControls
 
 const renderer = new THREE.WebGLRenderer({
     // alpha: true,
@@ -58,9 +59,9 @@ const tgeo = new ThreeGeo({
 const isDebug = 0;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
-    tgeo.setApiVector(`../geo-viewer/cache/eiger/mapbox-terrain-vector`);
-    tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
-    tgeo.setApiSatellite(`../geo-viewer/cache/eiger/mapbox-satellite`);
+    tgeo.setApiVector(`../geo-viewer/cache/eiger/custom-terrain-vector`);
+    tgeo.setApiRgb(`../geo-viewer/cache/eiger/custom-terrain-rgb`);
+    tgeo.setApiSatellite(`../geo-viewer/cache/eiger/custom-satellite`);
     // console.log('tgeo:', tgeo);
 }
 
