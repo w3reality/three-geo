@@ -949,7 +949,7 @@ for triInfo     <-                             triWorld,    normalWorld
                 tile: _toTile(zoompos),
                 srcDem: {
                     tile: _toTile(zoomposEle),
-                    uri: `resolveme/${_toTile(zoomposEle).join('/')}`,
+                    uri: Fetch.getUriMapbox(this.tokenMapbox, 'mapbox-terrain-rgb', zoomposEle),
                 },
             };
             objs.push(plane);

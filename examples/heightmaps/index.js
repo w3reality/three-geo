@@ -20,9 +20,8 @@ const tgeo = new ThreeGeo({
 const isDebug = 0;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
-    tgeo.setApiRgb(`../geo-viewer/cache/eiger/mapbox-terrain-rgb`);
-    tgeo.setApiSatellite(`../geo-viewer/cache/eiger/mapbox-satellite`);
-    // console.log('tgeo:', tgeo);
+    tgeo.setApiRgb(`../geo-viewer/cache/eiger/custom-terrain-rgb`);
+    tgeo.setApiSatellite(`../geo-viewer/cache/eiger/custom-satellite`);
 }
 
 const createTextSprite = (text, color) => Threelet.Utils.createCanvasSprite(
@@ -43,8 +42,7 @@ const demToObjects = (demUri, demTile, proj) => {
     let _demUri = demUri;
     if (isDebug) {
         const [tx, ty, tz] = demTile;
-        // _demUri = `../geo-viewer/cache/eiger/mapbox-terrain-rgb-${tz}-${tx}-${ty}.blob.debug.png`;
-        _demUri = `../geo-viewer/cache/eiger/mapbox-terrain-rgb-${tz}-${tx}-${ty}.blob`;
+        _demUri = `../geo-viewer/cache/eiger/custom-terrain-rgb-${tz}-${tx}-${ty}.png`;
     }
 
     const plane = new THREE.Mesh(
@@ -116,10 +114,9 @@ tgeo.getTerrain(origin, radius, 12, {
 
             //======== how to access src DEM being used (grand-parental tile)
             // ref - https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
-            const srcDem = mesh.userData.threeGeo.srcDem;
-            const srcDemUri = `${srcDem.uri}${tgeo.tokenMapbox}`;
-            const srcDemTile = srcDem.tile;
-            // console.log('srcDemUri:', srcDemUri);
+            const { tile: srcDemTile, uri: srcDemUri } =
+                mesh.userData.threeGeo.srcDem;
+            // console.log('@@ srcDemUri:', srcDemUri);
 
             if (! srcDemUris[srcDemUri]) {
                 // console.log('adding:', srcDemUri);
