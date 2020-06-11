@@ -44,38 +44,39 @@
     const origin = [46.5763, 7.9904];
     const radius = 5.0;
 
-    // add terrain
-    tgeo.getTerrain(origin, radius, 12, {
-        onRgbDem: (meshes) => {},
-        onSatelliteMat: (mesh) => {
-            mesh.rotation.x = - Math.PI/2;
+    (async () => {
+        const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
+        terrain.rotation.x = - Math.PI/2;
+        terrain.children.forEach(mesh => {
             mesh.material.wireframe = true;
-            scene.add(mesh);
-            render();
-        },
-    });
+        });
+        scene.add(terrain);
 
-    // add a point
-    const { proj, unitsPerMeter } = tgeo.getProjection(origin, radius);
-    const dot = new THREE.Points(
-        new THREE.Geometry(),
-        new THREE.PointsMaterial({
-            size: 8,
-            sizeAttenuation: false,
-            color: 0x00cccc,
-        }));
+        // add a point
 
-    // 🔵 API signature has changed
-    // proj([lng, lat]) -> [x, y]  (three-geo <= 1.2.5)
-    // proj([lat, lng]) -> [x, y]  (three-geo > 1.3.0dev)
+        const { proj, unitsPerMeter } = tgeo.getProjection(origin, radius);
+        const dot = new THREE.Points(
+            new THREE.Geometry(),
+            new THREE.PointsMaterial({
+                size: 8,
+                sizeAttenuation: false,
+                color: 0x00cccc,
+            }));
 
-    // const [x, y] = proj(origin), z = 4000; // reprojection test
-    const [x, y] = proj([46.5775, 8.0052]), z = 3970; // Eiger's peak
-    // const [x, y] = proj([46.5852, 7.9610]), z = 2100; // town
+        // 🔵 API signature has changed
+        // proj([lng, lat]) -> [x, y]  (three-geo <= 1.2.5)
+        // proj([lat, lng]) -> [x, y]  (three-geo > 1.3.0dev)
 
-    dot.geometry.vertices.push(new THREE.Vector3(
-        x, z * unitsPerMeter, -y));
-    scene.add(dot);
+        // const [x, y] = proj(origin), z = 4000; // reprojection test
+        const [x, y] = proj([46.5775, 8.0052]), z = 3970; // Eiger's peak
+        // const [x, y] = proj([46.5852, 7.9610]), z = 2100; // town
+
+        dot.geometry.vertices.push(new THREE.Vector3(
+            x, z * unitsPerMeter, -y));
+        scene.add(dot);
+
+        render();
+    })();
     </script>
 </body>
 </html>

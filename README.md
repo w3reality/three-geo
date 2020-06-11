@@ -1,5 +1,4 @@
-three-geo
-=========
+# three-geo
 
 **three-geo** is a [three.js](https://github.com/mrdoob/three.js) based geographic visualization library. Using three-geo, we can easily build satellite-textured 3D terrain models in near real-time by simply specifying GPS coordinates anywhere on the globe. The geometry of the terrain is based on the RGB-encoded DEM (Digital Elevation Model) provided by the Mapbox Maps API.
 
@@ -10,8 +9,7 @@ Credits: this library has been made possible thanks to
 - geo-related libraries such as [mapbox](https://github.com/mapbox), [Turfjs](https://github.com/Turfjs/turf), [d3](https://github.com/d3/d3) in npm, and [the Mapbox Maps API](https://www.mapbox.com/api-documentation/#maps).
 - [peterqliu](https://github.com/peterqliu) for informative 3D terrain-related articles and implementation.
 
-Demo
-----
+## Demo
 
 **1) examples/geo-viewer** ([live](https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer))
 
@@ -51,8 +49,7 @@ How to get a flattened view of the terrain by post-editing the underlying geomet
 
 How to register a new 3D object on top of the terrain based on its geographic location `[latitude, longitude, elevation]`.
 
-Setup
------
+## Setup
 
 **Installation**
 
@@ -74,8 +71,7 @@ ES6:
 import ThreeGeo from 'dist/three-geo.esm.js';
 ```
 
-Usage
------
+## Usage
 
 Here is an example of how to build a geographic terrain located at GPS coordinates (46.5763, 7.9904) in a 5 km radius circle. The terrain's satellite zoom resolution is set to 12. (The highest zoom value supported is 17.)
 
@@ -101,19 +97,17 @@ tgeo.getTerrain([46.5763, 7.9904], 5.0, 12, {
 
 ![image](https://w3reality.github.io/three-geo/examples/img/1.jpg)
 
-Who is using `three-geo`?
--------------------------
+## Who is using `three-geo`?
 
 - [jet-wasp](https://jet-wasp.glitch.me/) - Three-geo as A-Frame component ([source code](https://glitch.com/edit/#!/jet-wasp))
 - [locus-pocus](https://locus-pocus.io/) - A webapp to visualise your area using three-geo
 - *Your App* - *PR us!*
 
-API
----
+## API
 
-**ThreeGeo**
+`ThreeGeo`
 
-- **constructor(opts={})**
+- `constructor(opts={})`
   Create a ThreeGeo instance with parameters.
 
   - `opts.tokenMapbox`=\"\" **string** Mapbox API token. This must be provided.
@@ -121,7 +115,7 @@ API
   - `opts.unitsSide`=1.0 **number** The side length of the square that fits the terrain in WebGL space.
 
 
-- **getTerrain(latlng, radius, zoom, callbacks={})**
+- `getTerrain(latlng, radius, zoom, callbacks={})`
   - `latlng` **Array\<number\>** GPS coordinates of the form: `[latitude, longitude]`.
 
   - `radius` **number** The radius of the circle that fits the terrain.
@@ -140,8 +134,7 @@ API
 
     - `objs` **Array\<THREE.Object3D\>** Extruded meshes (THREE.Mesh objects with `.name` attribute prefixed by `dem-vec-shade-<ele>-`) and lines (THREE.Line objects with `.name` attribute prefixed by `dem-vec-line-<ele>-`), where `<ele>` is the height of each contour in meters.
 
-Build
------
+## Build
 
 ```
 $ npm i

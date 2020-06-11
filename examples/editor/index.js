@@ -28,7 +28,8 @@ const resizeCanvasToDisplaySize = (force=false) => {
 };
 resizeCanvasToDisplaySize(true); // first time
 
-// object stuff --------
+// object stuff
+
 const scene = new THREE.Scene();
 const walls = new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
@@ -37,7 +38,8 @@ walls.position.set(0, 0, 0);
 scene.add(walls);
 scene.add(new THREE.AxesHelper(1));
 
-// render stuff --------
+// render stuff
+
 const stats = new Stats();
 stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom);
@@ -47,8 +49,8 @@ const render = () => {
     renderer.render(scene, camera);
 };
 
+// main
 
-// main --------
 render(); // first time
 controls.addEventListener('change', render);
 
@@ -62,27 +64,21 @@ if (isDebug) {
     tgeo.setApiVector(`../geo-viewer/cache/eiger/custom-terrain-vector`);
     tgeo.setApiRgb(`../geo-viewer/cache/eiger/custom-terrain-rgb`);
     tgeo.setApiSatellite(`../geo-viewer/cache/eiger/custom-satellite`);
-    // console.log('tgeo:', tgeo);
 }
 
 const $msg = $('#msg');
 
 if (tgeo.tokenMapbox.startsWith('****')) {
     const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
-    // alert(warning);
     $msg.append(`<div>${warning}</div>`);
-} else {
-    // params: [lat, lng], terrain's radius (km), zoom resolution, callbacks
-    // Beware the value of radius; radius > 5.0 (km) could trigger huge number of tile API calls!!
+    throw warning;
+}
+
+(async () => {
     const origin = [46.5763, 7.9904];
     const radius = 5.0;
-    const {proj, projInv, bbox, unitsPerMeter} = tgeo.getProjection(origin, radius);
-    // console.log('proj:', proj);
-    // console.log('projInv:', projInv);
-    // console.log('unitsPerMeter:', unitsPerMeter);
-
-    const laser = new ThreeGeo.Laser({color: 0xff00ff});
-    scene.add(laser);
+    const {proj, projInv, bbox, unitsPerMeter} =
+        tgeo.getProjection(origin, radius);
 
     $msg.empty();
     $msg.append(`<div>---- ROI ----</div>`);
@@ -92,30 +88,30 @@ if (tgeo.tokenMapbox.startsWith('****')) {
     $msg.append(`<div>bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})</div>`);
     $msg.append(`<div>---- Log ----</div>`);
 
-    tgeo.getTerrain(origin, radius, 12, {
-        // onVectorDem: (mesh) => { /* just for debugging ajax */ },
-        onRgbDem: (meshes) => {
+    const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
+    scene.add(terrain);
 
-            const pt = new THREE.Vector3(0, 0, 0);
-            laser.setSource(new THREE.Vector3(0.3, -0.4, -0.2), camera);
-            laser.pointWithRaytrace(pt, meshes);
+    terrain.children.forEach((mesh, idx) => {
+        mesh.material.wireframe = true;
+        // mesh.material.side = THREE.DoubleSide;
 
-            meshes.forEach((mesh) => {
-                console.log('rgb DEM mesh:', mesh);
-                scene.add(mesh);
+        // How to access the post-processed heightmap
+        console.log('rgb DEM mesh:', mesh);
+        const position = mesh.geometry.attributes.position;
+        const arr = position.array;
+        console.log('arr.length:', arr.length); // 3x128x128 (+ deltaSeams)
 
-                //======== how to access the post-processed heightmap
-                const array = mesh.geometry.attributes.position.array;
-                // console.log('array:', array);
-                console.log('array.length:', array.length); // 3x128x128 (+ deltaSeams)
+        if (idx % 2 > 0) return;
 
-            });
-            render();
-        },
-        onSatelliteMat: (mesh) => {
-            mesh.material.wireframe = true;
-            // mesh.material.side = THREE.DoubleSide;
-            render();
-        },
+        for (let i = 0; i < arr.length; i += 3) { arr[i+2] = 0; }
+        position.needsUpdate = true;
     });
-}
+
+    // FIXME: odd laser reflection...
+    const laser = new ThreeGeo.Laser({color: 0xff00ff});
+    laser.setSource(new THREE.Vector3(0, 0, 0), camera);
+    laser.pointWithRaytrace(new THREE.Vector3(0, -0.5, 0), terrain.children);
+    scene.add(laser);
+
+    render();
+})();

@@ -91,48 +91,44 @@ $msg.append(`<div>units per km: ${unitsPerMeter * 1000}</div>`);
 $msg.append(`<div>bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})</div>`);
 $msg.append(`<div>---- Terrain Composition ----</div>`);
 
-tgeo.getTerrain(origin, radius, 12, {
-    onRgbDem: (meshes) => {
-        meshes.forEach((mesh) => {
-            console.log('rgb DEM mesh:', mesh);
-            group.add(mesh);
-            console.log('userData:', mesh.userData);
+(async () => {
+    const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
+    group.add(terrain);
 
-            //======== how to access the post-processed heightmap
-            const array = mesh.geometry.attributes.position.array;
-            // console.log('array:', array);
-            console.log('array.length:', array.length); // 3x128x128 (+ deltaSeams)
-
-            //======== how to visualize constituent tiles of the terrain
-            const tile = mesh.userData.threeGeo.tile;
-            const { obj, offset } = ThreeGeo.Utils.bboxToWireframe(
-                ThreeGeo.Utils.tileToBbox(tile), proj, {offsetZ: - 0.05});
-
-            const sp = createTextSprite(`${tile.join('-')}`, '#0ff');
-            sp.position.set(offset[0], offset[1], offset[2] + 0.05);
-            group.add(obj, sp);
-
-            //======== how to access src DEM being used (grand-parental tile)
-            // ref - https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
-            const { tile: srcDemTile, uri: srcDemUri } =
-                mesh.userData.threeGeo.srcDem;
-            // console.log('@@ srcDemUri:', srcDemUri);
-
-            if (! srcDemUris[srcDemUri]) {
-                // console.log('adding:', srcDemUri);
-                srcDemUris[srcDemUri] = true;
-
-                const {wireframe, plane, sprite} = demToObjects(srcDemUri, srcDemTile, proj);
-                group.add(wireframe, plane, sprite);
-            }
-
-            $msg.append(`<div><span style="color: #00ffffff;">tile ${tile.join('-')}</span> using <span style="color: #ff00ffff";>DEM ${srcDemTile.join('-')}</span></div>`);
-        });
-        render();
-    },
-    onSatelliteMat: (mesh) => {
+    terrain.children.forEach(mesh => {
         mesh.material.wireframe = true;
-        // mesh.material.side = THREE.DoubleSide;
-        render();
-    },
-});
+
+        console.log('rgb DEM mesh:', mesh);
+        console.log('userData:', mesh.userData);
+
+        //======== how to access the post-processed heightmap
+        const array = mesh.geometry.attributes.position.array;
+        console.log('array.length:', array.length); // 3x128x128 (+ deltaSeams)
+
+        //======== how to visualize constituent tiles of the terrain
+        const tile = mesh.userData.threeGeo.tile;
+        const { obj, offset } = ThreeGeo.Utils.bboxToWireframe(
+            ThreeGeo.Utils.tileToBbox(tile), proj, {offsetZ: - 0.05});
+
+        const sp = createTextSprite(`${tile.join('-')}`, '#0ff');
+        sp.position.set(offset[0], offset[1], offset[2] + 0.05);
+        group.add(obj, sp);
+
+        //======== how to access src DEM being used (grand-parental tile)
+        // ref - https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
+        const { tile: srcDemTile, uri: srcDemUri } =
+            mesh.userData.threeGeo.srcDem;
+
+        if (! srcDemUris[srcDemUri]) {
+            srcDemUris[srcDemUri] = true;
+
+            const { wireframe, plane, sprite } =
+                demToObjects(srcDemUri, srcDemTile, proj);
+            group.add(wireframe, plane, sprite);
+        }
+
+        $msg.append(`<div><span style="color: #00ffffff;">tile ${tile.join('-')}</span> using <span style="color: #ff00ffff";>DEM ${srcDemTile.join('-')}</span></div>`);
+    });
+
+    render();
+})();

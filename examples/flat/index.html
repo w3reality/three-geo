@@ -43,9 +43,11 @@
 
     const origin = [46.5763, 7.9904];
     const radius = 5.0;
-    tgeo.getTerrain(origin, radius, 12, {
-        onRgbDem: (meshes) => {},
-        onSatelliteMat: (mesh) => {
+
+    (async () => {
+        const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
+        scene.add(terrain);
+        terrain.children.forEach(mesh => {
             // To get more 'lightweight' flat terrain, you might want to try [this](https://github.com/w3reality/three-geo/issues/19#issuecomment-640161898)
             const position = mesh.geometry.attributes.position;
             const arr = position.array;
@@ -56,10 +58,9 @@
 
             mesh.rotation.x = - Math.PI/2;
             mesh.material.side = THREE.DoubleSide;
-            scene.add(mesh);
-            render();
-        },
-    });
+        });
+        render();
+    })();
     </script>
 </body>
 </html>
