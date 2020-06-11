@@ -20,6 +20,7 @@ const tgeo = new ThreeGeo({
 const isDebug = 0;
 if (isDebug) {
     tgeo.tokenMapbox = 'zzzz';
+    tgeo.setApiVector(`../geo-viewer/cache/eiger/custom-terrain-vector`);
     tgeo.setApiRgb(`../geo-viewer/cache/eiger/custom-terrain-rgb`);
     tgeo.setApiSatellite(`../geo-viewer/cache/eiger/custom-satellite`);
 }
@@ -63,13 +64,16 @@ const demToObjects = (demUri, demTile, proj) => {
     };
 };
 
-const $msg = $('#msg');
+const msg = document.getElementById('msg');
+const appendText = (el, text) => {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    el.appendChild(div);
+};
 
-if (tgeo.tokenMapbox.startsWith('****')) {
+if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
     const warning = 'Please set your Mapbox API token in the ThreeGeo constructor.';
-    // alert(warning);
-    $msg.append(`<div>${warning}</div>`);
-    alert(warning);
+    appendText(msg, warning);
     throw warning;
 }
 
@@ -83,13 +87,29 @@ const { proj, bbox, unitsPerMeter } = tgeo.getProjection(origin, radius);
 
 const srcDemUris = {};
 
-$msg.empty();
-$msg.append(`<div>---- ROI ----</div>`);
-$msg.append(`<div>lat lng: (${origin[0]}, ${origin[1]})</div>`);
-$msg.append(`<div>radius: ${radius} [km]</div>`);
-$msg.append(`<div>units per km: ${unitsPerMeter * 1000}</div>`);
-$msg.append(`<div>bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})</div>`);
-$msg.append(`<div>---- Terrain Composition ----</div>`);
+appendText(msg, `---- ROI ----`);
+appendText(msg, `lat lng: (${origin[0]}, ${origin[1]})`);
+appendText(msg, `radius: ${radius} [km]`);
+appendText(msg, `units per km: ${unitsPerMeter * 1000}`);
+appendText(msg, `bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})`);
+appendText(msg, `---- Terrain Composition ----`);
+
+const appendCompositionInfo = (el, tile, srcDemTile) => {
+    const div = document.createElement('div');
+    el.appendChild(div);
+
+    let span = document.createElement('span');
+    span.style.color = '#00ffffff';
+    span.appendChild(document.createTextNode(`tile ${tile.join('-')}`));
+    div.appendChild(span);
+
+    div.appendChild(document.createTextNode(' using '));
+
+    span = document.createElement('span');
+    span.style.color = '#ff00ffff';
+    span.appendChild(document.createTextNode(`DEM ${srcDemTile.join('-')}`));
+    div.appendChild(span);
+};
 
 (async () => {
     const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
@@ -118,6 +138,7 @@ $msg.append(`<div>---- Terrain Composition ----</div>`);
         // ref - https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
         const { tile: srcDemTile, uri: srcDemUri } =
             mesh.userData.threeGeo.srcDem;
+        appendCompositionInfo(msg, tile, srcDemTile);
 
         if (! srcDemUris[srcDemUri]) {
             srcDemUris[srcDemUri] = true;
@@ -126,8 +147,6 @@ $msg.append(`<div>---- Terrain Composition ----</div>`);
                 demToObjects(srcDemUri, srcDemTile, proj);
             group.add(wireframe, plane, sprite);
         }
-
-        $msg.append(`<div><span style="color: #00ffffff;">tile ${tile.join('-')}</span> using <span style="color: #ff00ffff";>DEM ${srcDemTile.join('-')}</span></div>`);
     });
 
     render();

@@ -12,22 +12,6 @@ const renderer = new THREE.WebGLRenderer({
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-// https://stackoverflow.com/questions/29884485/threejs-canvas-size-based-on-container
-const resizeCanvasToDisplaySize = (force=false) => {
-    let width = canvas.clientWidth;
-    let height = canvas.clientHeight;
-
-    // adjust displayBuffer size to match
-    if (force || canvas.width != width || canvas.height != height) {
-        // you must pass false here or three.js sadly fights the browser
-        // console.log "resizing: #{canvas.width} #{canvas.height} -> #{width} #{height}"
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-    }
-};
-resizeCanvasToDisplaySize(true); // first time
-
 // object stuff
 
 const scene = new THREE.Scene();
@@ -45,32 +29,35 @@ stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom);
 const render = () => {
     stats.update();
-    resizeCanvasToDisplaySize();
     renderer.render(scene, camera);
 };
 
 // main
 
-render(); // first time
 controls.addEventListener('change', render);
+render(); // first time
 
 const tgeo = new ThreeGeo({
     tokenMapbox: '********', // <---- set your Mapbox API token here
 });
 
-const isDebug = 0;
-if (isDebug) {
+if (0) {
     tgeo.tokenMapbox = 'zzzz';
     tgeo.setApiVector(`../geo-viewer/cache/eiger/custom-terrain-vector`);
     tgeo.setApiRgb(`../geo-viewer/cache/eiger/custom-terrain-rgb`);
     tgeo.setApiSatellite(`../geo-viewer/cache/eiger/custom-satellite`);
 }
 
-const $msg = $('#msg');
+const msg = document.getElementById('msg');
+const appendText = (el, text) => {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    el.appendChild(div);
+};
 
 if (tgeo.tokenMapbox.startsWith('****')) {
     const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
-    $msg.append(`<div>${warning}</div>`);
+    appendText(msg, warning);
     throw warning;
 }
 
@@ -80,13 +67,12 @@ if (tgeo.tokenMapbox.startsWith('****')) {
     const {proj, projInv, bbox, unitsPerMeter} =
         tgeo.getProjection(origin, radius);
 
-    $msg.empty();
-    $msg.append(`<div>---- ROI ----</div>`);
-    $msg.append(`<div>lat lng: (${origin[0]}, ${origin[1]})</div>`);
-    $msg.append(`<div>radius: ${radius} [km]</div>`);
-    $msg.append(`<div>units per km: ${unitsPerMeter * 1000}</div>`);
-    $msg.append(`<div>bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})</div>`);
-    $msg.append(`<div>---- Log ----</div>`);
+    appendText(msg, `---- ROI ----`);
+    appendText(msg, `lat lng: (${origin[0]}, ${origin[1]})`);
+    appendText(msg, `radius: ${radius} [km]`);
+    appendText(msg, `units per km: ${unitsPerMeter * 1000}`);
+    appendText(msg, `bbox (w, s, e, n): (${bbox.map(q => q.toFixed(4)).join(', ')})`);
+    appendText(msg, `---- Log ----`);
 
     const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
     scene.add(terrain);
