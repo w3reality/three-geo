@@ -1197,6 +1197,7 @@ for triInfo     <-                             triWorld,    normalWorld
             return null;
         } else {
             const group = new THREE.Group();
+            group.name = 'dem-rgb';
             group.add(...rgbDem);
             return group;
         }
@@ -1209,6 +1210,7 @@ for triInfo     <-                             triWorld,    normalWorld
             return null;
         } else {
             const group = new THREE.Group();
+            group.name = 'dem-vec';
             // Not doing `group.add(...vecorDem)`; `vectorDem.length` can be 'large'.
             for (let obj of vectorDem) { group.add(obj); }
             return group;
