@@ -171,36 +171,33 @@ class Viewer {
         if (obj.texture) obj.texture.dispose();
     }
     clearTerrainObjects() {
-        this.renderer.dispose(); // cf. https://gist.github.com/j-devel/6d0323264b6a1e47e2ee38bc8647c726
+        this.renderer.dispose();
 
-        // this.
-        //    this.wireframeMat                        intact
-        //    this.objsInteractive               vv    to be cleared
-        //    this._isRgbDemLoaded               vv    to be set false
-        //    this._isVectorDemLoaded            vv    to be set false
-        //    ::::this.satelliteMats             vv    to be cleared
-        //        dem-rgb-12/2257/2458        vv    to be cleared
-        //        dem-rgb-12/2257/2459        vv    to be cleared
-        //        ...                         vv
+        // this.wireframeMat             intact
+        // this.objsInteractive          to be cleared
+        // this._isRgbDemLoaded          to be set false
+        // this._isVectorDemLoaded       to be set false
+        // ::this.satelliteMats          to be cleared
+        //   dem-rgb-...                 to be cleared
+        //   dem-rgb-...                 to be cleared
+        //   ...                         to be cleared
         //========
         this.objsInteractive.length = 0;
         //--
         this._isRgbDemLoaded = false;
         this._isVectorDemLoaded = false;
-        //--
         Object.entries(this.satelliteMats).forEach(([k, mat]) => {
             delete this.satelliteMats[k];
             Viewer._disposeMaterial(mat);
         });
 
         // this.scene.children
-        //::::Mesh walls                      intact
-        //::::Mesh dem-rgb-...             vv   to be cleared
-        //::::Line dem-vec-line-...        vv   to be cleared
-        //::::Mesh dem-vec-shade-...       vv   to be cleared
-        //::::Laser ""     orbit           vv   this._updateLaserMarker(null)
-        //::::LineLoop ""  orbit           vv   this._removeOrbit()
-        //::::Laser ""     pointer            intact
+        //   ::Mesh walls                intact
+        //   ::Mesh dem-rgb-...          to be cleared
+        //   ::Group dem-vec             to be cleared
+        //   ::Laser ""     orbit        this._updateLaserMarker(null)
+        //   ::LineLoop ""  orbit        this._removeOrbit()
+        //   ::Laser ""     pointer      intact
         //========
         this.scene.children.filter(
             obj => obj.name.startsWith('dem-'))
@@ -216,13 +213,12 @@ class Viewer {
         if (this.guiHelper) {
             this.guiHelper.autoOrbitController.setValue(false);
         }
-        //--
 
         // this.sceneMeasure.children
-        //::::Laser ""     this._laserMarkTmp   vv   this._updateLaserMarkTmp(null)
-        //::::Laser ""     measure         vv   to be cleared
-        //::::Laser ""     measure         vv   to be cleared
-        //...                              vv
+        //   ::Laser ""     this._laserMarkTmp   this._updateLaserMarkTmp(null)
+        //   ::Laser ""     measure              to be cleared
+        //   ::Laser ""     measure              to be cleared
+        //   ...                                 to be cleared
         //========
         this._updateLaserMarkTmp(null);
         //--
@@ -232,7 +228,6 @@ class Viewer {
                     mark.parent.remove(mark);
                     Viewer._disposeObject(mark);
                 });
-        //--
     }
     reloadPageWithLocation(ll, title=undefined) {
         let href = `./index.html?lat=${ll[0]}&lng=${ll[1]}`;
@@ -316,14 +311,17 @@ class Viewer {
     }
 
     nop() { /* nop */ }
+    static isTokenSet(token) {
+        if (token !== '********') return true;
+
+        const msg = 'Please set a valid Mapbox token in env.js';
+        console.warn(msg);
+        alert(msg);
+        return false;
+    }
     loadRgbDem(cb=this.nop) {
         if (this._isRgbDemLoaded) { return cb(); }
-        if (this.env.tokenMapbox === '********') {
-            const msg = 'Please set a valid Mapbox token in env.js';
-            console.log(msg);
-            alert(msg);
-            return cb();
-        }
+        if (!Viewer.isTokenSet(this.env.tokenMapbox)) { return cb(); }
 
         this._isRgbDemLoaded = true;
         this.tgeo.getTerrain(this._origin, this._radius, this._zoom, {
@@ -344,26 +342,20 @@ class Viewer {
             },
         });
     }
-    loadVectorDem(cb=this.nop) {
+    async loadVectorDem(cb=this.nop) {
         if (this._isVectorDemLoaded) { return cb(); }
-        if (this.env.tokenMapbox === '********') {
-            console.log('Please set a valid Mapbox token in env.js');
-            return cb();
-        }
+        if (!Viewer.isTokenSet(this.env.tokenMapbox)) { return cb(); }
 
         console.log('load vector dem: start');
         this._isVectorDemLoaded = true;
-        this.tgeo.getTerrain(this._origin, this._radius, this._zoom, {
-            onVectorDem: (objs) => {
-                console.log('load vector dem: end');
-                // dem-vec-shade-<ele>-* and dem-vec-line-<ele>-*
-                objs.forEach((obj) => {
-                    this.scene.add(obj);
-                });
-                this._render();
-                return cb();
-            },
-        });
+
+        const terrain = await this.tgeo.getTerrainVector(
+            this._origin, this._radius, this._zoom);
+        console.log('load vector dem: end');
+
+        this.scene.add(terrain);
+        this._render();
+        cb();
     }
 
     // marker stuff --------
