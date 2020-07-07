@@ -49,24 +49,23 @@ class Fetch {
         return `${api}-${zoompos.join('-')}.${extension}`;
     }
     static getUriMapbox(token, api, zoompos) {
-        let prefix, res;
+        let prefix, res = '';
         switch (api) {
             case 'mapbox-terrain-vector':
+                // https://docs.mapbox.com/help/troubleshooting/access-elevation-data/#mapbox-terrain-vector-tileset
+                // https://docs.mapbox.com/api/maps/#vector-tiles
                 prefix = 'https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2';
                 res = '.vector.pbf';
                 break;
             case 'mapbox-terrain-rgb':
-                prefix = `https://api.mapbox.com/v4/mapbox.terrain-rgb`;
+                // https://docs.mapbox.com/help/troubleshooting/access-elevation-data/#mapbox-terrain-rgb
+                prefix = 'https://api.mapbox.com/v4/mapbox.terrain-rgb';
                 res = '@2x.pngraw';
                 break;
             case 'mapbox-satellite':
-                prefix = `https://api.mapbox.com/v4/mapbox.satellite`;
-                // [doc](https://docs.mapbox.com/api/#retrieve-tiles)
-                // test: mapbox-satellite-14-3072-6420.blob
-                // res = '@2x.png'; // 176813; gets a jpg per [spec](https://docs.mapbox.com/api/maps/#retrieve-raster-tiles)
-                // res = '@2x.jpg90'; // 132759
-                // res = '@2x.jpg80';
-                res = '@2x.jpg70'; // 72828
+                // https://docs.mapbox.com/help/troubleshooting/migrate-legacy-static-images-api/
+                // https://docs.mapbox.com/api/maps/#static-tiles
+                prefix = 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles';
                 break;
             default:
                 console.log('getUriMapbox(): unsupported api:', api);
