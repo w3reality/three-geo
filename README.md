@@ -79,20 +79,19 @@ For standalone tests, use **examples/simple-viewer** ([source code](https://gith
 
 ```js
 const tgeo = new ThreeGeo({
-    tokenMapbox: '********',                  // <---- set your Mapbox API token here
+    tokenMapbox: '********', // <---- set your Mapbox API token here
 });
 
-// params: [lat, lng], terrain's radius (km), satellite zoom resolution, callbacks
-// Beware the value of radius; for zoom 12, radius > 5.0 (km) could trigger huge number of tile API calls!!
-tgeo.getTerrain([46.5763, 7.9904], 5.0, 12, {
-    onRgbDem: meshes => {                     // your implementation when the terrain's geometry is obtained
-        meshes.forEach(mesh => scene.add(mesh));
-        render();                             // now render scene after dem meshes are added
-    },
-    onSatelliteMat: mesh => {                 // your implementation when terrain's satellite texture is obtained
-        render();                             // now render scene after dem material (satellite texture) is applied
-    },
-});
+const terrain = await tgeo.getTerrainRgb(
+    [46.5763, 7.9904], // [lat, lng]
+    5.0,               // radius of bounding circle (km)
+    12);               // zoom resolution
+
+const scene = new THREE.Scene();
+scene.add(terrain);
+
+const renderer = new THREE.WebGLRenderer({ canvas });
+renderer.render(scene, camera);
 ```
 
 ![image](https://w3reality.github.io/three-geo/examples/img/1.jpg)
@@ -105,22 +104,42 @@ tgeo.getTerrain([46.5763, 7.9904], 5.0, 12, {
 
 ## API
 
+In this section, we list `three-geo`'s public API methods, where `latlng`, `radius`, and `zoom` are parameters common to them:
+
+  - `latlng` **Array\<number\>** GPS coordinates of the form: `[latitude, longitude]`.
+
+  - `radius` **number** The radius of the circle that fits the terrain.
+
+  - `zoom` **number (integer)** Satellite zoom resolution of the tiles in the terrain. Select from {11, 12, 13, 14, 15, 16, 17}, where 17 is the highest value supported. For a fixed radius, higher zoom resolution results in more tileset API calls.
+
+
 `ThreeGeo`
 
 - `constructor(opts={})`
+
   Create a ThreeGeo instance with parameters.
 
   - `opts.tokenMapbox`=\"\" **string** Mapbox API token. This must be provided.
 
   - `opts.unitsSide`=1.0 **number** The side length of the square that fits the terrain in WebGL space.
 
+- `async getTerrainRgb(latlng, radius, zoom)` Added in v1.4
+
+  Return a **THREE.Group** object that represents a 3D surface of the terrain.
+
+  The group object contains an **Array\<THREE.Mesh\>** as `.children`. Each mesh corresponds to a partial geometry of the terrain textured with satellite images.
+
+- `async getTerrainVector(latlng, radius, zoom)` Added in v1.4
+
+  Return a **THREE.Group** object that represents a 3D contour map of the terrain.
+
+  The group object contains an **Array\<THREE.Object3D\>** as its `.children`. Each child object is either an extruded **THREE.Mesh** with `.name` attribute prefixed by `dem-vec-shade-<ele>-`, or a **THREE.Line** with `.name` prefixed by `dem-vec-line-<ele>-` (`<ele>` is the height of each contour in meters).
+
+
+<p><details>
+<summary>Legacy callback based API</summary>
 
 - `getTerrain(latlng, radius, zoom, callbacks={})`
-  - `latlng` **Array\<number\>** GPS coordinates of the form: `[latitude, longitude]`.
-
-  - `radius` **number** The radius of the circle that fits the terrain.
-
-  - `zoom` **number (integer)** Satellite zoom resolution of the tiles in the terrain. Select from {11, 12, 13, 14, 15, 16, 17}, where 17 is the highest value supported. For a fixed radius, higher zoom resolution results in more tileset API calls.
 
   - `callbacks.onRgbDem` **function (meshes) {}** Implement this to request the geometry of the terrain. Called when the entire terrain\'s geometry is obtained.
 
@@ -133,6 +152,8 @@ tgeo.getTerrain([46.5763, 7.9904], 5.0, 12, {
   - `callbacks.onVectorDem` **function (objs) {}** Implement this to request the contour map of the terrain. Called when the contour map of the terrain is obtained.
 
     - `objs` **Array\<THREE.Object3D\>** Extruded meshes (THREE.Mesh objects with `.name` attribute prefixed by `dem-vec-shade-<ele>-`) and lines (THREE.Line objects with `.name` attribute prefixed by `dem-vec-line-<ele>-`), where `<ele>` is the height of each contour in meters.
+
+</details></p>
 
 ## Build
 
