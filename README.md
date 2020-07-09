@@ -11,7 +11,7 @@ Credits: this library has been made possible thanks to
 
 ## Demo
 
-**1) examples/geo-viewer** ([live](https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer))
+### 1) examples/geo-viewer ([live](https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer))
 
 This demo app includes features such as
 
@@ -35,17 +35,17 @@ Live:
 
   [![image](https://w3reality.github.io/three-geo/examples/img/2.jpg)](https://w3reality.github.io/three-geo/examples/geo-viewer/io/index.html?lat=36.2058&lng=-112.4413&title=Colorado_River)
 
-**2) examples/heightmaps** ([live](https://w3reality.github.io/three-geo/examples/heightmaps/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/heightmaps))
+### 2) examples/heightmaps ([live](https://w3reality.github.io/three-geo/examples/heightmaps/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/heightmaps))
 
 This demo illustrates the relationship between a reconstructed 3D terrain and its underlying satellite/DEM tiles.
 
 [![image](https://w3reality.github.io/three-geo/examples/img/heightmap-demo-2.jpg)](https://w3reality.github.io/three-geo/examples/heightmaps/index.html)
 
-**3) examples/flat** ([live](https://w3reality.github.io/three-geo/examples/flat/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/flat/index.html))
+### 3) examples/flat ([live](https://w3reality.github.io/three-geo/examples/flat/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/flat/index.html))
 
 How to get a flattened view of the terrain by post-editing the underlying geometry.
 
-**4) examples/projection** ([live](https://w3reality.github.io/three-geo/examples/projection/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/projection/index.html))
+### <a name="ex-proj"></a>4) examples/projection ([live](https://w3reality.github.io/three-geo/examples/projection/index.html) | [source code](https://github.com/w3reality/three-geo/tree/master/examples/projection/index.html))
 
 How to register a new 3D object on top of the terrain based on its geographic location `[latitude, longitude, elevation]`.
 
@@ -104,11 +104,11 @@ renderer.render(scene, camera);
 
 ## API
 
-In this section, we list `three-geo`'s public API methods, where `latlng`, `radius`, and `zoom` are parameters common to them:
+In this section, we list `three-geo`'s public API methods, where `origin`, `radius`, and `zoom` are parameters common to them:
 
-  - `latlng` **Array\<number\>** GPS coordinates of the form: `[latitude, longitude]`.
+  - `origin` **Array\<number\>** Center of the terrain represented as GPS coordinates `[latitude, longitude]`.
 
-  - `radius` **number** The radius of the circle that fits the terrain.
+  - `radius` **number** Radius of the circle that fits the terrain.
 
   - `zoom` **number (integer)** Satellite zoom resolution of the tiles in the terrain. Select from {11, 12, 13, 14, 15, 16, 17}, where 17 is the highest value supported. For a fixed radius, higher zoom resolution results in more tileset API calls.
 
@@ -123,23 +123,34 @@ In this section, we list `three-geo`'s public API methods, where `latlng`, `radi
 
   - `opts.unitsSide`=1.0 **number** The side length of the square that fits the terrain in WebGL space.
 
-- `async getTerrainRgb(latlng, radius, zoom)` Added in v1.4
+- `async getTerrainRgb(origin, radius, zoom)` [ Added in v1.4 ]
 
   Return a **THREE.Group** object that represents a 3D surface of the terrain.
 
   The group object contains an **Array\<THREE.Mesh\>** as `.children`. Each mesh corresponds to a partial geometry of the terrain textured with satellite images.
 
-- `async getTerrainVector(latlng, radius, zoom)` Added in v1.4
+- `async getTerrainVector(origin, radius, zoom)` [ Added in v1.4 ]
 
   Return a **THREE.Group** object that represents a 3D contour map of the terrain.
 
-  The group object contains an **Array\<THREE.Object3D\>** as its `.children`. Each child object is either an extruded **THREE.Mesh** with `.name` attribute prefixed by `dem-vec-shade-<ele>-`, or a **THREE.Line** with `.name` prefixed by `dem-vec-line-<ele>-` (`<ele>` is the height of each contour in meters).
+  The group object contains an **Array\<THREE.Object3D\>** as `.children`. Each child object is either an extruded **THREE.Mesh** with `.name` attribute prefixed by `dem-vec-shade-<ele>-`, or a **THREE.Line** with `.name` prefixed by `dem-vec-line-<ele>-` (`<ele>` is the height of each contour in meters).
 
+- `getProjection(origin, radius, unitsSide=1.0)` [ [Example](#ex-proj) ]
+
+  Return an object `{ proj, projInv, bbox, unitsPerMeter }` that includes transformation-related functions and parameters, where
+
+  - `proj(latlng)` is a function that maps geo coordinates `latlng` (an array `[lat, lng]`) to WebGL coordinates `[x, y]`.
+
+  - `projInv(x, y)` is a function that maps WebGL coordinates `[x, y]` to geo coordinates `[lat, lng]`.
+
+  - `bbox` is an array `[w, s, e, n]` that represents the computed bounding box of the terrain, where `w` (West) and `e` (East) are longitudinal limits; and `s` (South) and `n` (North) are latitudinal limits.
+
+  - `unitsPerMeter` is the length in WebGL-space per meter.
 
 <p><details>
 <summary>Legacy callback based API</summary>
 
-- `getTerrain(latlng, radius, zoom, callbacks={})`
+- `getTerrain(origin, radius, zoom, callbacks={})`
 
   - `callbacks.onRgbDem` **function (meshes) {}** Implement this to request the geometry of the terrain. Called when the entire terrain\'s geometry is obtained.
 
@@ -151,7 +162,7 @@ In this section, we list `three-geo`'s public API methods, where `latlng`, `radi
 
   - `callbacks.onVectorDem` **function (objs) {}** Implement this to request the contour map of the terrain. Called when the contour map of the terrain is obtained.
 
-    - `objs` **Array\<THREE.Object3D\>** Extruded meshes (THREE.Mesh objects with `.name` attribute prefixed by `dem-vec-shade-<ele>-`) and lines (THREE.Line objects with `.name` attribute prefixed by `dem-vec-line-<ele>-`), where `<ele>` is the height of each contour in meters.
+    - `objs` **Array\<THREE.Object3D\>** Extruded meshes (**THREE.Mesh** objects with `.name` attribute prefixed by `dem-vec-shade-<ele>-`) and lines (**THREE.Line** objects with `.name` attribute prefixed by `dem-vec-line-<ele>-`), where `<ele>` is the height of each contour in meters.
 
 </details></p>
 
