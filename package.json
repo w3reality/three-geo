@@ -1,13 +1,13 @@
 {
     "name": "three-geo",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "description": "Geographic visualization with three.js",
     "main": "dist/three-geo.min.js",
     "directories": {
         "example": "examples"
     },
     "scripts": {
-        "postinstall": "(cd ./examples/geo-viewer && npm i);",
+        "postinstall": "(cd ./examples/geo-viewer && npm i || echo);",
         "dist": "es-pack build -d ./dist -m umd esm esm-compat",
         "build": "es-pack build -m umd",
         "build:esm": "es-pack build -m esm",

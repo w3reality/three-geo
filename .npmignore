@@ -1,6 +1,4 @@
-examples/*
-examples/geo-viewer/*
-!examples/geo-viewer/package.json
+examples/
 lib/
 test/
 webpack.config.js
