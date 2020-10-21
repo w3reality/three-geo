@@ -40,6 +40,15 @@ const run = async (fnName, loc) => {
     return { group, err };
 };
 
+test('`getTerrainRgb()`: case - no DEM files fetched', async () => {
+    const loc = {name: 'noexist', origin: [46.5763, 7.9904], radius: 5.0, zoom: 12};
+
+    // The API call should return even when no rgb DEM files are fetched
+    const ret = await run('getTerrainRgb', loc);
+
+    expect(ret.err).toBe(undefined);
+});
+
 test('`getTerrainRgb()`: eiger', async () => {
     const loc = {name: 'eiger', origin: [46.5763, 7.9904], radius: 5.0, zoom: 12};
     const ret = await run('getTerrainRgb', loc);

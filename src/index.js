@@ -990,6 +990,13 @@ for triInfo     <-                             triWorld,    normalWorld
                 if (count === zpEle.length) {
                     console.log('dataEleCovered:', dataEleCovered);
 
+                    if (dataEleCovered.length === 0) {
+                        const meshes = [];
+                        onRgbDem(meshes);
+                        watcher({what: 'dem-rgb', data: meshes});
+                        return;
+                    }
+
                     if (onSatelliteMat) {
                         let _count = 0; // for satellite processing
                         const _onSatelliteMat = (mesh, meshesAcc) => {
