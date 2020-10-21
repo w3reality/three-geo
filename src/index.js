@@ -594,12 +594,12 @@ for triInfo     <-                             triWorld,    normalWorld
             max_zoom: zoom,
         };
         return cover.tiles(polygon.geometry, limits) // poszoom
-            .map(([x, y, z]) => { return [z, x, y]; }); // zoompos now!!
+            .map(([x, y, z]) => [z, x, y]); // zoompos now!!
     }
     static getZoomposEle(zpArray) {
         // compute elevation tiles belonging to the gradparent zoom level
         let elevations = {};
-        zpArray.forEach((zoompos) => {
+        zpArray.forEach(zoompos => {
             let grandparent = [
                 zoompos[0]-2,
                 Math.floor(zoompos[1]/4),
@@ -612,14 +612,8 @@ for triInfo     <-                             triWorld,    normalWorld
         });
         // console.log('elevations:', elevations);
 
-        let zpEle = Object.keys(elevations)
-            .map((triplet) => {
-                return triplet.split(',').map((num) => {
-                    return parseFloat(num);
-                });
-            });
-        // console.log('zpEle:', zpEle);
-        return zpEle;
+        return Object.keys(elevations)
+            .map(triplet => triplet.split(',').map(num => parseFloat(num)));
     }
 
     static processVectorTile(tile, zoompos, geojson, bottomTiles) {
