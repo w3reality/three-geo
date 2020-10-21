@@ -1189,32 +1189,26 @@ for triInfo     <-                             triWorld,    normalWorld
             }
         });
     }
-    async getTerrainRgb(origin, radius, zoom, cb=undefined) {
-        const _cbs = {onRgbDem: () => {}, onSatelliteMat: () => {}}; // to trigger rgb fetching
-        const { rgbDem } = await this.getTerrain(origin, radius, zoom, _cbs);
-        if (cb) { // Emulate the classic API
-            cb(rgbDem); // Array<THREE.Mesh>
-            return null;
-        } else {
-            const group = new THREE.Group();
-            group.name = 'dem-rgb';
-            group.add(...rgbDem);
-            return group;
-        }
+    async getTerrainRgb(origin, radius, zoom, _cb=undefined) {
+        const { rgbDem: objs } = await this.getTerrain(origin, radius, zoom, {
+            // Trigger rgb fetching
+            onRgbDem: () => {},
+            onSatelliteMat: () => {},
+        });
+        return _cb ? _cb(objs) : ThreeGeo._createDemGroup(objs, 'dem-rgb');
     }
-    async getTerrainVector(origin, radius, zoom, cb=undefined) {
-        const _cbs = {onVectorDem: () => {}}; // to trigger vector fetching
-        const { vectorDem } = await this.getTerrain(origin, radius, zoom, _cbs);
-        if (cb) { // Emulate the classic API
-            cb(vectorDem); // Array<THREE.Object3D>
-            return null;
-        } else {
-            const group = new THREE.Group();
-            group.name = 'dem-vec';
-            // Not doing `group.add(...vecorDem)`; `vectorDem.length` can be 'large'.
-            for (let obj of vectorDem) { group.add(obj); }
-            return group;
-        }
+    async getTerrainVector(origin, radius, zoom, _cb=undefined) {
+        const { vectorDem: objs } = await this.getTerrain(origin, radius, zoom, {
+            // Trigger vector fetching
+            onVectorDem: () => {},
+        });
+        return _cb ? _cb(objs) : ThreeGeo._createDemGroup(objs, 'dem-vec');
+    }
+    static _createDemGroup(objs, name) {
+        const group = new THREE.Group();
+        group.name = name;
+        for (let obj of objs) { group.add(obj); }
+        return group;
     }
 
     setApiVector(api) { this.apiVector = api; }
