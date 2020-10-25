@@ -6,7 +6,7 @@ The terrain is represented by standard [THREE.Mesh](https://threejs.org/docs/#ap
 
 Credits: this library has been made possible thanks to
 
-- geo-related libraries such as [mapbox](https://github.com/mapbox), [Turfjs](https://github.com/Turfjs/turf), [d3](https://github.com/d3/d3) in npm, and [the Mapbox Maps API](https://www.mapbox.com/api-documentation/#maps).
+- geo-related libraries ([mapbox](https://github.com/mapbox), [Turfjs](https://github.com/Turfjs/turf)) and [the Mapbox Maps API](https://www.mapbox.com/api-documentation/#maps).
 - [peterqliu](https://github.com/peterqliu) for informative 3D terrain-related articles and implementation.
 
 ## Demo

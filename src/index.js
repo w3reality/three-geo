@@ -18,12 +18,6 @@ import SphericalMercator from '@mapbox/sphericalmercator';
 import cover from '@mapbox/tile-cover';
 import uniq from 'uniq';
 
-// no longer used; see colorRangeNonD3()
-// import * as d3 from 'd3'; // be more selective - https://github.com/d3/d3
-// import { scaleLinear, interpolateRgb } from 'd3'; // not much difference...
-// console.log('d3:', d3);
-
-
 const sixteenthPixelRanges = (() => {
     let cols = 512;
     let rows = 512;
@@ -43,17 +37,6 @@ const sixteenthPixelRanges = (() => {
 const constVertices = 128;
 const constTilePixels = new SphericalMercator({size: 128});
 // console.log('constTilePixels:', constTilePixels);
-
-// const constBasePlaneDimension = 65024; // 2**16 - 1
-// const getTileSize = (zoom) => {
-//     return constBasePlaneDimension / Math.pow(2, zoom);
-// };
-// const getMetersPerPixel = (latitude, tileSize, zoom) => {
-//     // 40,075,000 = circumference of the Earth in meters
-//     return Math.abs(
-//         40075000 * Math.cos(latitude*Math.PI/180) /
-//         (Math.pow(2,zoom) * tileSize));
-// };
 
 // use shift = 0 when array's format is [x0, z0, y0, x1, z1, y1, ... x127, z127, y127]
 // 0: Array(128) [1, 4, 7, 10, 13, 16, 19, 22, ... 379, 382]
@@ -485,12 +468,6 @@ for triInfo     <-                             triWorld,    normalWorld
     _getVectorDem(contours, northWest, southEast, radius) {
         // console.log('_getVectorDem():', contours, northWest, southEast, radius);
 
-        // deprecated to remove the d3 dependency (save ~125KB)
-        // const colorRange = d3.scaleLinear()
-        //     .domain([0, contours.length])
-        //     .interpolate(d3.interpolateRgb)
-        //     .range(["#231918", "#ed6356"]);
-        //========
         const _getColorRange = (range, len) => {
             const _rgb = hex => [hex >> 16, (hex & 0x00ff00) >> 8, hex & 0x0000ff];
             const arrStart = _rgb(range[0]);
