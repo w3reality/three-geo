@@ -13,6 +13,15 @@
  */
 
 /**
+   * splaytree v3.0.1
+   * Fast Splay tree for Node and browser
+   *
+   * @author Alexander Milevski <info@w8r.name>
+   * @license MIT
+   * @preserve
+   */
+
+/**
  * martinez v0.4.3
  * Martinez polygon clipping algorithm, does boolean operation on polygons (multipolygons, polygons with holes etc): intersection, union, difference, xor
  *

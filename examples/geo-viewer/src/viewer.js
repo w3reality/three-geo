@@ -85,7 +85,7 @@ class Viewer {
 
         this._debugLoading = this.env.debugLoading === true;
         this._debugTitleLast = 'invalid';
-        if (this._debugLoading) { // use cache for debug....
+        if (this._debugLoading) { // use cache
             this._setApiDebug(this.tgeo, query.title);
         }
 
@@ -305,9 +305,9 @@ class Viewer {
         if (title.includes('Eiger')) _location = 'eiger';
         if (title.includes('River')) _location = 'river';
         if (title.includes('Akagi')) _location = 'akagi';
-        tgeo.setApiVector(`../cache/${_location}/custom-terrain-vector`);
-        tgeo.setApiRgb(`../cache/${_location}/custom-terrain-rgb`);
-        tgeo.setApiSatellite(`../cache/${_location}/custom-satellite`);
+        tgeo.setApiVector(`../../cache/${_location}/custom-terrain-vector`);
+        tgeo.setApiRgb(`../../cache/${_location}/custom-terrain-rgb`);
+        tgeo.setApiSatellite(`../../cache/${_location}/custom-satellite`);
     }
 
     nop() { /* nop */ }

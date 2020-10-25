@@ -1,6 +1,6 @@
 {
     "name": "three-geo",
-    "version": "1.4.3-dev.0",
+    "version": "1.4.3-dev.1",
     "description": "Geographic visualization with three.js",
     "main": "dist/three-geo.min.js",
     "directories": {
@@ -44,10 +44,9 @@
         "@turf/intersect": "^6.1.2",
         "@turf/transform-rotate": "^5.1.5",
         "@turf/transform-translate": "^5.1.5",
-        "@turf/union": "^5.1.5",
+        "@turf/union": "6.2.0-alpha.2",
         "es-pack-js": "^0.3.6",
         "get-pixels": "^3.3.0",
-        "jsts": "^2.0.2",
         "pbf": "^3.1.0",
         "regenerator": "^0.14.2",
         "three": "^0.115.0",

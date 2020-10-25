@@ -1,61 +1,20 @@
 import { version as __version } from '../package.json';
 // const __version = 'n/a';
 
-
-import * as THREE from 'three';
-
 import 'regenerator-runtime/runtime.js';
 
+import * as THREE from 'three';
 import Fetch from './Fetch.js';
 import Utils from './Utils.js';
 import Laser from 'three-laser-pointer/src';
 
-// import * as turf from '@turf/turf'; // need being more selective - http://turfjs.org/getting-started/
-// import { intersect } from '@turf/turf'; // TEST of tree-shaking, not working... FIXME
-// console.log('turf:', turf);
-//========
 import * as turfHelpers from '@turf/helpers';
-// console.log('turfHelpers:', turfHelpers);
-
-//======== FIXME try v7 in future??
-// v5 approach introduces jsts.min.js causing bloat (to 482KB)
-// https://github.com/Turfjs/turf/issues/1392#issuecomment-403189175
-// @turf/union v5.1.5 ok; v6 fails (broken at ele 1160 for the river data)......
-import turfUnion from '@turf/union';
-//======== NG
-// manually construct union op with turf-jsts
-// --> more bloats than the above (v5) and a uglifyjs problem
-// use ./turf-union-jsts-es6.js
-// see how union is implemented with jsts -- node_modules/@turf/union
-// https://gis.stackexchange.com/questions/283806/creating-buffers-using-jsts-es6-modules-not-working
-// https://github.com/DenisCarriere/jsts-es6-example
-// import turfUnion from './turf-union-jsts-es6'
-// window.turfUnion = turfUnion;
-// window.p1 = turfHelpers.polygon([[
-//     [-82.574787, 35.594087],
-//     [-82.574787, 35.615581],
-//     [-82.545261, 35.615581],
-//     [-82.545261, 35.594087],
-//     [-82.574787, 35.594087]
-// ]], {"fill": "#0f0"});
-// window.p2 = turfHelpers.polygon([[
-//     [-82.560024, 35.585153],
-//     [-82.560024, 35.602602],
-//     [-82.52964, 35.602602],
-//     [-82.52964, 35.585153],
-//     [-82.560024, 35.585153]
-// ]], {"fill": "#0f0"});
-// console.log('turfUnion:', turfUnion);
-// console.log('turfUnion(p1, p2):', turfUnion(p1, p2));
-
 import turfArea from '@turf/area';
 import turfDestination from '@turf/destination';
-
-// turf.intersect (v5.1.6) fails in case MultiPolygon -- https://github.com/Turfjs/turf/issues/702
-// so, use this module version with recent fix instead
 import turfIntersect from '@turf/intersect';
-// console.log('turfIntersect:', turfIntersect);
+import turfUnion from '@turf/union';
 
+import SphericalMercator from '@mapbox/sphericalmercator';
 import cover from '@mapbox/tile-cover';
 import uniq from 'uniq';
 
@@ -64,7 +23,6 @@ import uniq from 'uniq';
 // import { scaleLinear, interpolateRgb } from 'd3'; // not much difference...
 // console.log('d3:', d3);
 
-import SphericalMercator from '@mapbox/sphericalmercator';
 
 const sixteenthPixelRanges = (() => {
     let cols = 512;
