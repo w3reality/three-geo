@@ -5,6 +5,8 @@ import { VectorTile } from '@mapbox/vector-tile';
 // For NodeJs case, we load `get-pixels` dynamically (see `resolveGetPixels()`)
 import __getPixelsDom from 'get-pixels/dom-pixels';
 
+import Utils from './Utils.js';
+
 class Fetch {
     static dumpBufferAsBlob(buffer, name) {
         // https://discourse.threejs.org/t/how-to-create-a-new-file-and-save-it-with-arraybuffer-content/628/2
@@ -127,20 +129,9 @@ class Fetch {
     }
 
     static async resolveGetPixels() {
-        let fn;
-        if (typeof __non_webpack_require__ !== 'undefined') { // is node?
-            const nodePixels = 'get-pixels/node-pixels';
-            fn = (typeof global.require !== 'function') ?
-                (await global.import(nodePixels)).default :
-                global.require(nodePixels);
-        } else {
-            fn = __getPixelsDom; // the statically imported
-        }
-
-        if (typeof fn !== 'function') {
-            throw new Error('Failed to resolve `get-pixels`');
-        }
-        return fn;
+        return Utils.Meta.isNodeJS() ?
+            await Utils.Meta.nodeRequire(global, 'get-pixels/node-pixels') :
+            __getPixelsDom; // use the statically imported one
     }
 
     static fetchTile(zoompos, api, token, getPixels, cb) {

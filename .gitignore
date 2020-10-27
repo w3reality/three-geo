@@ -34,3 +34,5 @@ node_modules
 
 lib
 *.rst.html
+examples/cache
+target

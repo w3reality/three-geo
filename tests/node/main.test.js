@@ -1,15 +1,15 @@
+global.require = require;
 const path = require('path');
 
 const libName = 'three-geo';
 const outDir = path.join(__dirname, '../../target');
 
 const __modPath = `${outDir}/${libName}.min.js`;
-//const __modPath = `${outDir}/${libName}.js`; // dev !!!!
+// const __modPath = `${outDir}/${libName}.js`; // dev !!!!
 
-// kludge: make sure `global.require` inside `ThreeGeo` is available
-global.require = require;
 
 const ThreeGeo = require(__modPath);
+
 test('constructor', () => {
     expect(typeof ThreeGeo).toBe('function');
     expect(typeof ThreeGeo.Laser).toBe('function');

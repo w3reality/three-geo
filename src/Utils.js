@@ -1,11 +1,12 @@
-import * as THREE from 'three';
 
+import Meta from 'es-pack-js/src/meta';
+
+import * as THREE from 'three';
 import turfTransformTranslate from '@turf/transform-translate';
 import turfTransformRotate from '@turf/transform-rotate';
 import tilebelt from "@mapbox/tilebelt";
 import Laser from 'three-laser-pointer/src';
 
-// TODO doc
 class Utils {
     static createLine(arr, opts={color: 0xff0000, maxPoints: 256}) {
         const laser = new Laser(opts);
@@ -64,10 +65,8 @@ class Utils {
     static tileToBbox(tile) {
         return tilebelt.tileToBBOX(tile);
     }
-    static _consoleLog(...args) {
-        // for eluding uglify
-        const _console = console;
-        _console.log.apply(_console, args);
-    }
 }
+
+Utils.Meta = Meta;
+
 export default Utils;

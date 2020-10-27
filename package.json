@@ -1,6 +1,6 @@
 {
     "name": "three-geo",
-    "version": "1.4.3-dev.1",
+    "version": "1.4.3-dev.2",
     "description": "Geographic visualization with three.js",
     "main": "dist/three-geo.min.js",
     "directories": {
