@@ -26,18 +26,18 @@ test('`new`', () => {
 const units = require(path.join(__dirname, '../units.js'));
 const dataDir = path.join(__dirname, '../data');
 
-test('`getTerrainRgb()`: case when no DEM files were fetched', async () => {
+test('rgb-noexist`: case when no rgb DEM files were fetched', async () => {
     await units['rgb-noexist'](ThreeGeo, dataDir);
 });
 
-test('`getTerrainRgb()`: eiger', async () => {
+test('rgb-eiger', async () => {
     await units['rgb-eiger'](ThreeGeo, dataDir);
 });
 
-test('`getTerrainRgb()`: table', async () => {
+test('rgb-table', async () => {
     await units['rgb-table'](ThreeGeo, dataDir);
 });
 
-test('`getTerrainVector()`: table', async () => {
+test('vec-table', async () => {
     await units['vec-table'](ThreeGeo, dataDir);
 });

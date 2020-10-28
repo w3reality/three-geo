@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <title>tests</title>
+</head>
+<body>
+    <script src="__three.min.js"></script>
+    <script src="__tmp.min.js"></script>
+    <script src="units.js"></script>
+    <script type="module">
+        const output = {};
+
+        { // test `new`
+            const tgeo = new ThreeGeo();
+            output['new'] = [
+                typeof ThreeGeo, // 'function',
+                tgeo.constUnitsSide, // 1
+            ];
+        }
+
+        (async () => {
+            const dataDir = './data';
+            const preset = 'browser';
+            output['rgb-noexist'] =
+                await window.units['rgb-noexist'](ThreeGeo, dataDir, preset);
+            output['rgb-eiger'] =
+                await window.units['rgb-eiger'](ThreeGeo, dataDir, preset);
+            output['rgb-table'] =
+                await window.units['rgb-table'](ThreeGeo, dataDir, preset);
+            output['vec-table'] =
+                await window.units['vec-table'](ThreeGeo, dataDir, preset);
+
+            // store results
+            window['output'] = output;
+        })();
+    </script>
+</body>
+</html>
