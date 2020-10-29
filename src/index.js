@@ -599,10 +599,6 @@ for triInfo     <-                             triWorld,    normalWorld
         return contours;
     }
 
-    static deslash(input) {
-        return input.split('/').map((str) => { return parseInt(str); });
-    }
-
     processRgbTile(pixels, zoomposEle, zpCovered, bbox, radius) {
         let elevations = [];
         if (pixels) {
@@ -648,9 +644,9 @@ for triInfo     <-                             triWorld,    normalWorld
         const unitsPerMeter = ThreeGeo._getUnitsPerMeter(this.constUnitsSide, radius);
         const dataEle = [];
         sixteenths.forEach((zoomposStr, index) => {
-            if (! zpCoveredStr.includes(zoomposStr)) return;
+            if (!zpCoveredStr.includes(zoomposStr)) return;
 
-            let zoompos = ThreeGeo.deslash(zoomposStr);
+            let zoompos = zoomposStr.split('/').map(str => parseInt(str));
             let pxRange = sixteenthPixelRanges[index];
             let elev = [];
 
@@ -1020,36 +1016,6 @@ for triInfo     <-                             triWorld,    normalWorld
         };
     }
 
-    static debugZp(zpCovered) {
-        console.warn('zpCovered mods enabled for debug...');
-        zpCovered.length = 1;
-        // zpCovered.length = 2;
-        // zpCovered.length = 4;
-        // zpCovered.length = 8;
-        // zpCovered.length = 12;
-        // zpCovered.length = 16;
-
-        // debug with eiger
-        // zpCovered.length = 19; // eiger snow ok
-        // zpCovered.length = 20; // eiger snow NG <- fixed by dataEle.sort()
-        // zpCovered = [[14, 8555, 5792], [14, 8556, 5792]]; // OK
-        // zpCovered = [[14, 8555, 5792], [14, 8556, 5792], [14, 8557, 5792]]; // NG <- fixed by dataEle.sort()
-
-        // zpCovered = [ // for checking seams
-        //     [14, 3073, 6421], [14, 3074, 6421],
-        //     [14, 3073, 6422], [14, 3074, 6422],
-        // ];
-        // zpCovered = [[14, 3072, 6420],]; // debug, to one elem
-        // zpCovered = [                  [14, 3073, 6420],];
-        // zpCovered = [[14, 3072, 6420], [14, 3073, 6420],];
-        // zpCovered = [
-        //     [14, 3072, 6420], [14, 3074, 6420], [14, 3076, 6420],
-        //     [14, 3073, 6421], [14, 3075, 6421],
-        //     [14, 3072, 6422], [14, 3074, 6422], [14, 3076, 6422],
-        //     [14, 3073, 6423], [14, 3075, 6423],
-        // ];
-    }
-
     static _createWatcher(cbs, res) {
         let isVecPending = cbs.onVectorDem ? true : false;
         let isRgbPending = cbs.onRgbDem ? true : false;
@@ -1100,12 +1066,6 @@ for triInfo     <-                             triWorld,    normalWorld
         });
     }
 
-    // tiles to cover a 5km-radius:  - processing (approx.)
-    // zoom: 15, // 64  <= 8x8 tiles - 8s
-    // zoom: 14, // 20  <= 5x5 tiles - 4s (high resolution)
-    // zoom: 13, // 6-9 <= 3x3 tiles - 2s (default)
-    // zoom: 12, // 2-4 <= 2x2 tiles - 1s
-    // zoom: 11, // 1 tile           - 0s
     getTerrain(origin, radius, zoom, cbs={}) {
         return new Promise(async (res, rej) => {
             try {
@@ -1117,7 +1077,6 @@ for triInfo     <-                             triWorld,    normalWorld
                 console.log('bbox:', bbox);
 
                 const zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
-                // ThreeGeo.debugZp(zpCovered); // dev only
                 console.log('(for satellite) zpCovered:', zpCovered);
 
                 res(await this._getTerrain(zpCovered, bbox, radius, cbs));
@@ -1129,7 +1088,7 @@ for triInfo     <-                             triWorld,    normalWorld
     }
     async getTerrainRgb(origin, radius, zoom, _cb=undefined) {
         const { rgbDem: objs } = await this.getTerrain(origin, radius, zoom, {
-            // Trigger rgb fetching
+            // Set dummy callbacks to trigger rgb DEM fetching
             onRgbDem: () => {},
             onSatelliteMat: () => {},
         });
@@ -1137,7 +1096,7 @@ for triInfo     <-                             triWorld,    normalWorld
     }
     async getTerrainVector(origin, radius, zoom, _cb=undefined) {
         const { vectorDem: objs } = await this.getTerrain(origin, radius, zoom, {
-            // Trigger vector fetching
+            // Set dummy callbacks to trigger vector DEM fetching
             onVectorDem: () => {},
         });
         return _cb ? _cb(objs) : ThreeGeo._createDemGroup(objs, 'dem-vec');
