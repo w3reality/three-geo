@@ -5,7 +5,7 @@ import { VectorTile } from '@mapbox/vector-tile';
 // For NodeJs case, we load `get-pixels` dynamically (see `resolveGetPixels()`)
 import __getPixelsDom from 'get-pixels/dom-pixels';
 
-import Utils from './Utils.js';
+import Utils from '../utils.js';
 
 class Fetch {
     static dumpBufferAsBlob(buffer, name) {
@@ -118,23 +118,34 @@ class Fetch {
         };
     }
 
-    static getImage(uri, getPixels, cb) {
-        getPixels(uri, (err, pixels) => {
-            if (err) {
-                console.log("Bad image uri:", uri);
-                return cb(null);
-            }
-            cb(pixels);
-        });
-    }
-
     static async resolveGetPixels() {
         return Utils.Meta.isNodeJS() ?
             await Utils.Meta.nodeRequire(global, 'get-pixels/node-pixels') :
             __getPixelsDom; // use the statically imported one
     }
 
-    static fetchTile(zoompos, api, token, getPixels, cb) {
+    // compute elevation tiles belonging to the gradparent zoom level
+    static getZoomposEle(zpArray) {
+        const elevations = {};
+        zpArray.forEach(zoompos => {
+            let grandparent = [
+                zoompos[0]-2,
+                Math.floor(zoompos[1]/4),
+                Math.floor(zoompos[2]/4)];
+            if (elevations[grandparent]) {
+                elevations[grandparent].push(zoompos);
+            } else {
+                elevations[grandparent] = [zoompos];
+            }
+        });
+        // console.log('elevations:', elevations);
+
+        return Object.keys(elevations)
+            .map(triplet => triplet.split(',').map(num => parseFloat(num)));
+    }
+
+    static fetchTile(zoompos, api, token, cb) {
+        // console.log('token:', token);
         let isMapbox = api.startsWith('mapbox-');
         let uri = isMapbox ?
             this.getUriMapbox(token, api, zoompos) :
@@ -166,8 +177,8 @@ class Fetch {
                 this.xhrDumpBlob(uri, api, zoompos); // return;
             }
 
-            // console.log('uri:', uri);
-            this.getImage(uri, getPixels, cb);
+            const _cb = (err, pixels) => cb(err ? null : pixels);
+            this.resolveGetPixels().then(fn => fn(uri, _cb));
         } else {
             console.log('nop, unsupported api:', api);
         }
