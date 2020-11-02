@@ -1,11 +1,13 @@
-
 import Meta from 'es-pack-js/src/meta';
 
 import * as THREE from 'three';
-import turfTransformTranslate from '@turf/transform-translate';
-import turfTransformRotate from '@turf/transform-rotate';
 import tilebelt from "@mapbox/tilebelt";
 import Laser from 'three-laser-pointer/src';
+
+import * as turfHelpers from '@turf/helpers';
+import turfDestination from '@turf/destination';
+import turfTransformTranslate from '@turf/transform-translate';
+import turfTransformRotate from '@turf/transform-rotate';
 
 class Utils {
     static createLine(arr, opts={color: 0xff0000, maxPoints: 256}) {
@@ -13,23 +15,6 @@ class Utils {
         laser.updatePoints(arr);
         return laser;
     }
-
-    static translateTurfObject(turfObj, dx, dy, dz, unitsPerMeter, mutate=true) {
-        const vec = new THREE.Vector2(dx, dy).divideScalar(unitsPerMeter);
-        const theta = 90.0 - vec.angle() * 180.0 / Math.PI;
-        return turfTransformTranslate(turfObj, vec.length(), theta, {
-                units: 'meters',
-                zTranslation: dz / unitsPerMeter,
-                mutate: mutate, // "significant performance increase if true" per doc
-            });
-    }
-    static rotateTurfObject(turfObj, deg, pivotLatlng, mutate=true) {
-        return turfTransformRotate(turfObj, deg, {
-                pivot: [pivotLatlng[1], pivotLatlng[0]],
-                mutate: mutate,
-            });
-    }
-
     static bboxToWireframe(wsen, proj, opts={}) {
         const defaults = {
             offsetZ: 0.0,
@@ -65,6 +50,34 @@ class Utils {
     static tileToBbox(tile) {
         return tilebelt.tileToBBOX(tile);
     }
+
+    // `@turf` dependent methods
+    static createTurfPoint(ll) {
+        return turfHelpers.point([ll[1], ll[0]]);
+    }
+    static originRadiusToBbox(origin, radius) {
+        const [w, n] = turfDestination(this.createTurfPoint(origin),
+            radius, -45, {units: 'kilometers'}).geometry.coordinates;
+        const [e, s] = turfDestination(this.createTurfPoint(origin),
+            radius, 135, {units: 'kilometers'}).geometry.coordinates;
+        return [w, s, e, n];
+    }
+    static translateTurfObject(turfObj, dx, dy, dz, unitsPerMeter, mutate=true) {
+        const vec = new THREE.Vector2(dx, dy).divideScalar(unitsPerMeter);
+        const theta = 90.0 - vec.angle() * 180.0 / Math.PI;
+        return turfTransformTranslate(turfObj, vec.length(), theta, {
+                units: 'meters',
+                zTranslation: dz / unitsPerMeter,
+                mutate: mutate, // "significant performance increase if true" per doc
+            });
+    }
+    static rotateTurfObject(turfObj, deg, pivotLatlng, mutate=true) {
+        return turfTransformRotate(turfObj, deg, {
+                pivot: [pivotLatlng[1], pivotLatlng[0]],
+                mutate: mutate,
+            });
+    }
+
 }
 
 Utils.Meta = Meta;

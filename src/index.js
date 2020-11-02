@@ -8,12 +8,9 @@ import * as THREE from 'three';
 import RgbModel from './models/rgb.js';
 import VectorModel from './models/vector.js';
 import Elevation from './elevation.js';
-
 import Utils from './utils.js';
 import Laser from 'three-laser-pointer/src';
 
-import * as turfHelpers from '@turf/helpers';
-import turfDestination from '@turf/destination';
 import cover from '@mapbox/tile-cover';
 
 class ThreeGeo {
@@ -87,7 +84,7 @@ class ThreeGeo {
     //   latlng: three-geo, leaflet
     //   lnglat: turf
     getProjection(origin, radius, unitsSide=this.constUnitsSide) {
-        const wsen = ThreeGeo.originRadiusToBbox(origin, radius);
+        const wsen = Utils.originRadiusToBbox(origin, radius);
         // console.log('origin:', origin);
         // console.log('wsen:', wsen);
         const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
@@ -117,10 +114,9 @@ class ThreeGeo {
         return z !== undefined ? [x, y, z] : [x, y];
     }
     static _projInv(x, y, origin, unitsPerMeter) {
-        const _swap = ll => [ll[1], ll[0]];
-        return _swap(Utils.translateTurfObject(
-            turfHelpers.point(_swap(origin)),
-            x, y, 0, unitsPerMeter).geometry.coordinates); // latlng
+        const ll = Utils.translateTurfObject(Utils.createTurfPoint(origin),
+            x, y, 0, unitsPerMeter).geometry.coordinates; // lnglat
+        return [ll[1], ll[0]]; // latlng
     }
 
     // Zoom extent - https://www.mapbox.com/studio/tilesets/
@@ -144,14 +140,6 @@ class ThreeGeo {
             .map(([x, y, z]) => [z, x, y]); // zoompos now!!
     }
 
-    static originRadiusToBbox(origin, radius) {
-        const _swap = ll => [ll[1], ll[0]];
-        const [w, n] = turfDestination(turfHelpers.point(_swap(origin)),
-            radius, -45, {units: 'kilometers'}).geometry.coordinates;
-        const [e, s] = turfDestination(turfHelpers.point(_swap(origin)),
-            radius, 135, {units: 'kilometers'}).geometry.coordinates;
-        return [w, s, e, n];
-    }
     static getBbox(origin, radius) {
         const testPolygon = {
             "type": "FeatureCollection",
@@ -168,7 +156,7 @@ class ThreeGeo {
             }]
         };
         const polygon = testPolygon.features[0];
-        const [w, s, e, n] = this.originRadiusToBbox(origin, radius);
+        const [w, s, e, n] = Utils.originRadiusToBbox(origin, radius);
         const nw = [w, n], se = [e, s];
         polygon.geometry.coordinates[0] = [
             nw, [se[0], nw[1]], se, [nw[0], se[1]], nw
