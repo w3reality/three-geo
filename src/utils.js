@@ -51,6 +51,36 @@ class Utils {
         return tilebelt.tileToBBOX(tile);
     }
 
+    // REMOVING in favour of the WIP `Elevation` API
+    static _resolveTri(x, y, meshes, scale, shiftZ) {
+        const isect = (new Laser()).raycast(
+            new THREE.Vector3(x, y, 12000), // ray origin
+            new THREE.Vector3(0, 0, -1), // ray direction
+            meshes);
+        // console.log('isect:', isect);
+        if (! isect) return null;
+
+        // console.log('isect:', isect);
+        // console.log('isect.point.z:', isect.point.z);
+        // console.log('isect.faceIndex:', isect.faceIndex);
+        // https://stackoverflow.com/questions/41540313/three-buffergeometry-accessing-face-indices-and-face-normals
+        const faceIndex = isect.faceIndex;
+        const indexArr = isect.object.geometry.index.array;
+        const attrPos = isect.object.geometry.attributes.position;
+        const tri = [0, 1, 2].map(i => (new THREE.Vector3())
+            .fromBufferAttribute(attrPos, indexArr[3 * faceIndex + i])
+            .multiplyScalar(scale)
+            // z's of tri is relative to the isect point
+            .add(new THREE.Vector3(0, 0, shiftZ ? shiftZ : -isect.point.z)));
+        // console.log('isect tri (z-shifted):', tri);
+        return { // return new objects to remain pure
+            faceIndex: isect.faceIndex,
+            isectPoint: isect.point.clone(),
+            tri: tri,
+            normal: isect.face.normal.clone(),
+        };
+    }
+
     // `@turf` dependent methods
     static createTurfPoint(ll) {
         return turfHelpers.point([ll[1], ll[0]]);
