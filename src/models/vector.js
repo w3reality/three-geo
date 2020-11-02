@@ -11,8 +11,8 @@ import * as THREE from 'three';
 class VectorModel {
     constructor(params) {
         // static parameters
-        this.unitsPerMeter = params.geo.unitsPerMeter;
-        this.projectCoord = params.geo.projectCoord;
+        this.unitsPerMeter = params.unitsPerMeter;
+        this.projectCoord = params.projectCoord;
         this.token = params.token;
         this.apiVector = params.apiVector;
 

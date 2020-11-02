@@ -12,9 +12,7 @@ import Laser from 'three-laser-pointer/src';
 
 import * as turfHelpers from '@turf/helpers';
 import turfDestination from '@turf/destination';
-
 import cover from '@mapbox/tile-cover';
-
 
 class ThreeGeo {
     constructor(opts={}) {
@@ -284,34 +282,6 @@ for triInfo     <-                             triWorld,    normalWorld
             .map(([x, y, z]) => [z, x, y]); // zoompos now!!
     }
 
-    _getGeoParams(radius) {
-        const unitsSide = this.constUnitsSide;
-        return {
-            unitsPerMeter: ThreeGeo._getUnitsPerMeter(unitsSide, radius),
-            projectCoord: (coord, nw, se) =>
-                ThreeGeo._projectCoordStatic(coord, nw, se, unitsSide),
-        };
-    }
-
-    _getRgbTiles(zpCovered, bbox, radius, onRgbDem, onSatelliteMat, watcher) {
-        (new RgbModel({
-            geo: this._getGeoParams(radius),
-            token: this.tokenMapbox,
-            apiRgb: this.apiRgb,
-            apiSatellite: this.apiSatellite,
-            onRgbDem, onSatelliteMat, watcher, // callbacks
-        })).fetch(zpCovered, bbox);
-    }
-
-    _getVectorTiles(zpCovered, bbox, radius, onVectorDem, watcher) {
-        (new VectorModel({
-            geo: this._getGeoParams(radius),
-            token: this.tokenMapbox,
-            apiVector: this.apiVector,
-            onVectorDem, watcher, // callbacks
-        })).fetch(zpCovered, bbox, radius);
-    }
-
     static originRadiusToBbox(origin, radius) {
         const _swap = ll => [ll[1], ll[0]];
         const [w, n] = turfDestination(turfHelpers.point(_swap(origin)),
@@ -377,19 +347,38 @@ for triInfo     <-                             triWorld,    normalWorld
             }
         };
     }
+
     _getTerrain(zpCovered, bbox, radius, cbs) {
         return new Promise((res, rej) => {
             const watcher = ThreeGeo._createWatcher(cbs, res);
             if (!watcher) return;
 
+            // static parameters
+            const _unitsSide = this.constUnitsSide;
+            const unitsPerMeter = ThreeGeo._getUnitsPerMeter(_unitsSide, radius);
+            const projectCoord = (coord, nw, se) =>
+                    ThreeGeo._projectCoordStatic(coord, nw, se, _unitsSide);
+            const { tokenMapbox: token,
+                apiRgb, apiSatellite, apiVector } = this;
+
+            // callbacks
+            const { onRgbDem, onSatelliteMat, onVectorDem } = cbs;
+
             try {
-                if (cbs.onVectorDem) {
-                    this._getVectorTiles(zpCovered, bbox, radius,
-                        cbs.onVectorDem, watcher);
+                if (onRgbDem) {
+                    (new RgbModel({
+                        unitsPerMeter, projectCoord,
+                        token, apiRgb, apiSatellite,
+                        onRgbDem, onSatelliteMat, watcher,
+                    })).fetch(zpCovered, bbox);
                 }
-                if (cbs.onRgbDem) {
-                    this._getRgbTiles(zpCovered, bbox, radius,
-                        cbs.onRgbDem, cbs.onSatelliteMat, watcher);
+
+                if (onVectorDem) {
+                    (new VectorModel({
+                        unitsPerMeter, projectCoord,
+                        token, apiVector,
+                        onVectorDem, watcher,
+                    })).fetch(zpCovered, bbox, radius);
                 }
             } catch (err) {
                 console.error('err:', err);

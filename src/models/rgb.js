@@ -54,8 +54,8 @@ const sixteenthPixelRanges = (() => {
 class RgbModel {
     constructor(params) {
         // static parameters
-        this.unitsPerMeter = params.geo.unitsPerMeter;
-        this.projectCoord = params.geo.projectCoord;
+        this.unitsPerMeter = params.unitsPerMeter;
+        this.projectCoord = params.projectCoord;
         this.token = params.token;
         this.apiRgb = params.apiRgb;
         this.apiSatellite = params.apiSatellite;
