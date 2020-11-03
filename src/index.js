@@ -4,14 +4,16 @@ import { version as __version } from '../package.json';
 import 'regenerator-runtime/runtime.js';
 
 import * as THREE from 'three';
-
+import cover from '@mapbox/tile-cover';
 import RgbModel from './models/rgb.js';
 import VectorModel from './models/vector.js';
-import Elevation from './elevation.js';
 import Utils from './utils.js';
 import Laser from 'three-laser-pointer/src';
 
-import cover from '@mapbox/tile-cover';
+// import Elevation from './elevation.js'; // WIP
+//====
+const Elevation = {resolveElevation: () => undefined}; // dummy for now
+
 
 class ThreeGeo {
     constructor(opts={}) {
