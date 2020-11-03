@@ -148,6 +148,7 @@ class ThreeGeo {
         const isDone = () => !isVecPending && !isRgbPending;
 
         if (isDone()) {
+            console.log('no callbacks are set');
             res(ret);
             return null;
         }
@@ -163,29 +164,36 @@ class ThreeGeo {
                 isRgbPending = false;
                 ret.rgbDem = data;
             }
-            if (isDone()) { // both callbacks are complete
+            if (isDone()) {
+                console.log('all callbacks are complete');
                 res(ret);
             }
         };
     }
 
-    _getTerrain(zpCovered, bbox, radius, cbs) {
+    getTerrain(origin, radius, zoom, cbs={}) {
         return new Promise((res, rej) => {
-            const watcher = ThreeGeo._createWatcher(cbs, res);
-            if (!watcher) return;
-
-            // static parameters
-            const _unitsSide = this.constUnitsSide;
-            const unitsPerMeter = ThreeGeo._getUnitsPerMeter(_unitsSide, radius);
-            const projectCoord = (coord, nw, se) =>
-                    ThreeGeo._projectCoordStatic(coord, nw, se, _unitsSide);
-            const { tokenMapbox: token,
-                apiRgb, apiSatellite, apiVector } = this;
-
-            // callbacks
-            const { onRgbDem, onSatelliteMat, onVectorDem } = cbs;
-
             try {
+                const watcher = ThreeGeo._createWatcher(cbs, res);
+                if (!watcher) return;
+
+                // static parameters
+                const _unitsSide = this.constUnitsSide;
+                const unitsPerMeter = ThreeGeo._getUnitsPerMeter(_unitsSide, radius);
+                const projectCoord = (coord, nw, se) =>
+                        ThreeGeo._projectCoordStatic(coord, nw, se, _unitsSide);
+                const { tokenMapbox: token,
+                    apiRgb, apiSatellite, apiVector } = this;
+
+                // callbacks
+                const { onRgbDem, onSatelliteMat, onVectorDem } = cbs;
+
+                // ROI
+                const bbox = ThreeGeo.getBbox(origin, radius);
+                console.log('bbox:', bbox);
+                const zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
+                console.log('(satellite-level) zpCovered:', zpCovered);
+
                 if (onRgbDem) {
                     (new RgbModel({
                         unitsPerMeter, projectCoord,
@@ -201,23 +209,6 @@ class ThreeGeo {
                         onVectorDem, watcher,
                     })).fetch(zpCovered, bbox, radius);
                 }
-            } catch (err) {
-                console.error('err:', err);
-                rej(null);
-            }
-        });
-    }
-
-    getTerrain(origin, radius, zoom, cbs={}) {
-        return new Promise(async (res, rej) => {
-            try {
-                const bbox = ThreeGeo.getBbox(origin, radius);
-                console.log('bbox:', bbox);
-
-                const zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
-                console.log('(for satellite) zpCovered:', zpCovered);
-
-                res(await this._getTerrain(zpCovered, bbox, radius, cbs));
             } catch (err) {
                 console.error('err:', err);
                 rej(null);
