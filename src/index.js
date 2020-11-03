@@ -40,15 +40,12 @@ class ThreeGeo {
     static _getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
     }
-    static _projectCoordStatic(coord, nw, se, unitsSide) {
+    static _projectCoord(unitsSide, coord, nw, se) {
         // lng, lat -> px, py
         return [
             unitsSide * (-0.5 + (coord[0]-nw[0]) / (se[0]-nw[0])),
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
-    }
-    _projectCoord(coord, nw, se, unitsSide=this.constUnitsSide) {
-        return ThreeGeo._projectCoordStatic(coord, nw, se, unitsSide);
     }
 
     // ll-notation
@@ -73,8 +70,8 @@ class ThreeGeo {
         const [w, s, e, n] = wsen;
 
         // [x, y, z]: terrain coordinates
-        const [x, y] = this._projectCoordStatic(
-            [lng, lat], [w, n], [e, s], unitsSide);
+        const [x, y] = this._projectCoord(
+            unitsSide, [lng, lat], [w, n], [e, s]);
 
         // WIP (undocumented API): Resolve `z` (elevation) in case
         //   the optional `meshes` is provided.
@@ -181,7 +178,7 @@ class ThreeGeo {
                 const _unitsSide = this.constUnitsSide;
                 const unitsPerMeter = ThreeGeo._getUnitsPerMeter(_unitsSide, radius);
                 const projectCoord = (coord, nw, se) =>
-                        ThreeGeo._projectCoordStatic(coord, nw, se, _unitsSide);
+                        ThreeGeo._projectCoord(_unitsSide, coord, nw, se);
                 const { tokenMapbox: token,
                     apiRgb, apiSatellite, apiVector } = this;
 
