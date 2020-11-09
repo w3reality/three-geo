@@ -19,8 +19,7 @@ class ThreeGeo {
     constructor(opts={}) {
         this.version = __version;
 
-        // (note: use `Meta.consoleLog()` for es-pack-js >= 0.3.8)
-        Utils.Meta._consoleLog(`ThreeGeo ${__version} with THREE r${THREE.REVISION}`);
+        Utils.Meta.consoleLog(`ThreeGeo ${__version} with THREE r${THREE.REVISION}`);
 
         const defaults = {
             unitsSide: 1.0,
