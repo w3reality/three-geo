@@ -1,5 +1,5 @@
-import { version as __version } from '../package.json';
-// const __version = 'n/a';
+import pkg from '../package.json';
+const __version = pkg.version;
 
 import 'regenerator-runtime/runtime.js';
 

@@ -1,6 +1,6 @@
 {
     "name": "three-geo",
-    "version": "1.4.3-dev.4",
+    "version": "1.4.3-dev.5",
     "description": "3D geographic visualization library",
     "main": "dist/three-geo.min.js",
     "directories": {
@@ -45,12 +45,12 @@
         "@turf/transform-rotate": "^5.1.5",
         "@turf/transform-translate": "^5.1.5",
         "@turf/union": "6.2.0-alpha.2",
-        "es-pack-js": "^0.3.7",
+        "es-pack-js": "^0.3.9",
         "get-pixels": "^3.3.0",
         "pbf": "^3.1.0",
         "regenerator": "^0.14.2",
         "three": "^0.115.0",
-        "three-laser-pointer": "^1.2.0",
+        "three-laser-pointer": "^1.2.1",
         "uniq": "^1.0.1",
         "xhr": "^2.5.0"
     }
