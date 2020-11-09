@@ -5,10 +5,8 @@ import { VectorTile } from '@mapbox/vector-tile';
 // For NodeJs, we load `get-pixels` dynamically (see `resolveGetPixels()`)
 
 // For browser, we load `get-pixels` statically
-import __getPixelsDom from 'get-pixels/dom-pixels';
-  // and work around the `Buffer` not defined error
-import { Buffer } from 'buffer';
-if (!Utils.Meta.isNodeJS()) { window.Buffer = Buffer; }
+// import __getPixelsDom from 'get-pixels/dom-pixels'; // runtime error: `Buffer` not defined
+import __getPixelsDom from './dom-pixels-workaround.js';
 
 import Utils from '../utils.js';
 

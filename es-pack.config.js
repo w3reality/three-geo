@@ -5,6 +5,8 @@ module.exports = {
     onBundle: (webpackConfig) => {
         webpackConfig.externals = {'three': 'THREE'};
         webpackConfig.performance = {hints: false};
+
+        webpackConfig.module.rules[1].exclude = /(node_modules|dom-pixels-workaround)/;
     },
     onVerify: (preloadJs, units) => {
         const pathUpper = path.resolve(__dirname, './node_modules/THREE');
@@ -18,4 +20,3 @@ module.exports = {
         preloadJs.browser = path.resolve(__dirname, './node_modules/three/build/three.min.js');
     },
 };
-
