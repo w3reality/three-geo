@@ -7,6 +7,6 @@ module.exports = {
         webpackConfig.resolve.modules.push(path.resolve('../../node_modules'));
         webpackConfig.performance = {hints: false};
 
-        webpackConfig.module.rules[1].exclude = /(node_modules|dom-pixels-workaround)/;
+        webpackConfig.module.rules[1].exclude = /(node_modules|dom-pixels)/;
     },
 };
