@@ -19,11 +19,13 @@ class ThreeGeo {
     constructor(opts={}) {
         this.version = __version;
 
-        Utils.Meta.consoleLog(`ThreeGeo ${__version} with THREE r${THREE.REVISION}`);
+        console.info(`ThreeGeo ${__version} with THREE r${THREE.REVISION}`);
+        console.info('Note: Since three-geo v1.4.3, when using with NodeJS, you must set the constructor option `useNodePixels` to `true` (https://github.com/w3reality/three-geo#api)');
 
         const defaults = {
             unitsSide: 1.0,
             tokenMapbox: '',
+            useNodePixels: false, // Do enable this when using with NodeJS
             apiVector: 'mapbox-terrain-vector',
             apiRgb: 'mapbox-terrain-rgb',
             apiSatellite: 'mapbox-satellite',
@@ -31,6 +33,7 @@ class ThreeGeo {
         const actual = Object.assign({}, defaults, opts);
         this.constUnitsSide = actual.unitsSide;
         this.tokenMapbox = actual.tokenMapbox;
+        this.useNodePixels = actual.useNodePixels;
         this.apiVector = actual.apiVector;
         this.apiRgb = actual.apiRgb;
         this.apiSatellite = actual.apiSatellite;
@@ -178,7 +181,7 @@ class ThreeGeo {
                 const unitsPerMeter = ThreeGeo._getUnitsPerMeter(_unitsSide, radius);
                 const projectCoord = (coord, nw, se) =>
                         ThreeGeo._projectCoord(_unitsSide, coord, nw, se);
-                const { tokenMapbox: token,
+                const { tokenMapbox: token, useNodePixels,
                     apiRgb, apiSatellite, apiVector } = this;
 
                 // callbacks
@@ -193,7 +196,7 @@ class ThreeGeo {
                 if (onRgbDem) {
                     (new RgbModel({
                         unitsPerMeter, projectCoord,
-                        token, apiRgb, apiSatellite,
+                        token, useNodePixels, apiRgb, apiSatellite,
                         onRgbDem, onSatelliteMat, watcher,
                     })).fetch(zpCovered, bbox);
                 }
@@ -201,13 +204,13 @@ class ThreeGeo {
                 if (onVectorDem) {
                     (new VectorModel({
                         unitsPerMeter, projectCoord,
-                        token, apiVector,
+                        token, useNodePixels, apiVector,
                         onVectorDem, watcher,
                     })).fetch(zpCovered, bbox, radius);
                 }
             } catch (err) {
                 console.error('err:', err);
-                rej(null);
+                rej(err);
             }
         });
     }

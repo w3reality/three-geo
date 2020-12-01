@@ -57,6 +57,7 @@ class RgbModel {
         this.unitsPerMeter = params.unitsPerMeter;
         this.projectCoord = params.projectCoord;
         this.token = params.token;
+        this.useNodePixels = params.useNodePixels;
         this.apiRgb = params.apiRgb;
         this.apiSatellite = params.apiSatellite;
 
@@ -77,7 +78,7 @@ class RgbModel {
 
         let count = 0;
         zpEle.forEach(zoompos => {
-            Fetch.fetchTile(zoompos, this.apiRgb, this.token, tile => {
+            Fetch.fetchTile(zoompos, this.apiRgb, this.token, this.useNodePixels, tile => {
                 if (tile) {
                     this.addTile(tile, zoompos, zpCovered, bbox);
                 } else {
@@ -305,14 +306,15 @@ class RgbModel {
         }
 
         const meshes = RgbModel._build(
-            this.dataEleCovered, this.apiSatellite, this.token, onSatelliteMatWrapper);
+            this.dataEleCovered, this.apiSatellite,
+            this.token, this.useNodePixels, onSatelliteMatWrapper);
 
         this.onRgbDem(meshes); // legacy API
         if (!onSatelliteMatWrapper) {
             this.watcher({what: 'dem-rgb', data: meshes});
         }
     }
-    static _build(dataEle, apiSatellite, token, onSatelliteMatWrapper) {
+    static _build(dataEle, apiSatellite, token, useNodePixels, onSatelliteMatWrapper) {
         console.log('apiSatellite:', apiSatellite);
 
         // dataEle should be sorted so that .resolveSeams() is applied
@@ -366,7 +368,7 @@ class RgbModel {
             };
             objs.push(plane);
 
-            this.resolveTex(zoompos, apiSatellite, token, tex => {
+            this.resolveTex(zoompos, apiSatellite, token, useNodePixels, tex => {
                 if (tex) {
                     plane.material = new THREE.MeshBasicMaterial({
                         side: THREE.FrontSide,
@@ -383,8 +385,9 @@ class RgbModel {
     }
 
     //==== THREE specific
-    static resolveTex(zoompos, apiSatellite, token, onTex) {
-        Fetch.fetchTile(zoompos, apiSatellite, token, pixels => {
+    // _buildModelThree() {} // TODO (refactor)
+    static resolveTex(zoompos, apiSatellite, token, useNodePixels, onTex) {
+        Fetch.fetchTile(zoompos, apiSatellite, token, useNodePixels, pixels => {
             let tex = null;
             if (pixels) {
                 // console.log("satellite pixels", pixels.shape.slice(0));
@@ -409,7 +412,6 @@ class RgbModel {
             }
         });
     }
-    // _buildModelThree() {} // TODO !!!!!!!!
 }
 
 export default RgbModel;

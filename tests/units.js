@@ -1,5 +1,6 @@
-const setupApi = (tgeo, base) => {
+const setupApi = (tgeo, preset, base) => {
     tgeo.tokenMapbox = 'zzzz';
+    tgeo.useNodePixels = preset === 'node';
     tgeo.setApiVector(`${base}/custom-terrain-vector`);
     tgeo.setApiRgb(`${base}/custom-terrain-rgb`);
     tgeo.setApiSatellite(`${base}/custom-satellite`);
@@ -22,7 +23,7 @@ units['rgb-noexist'] = async (ThreeGeo, dataDir, preset='node') => {
 
     // The API call should return even when no rgb DEM files are fetched
     const loc = {name: 'noexist', origin: [46.5763, 7.9904], radius: 5.0, zoom: 12};
-    setupApi(tgeo, `${dataDir}/${loc.name}`);
+    setupApi(tgeo, preset, `${dataDir}/${loc.name}`);
 
     const { origin, radius, zoom } = loc;
     const ret = await run(() => tgeo.getTerrainRgb(origin, radius, zoom));
@@ -38,7 +39,7 @@ units['rgb-eiger'] = async (ThreeGeo, dataDir, preset='node') => {
     const tgeo = new ThreeGeo();
 
     const loc = {name: 'eiger', origin: [46.5763, 7.9904], radius: 5.0, zoom: 12};
-    setupApi(tgeo, `${dataDir}/${loc.name}`);
+    setupApi(tgeo, preset, `${dataDir}/${loc.name}`);
 
     const { origin, radius, zoom } = loc;
     const ret = await run(() => tgeo.getTerrainRgb(origin, radius, zoom));
@@ -66,7 +67,7 @@ units['rgb-table'] = async (ThreeGeo, dataDir, preset='node') => {
     const tgeo = new ThreeGeo();
 
     const loc = {name: 'table', origin: [-33.9625, 18.4107], radius: 1.25, zoom: 14};
-    setupApi(tgeo, `${dataDir}/${loc.name}`);
+    setupApi(tgeo, preset, `${dataDir}/${loc.name}`);
 
     const { origin, radius, zoom } = loc;
     const ret = await run(() => tgeo.getTerrainRgb(origin, radius, zoom));
@@ -94,7 +95,7 @@ units['vec-table'] = async (ThreeGeo, dataDir, preset='node') => {
     const tgeo = new ThreeGeo();
 
     const loc = {name: 'table', origin: [-33.9625, 18.4107], radius: 1.25, zoom: 14};
-    setupApi(tgeo, `${dataDir}/${loc.name}`);
+    setupApi(tgeo, preset, `${dataDir}/${loc.name}`);
 
     const { origin, radius, zoom } = loc;
     const ret = await run(() => tgeo.getTerrainVector(origin, radius, zoom));

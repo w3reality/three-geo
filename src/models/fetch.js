@@ -121,8 +121,8 @@ class Fetch {
         };
     }
 
-    static async resolveGetPixels() {
-        return Utils.Meta.isNodeJS() ?
+    static async resolveGetPixels(useNodePixels) {
+        return useNodePixels ?
             await Utils.Meta.nodeRequire(global, 'get-pixels/node-pixels') :
             __getPixelsDom; // use the statically imported one
     }
@@ -147,7 +147,7 @@ class Fetch {
             .map(triplet => triplet.split(',').map(num => parseFloat(num)));
     }
 
-    static fetchTile(zoompos, api, token, cb) {
+    static fetchTile(zoompos, api, token, useNodePixels, cb) {
         // console.log('token:', token);
         let isMapbox = api.startsWith('mapbox-');
         let uri = isMapbox ?
@@ -181,7 +181,9 @@ class Fetch {
             }
 
             const _cb = (err, pixels) => cb(err ? null : pixels);
-            this.resolveGetPixels().then(fn => fn(uri, _cb));
+            this.resolveGetPixels(useNodePixels)
+                .then(fn => fn(uri, _cb))
+                .catch(err => console.error('err:', err));
         } else {
             console.log('nop, unsupported api:', api);
         }
