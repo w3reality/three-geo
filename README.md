@@ -77,7 +77,7 @@ Here is an example of how to build a geographic terrain located at GPS coordinat
 
 For standalone tests, use **examples/simple-viewer** ([source code](https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer)).
 
-For use with NodeJS, do ebable [this option](#note-nodejs) as well.
+For use with NodeJS, do enable [this `useNodePixels` option](#note-nodejs) as well.
 
 ```js
 const tgeo = new ThreeGeo({
