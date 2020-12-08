@@ -36,6 +36,8 @@ class App extends Threelet {
         viewer.showMsgTerrain();
 
         this.on('mouse-move', (mx, my) => viewer.pick(mx, my));
+        // TODO CHECK
+        // 'mouseup' to 'pointerup' migration? (w.r.t. threelet/examples/model-selection/index.html)
         this.on('mouse-click', (mx, my) => viewer.updateMeasure(mx, my));
         this.on('mouse-click-right', (mx, my) => viewer.updateOrbit(mx, my));
 
