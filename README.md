@@ -1,6 +1,15 @@
 # three-geo
 
-![](https://github.com/w3reality/three-geo/workflows/Build%20and%20Run/badge.svg)
+[![NPM][npm-badge]][npm-url]
+[![MIT licensed][mit-badge]][mit-url]
+[![CI][actions-badge]][actions-url]
+
+[npm-badge]: https://img.shields.io/npm/v/three-geo.svg
+[npm-url]: https://www.npmjs.com/package/three-geo
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[mit-url]: https://github.com/w3reality/three-geo/blob/master/LICENSE
+[actions-badge]: https://github.com/w3reality/three-geo/workflows/CI/badge.svg
+[actions-url]: https://github.com/w3reality/three-geo/actions
 
 **three-geo** is a [three.js](https://github.com/mrdoob/three.js) based geographic visualization library. Using three-geo, we can easily build satellite-textured 3D terrain models in near real-time by simply specifying GPS coordinates anywhere on the globe. The geometry of the terrain is based on the RGB-encoded DEM (Digital Elevation Model) provided by the Mapbox Maps API.
 
