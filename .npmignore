@@ -1,10 +1,5 @@
 examples/
-lib/
 test/
-webpack.config.js
-README.rst
-.babelrc
-.eslintrc
 tests/
 target/
 .github/
