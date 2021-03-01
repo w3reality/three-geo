@@ -49,7 +49,7 @@
         "get-pixels": "3.3.2",
         "pbf": "^3.1.0",
         "regenerator": "^0.14.2",
-        "three": "^0.115.0",
+        "three": "^0.125.0",
         "three-laser-pointer": "^1.2.2",
         "uniq": "^1.0.1",
         "xhr": "^2.5.0"
