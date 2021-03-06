@@ -7,7 +7,7 @@
         "example": "examples"
     },
     "scripts": {
-        "postinstall": "(cd ./examples/geo-viewer && npm i || echo);",
+        "postinstall": "([ -d './examples' ] && cd ./examples/geo-viewer && npm i || true);",
         "dist": "es-pack build -d ./dist -m umd esm esm-compat",
         "build": "es-pack build -m umd",
         "build:esm": "es-pack build -m esm",
