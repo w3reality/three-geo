@@ -222,50 +222,58 @@ class VectorModel {
         }
         return objs;
     }
+
     _buildSlice(coords, iContour, color, contours, nw, se) {
-        const shadedContour = new THREE.Shape();
-        const wireframeContours = [new THREE.Geometry()];
+        const shape = new THREE.Shape();
+        const geoms = [new THREE.BufferGeometry()];
 
         const h = iContour;
         const pz = - contours[h].ele * this.unitsPerMeter;
 
+        const setVertices = (geom, vertices) => geom.setAttribute('position',
+            new THREE.BufferAttribute(new Float32Array(vertices), 3));
+
         // iterate through vertices per shape
-        // console.log('coords[0]:', coords[0]);
+        const vertices = [];
         coords[0].forEach((coord, index) => {
             let [px, py] = this.projectCoord(coord, nw, se);
-            wireframeContours[0].vertices.push(
-                new THREE.Vector3(-px, py, pz));
+            vertices.push(-px, py, pz);
+
             if (index === 0) {
-                shadedContour.moveTo(-px, py);
+                shape.moveTo(-px, py);
             } else {
-                shadedContour.lineTo(-px, py);
+                shape.lineTo(-px, py);
             }
         });
+        setVertices(geoms[0], vertices);
 
         // carve out holes (if none, would automatically skip this)
         for (let k = 1; k < coords.length; k++) {
             // console.log('holes');
             let holePath = new THREE.Path();
-            wireframeContours.push(new THREE.Geometry());
+            geoms.push(new THREE.BufferGeometry());
 
             // iterate through hole path vertices
+            const vertices = [];
             for (let j = 0; j < coords[k].length; j++) {
                 let [px, py] = this.projectCoord(coords[k][j], nw, se);
-                wireframeContours[k].vertices.push(
-                    new THREE.Vector3(-px, py, pz));
+                vertices.push(-px, py, pz);
+
                 if (j === 0) {
                     holePath.moveTo(-px, py);
                 } else {
                     holePath.lineTo(-px, py);
                 }
             }
-            shadedContour.holes.push(holePath);
+            setVertices(geoms[k], vertices);
+
+            shape.holes.push(holePath);
         }
 
         const lines = [];
-        wireframeContours.forEach((_loop, _index) => {
+        geoms.forEach((_loop, _index) => {
             let line = new THREE.Line(
-                wireframeContours[0],
+                geoms[0],
                 new THREE.LineBasicMaterial({
                     color: 0xcccccc
                 }));
@@ -278,7 +286,7 @@ class VectorModel {
             lines.push(line);
         });
 
-        let extrudeGeom = new THREE.ExtrudeGeometry(shadedContour, {
+        let extrudeGeom = new THREE.ExtrudeGeometry(shape, {
             depth: contours[h+1] ?
                 this.unitsPerMeter * (contours[h+1].ele - contours[h].ele) :
                 this.unitsPerMeter * (contours[h].ele - contours[h-1].ele),
