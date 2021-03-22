@@ -1,1 +1,1 @@
-app.min.js
+app.esm.js

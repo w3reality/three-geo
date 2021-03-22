@@ -403,7 +403,7 @@ class Viewer {
     _addOrbit(orbit, segments=128) {
         let radius = orbit.rvec.length();
         let geom = new THREE.CircleGeometry(radius, segments);
-        geom.vertices.shift(); // remove the center vertex
+//        geom.vertices.shift(); // remove the center vertex
         this._orbit = new THREE.LineLoop(geom,
             new THREE.LineBasicMaterial({color: 0xff00ff}));
         this._orbit.position.set(orbit.center.x, orbit.center.y, orbit.center.z);

@@ -1,11 +1,12 @@
-import env from './env.js';
-// import env from './envs-ignore/env-dev.js';
+//import env from './env.js';
+ import env from './envs-ignore/env-dev.js';
 // import env from './envs-ignore/env-io.js';
 
-const { THREE, Threelet, Stats } = window;
-
+import Threelet from '../../deps/threelet.esm.js';
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
+
+const { THREE, Stats } = window;
 
 class App extends Threelet {
     // override
@@ -23,7 +24,6 @@ class App extends Threelet {
             viewer.showMsg(this.camera);
             viewer.plotCamInMap(this.camera);
         };
-        this.setup('mod-controls', THREE.OrbitControls);
 
         const guiData = App.createGuiData();
         viewer.setGuiHelper(
@@ -148,7 +148,4 @@ class App extends Threelet {
     }
 }
 
-const app = new App({
-    canvas: document.getElementById("canvas"),
-});
-app.render(); // first time
+export default App;

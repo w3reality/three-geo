@@ -4,8 +4,8 @@
     "version": "0.1.0",
     "description": "",
     "scripts": {
-        "build": "../../node_modules/.bin/es-pack build -d ./dist",
-        "dev": "../../node_modules/.bin/es-pack build -d ./dist --dev"
+        "build": "../../node_modules/.bin/es-pack build -m esm -d ./dist",
+        "dev": "../../node_modules/.bin/es-pack build -m esm -d ./dist --dev"
     },
     "author": "j-devel",
     "license": "MIT",

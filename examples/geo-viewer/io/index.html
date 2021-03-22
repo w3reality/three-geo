@@ -47,13 +47,22 @@
     </div>
 
     <script src="../../deps/jquery.min.js"></script>
-
-    <script src="../../deps/three.min.js"></script>
-    <script src="../../deps/dat-gui-defaults.min.js"></script>
     <script src="../../deps/stats.min.js"></script>
-    <script src="../../deps/OrbitControls.js"></script>
-    <script src="../../deps/threelet.min.js"></script>
+    <script src="../../deps/dat-gui-defaults.min.js"></script>
 
-    <script src='./app.js'></script>
+    <script type="module">
+    import { OrbitControls } from '../../deps/three/examples/jsm/controls/OrbitControls.js';
+
+    (async () => {
+        window.THREE = await import('../../deps/three/build/three.module.js');
+
+        const App = (await import('./app.js')).default;
+        const app = new App({
+            canvas: document.getElementById("canvas"),
+        });
+        app.setup('mod-controls', OrbitControls);
+        app.render(); // first time
+    })();
+    </script>
 </body>
 </html>
