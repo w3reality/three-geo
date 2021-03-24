@@ -1,6 +1,6 @@
 import ThreeGeo from '../../../src';
 
-const { THREE, jQuery: $ } = window;
+const { THREE } = window;
 
 import L from 'leaflet';
 // console.log('L:', L);
@@ -185,20 +185,24 @@ class MapHelper {
         // so, sent a PR - https://github.com/smeijer/leaflet-geosearch/pull/178
         // that solves this issue.  FIXME later...
 
+        try {
+            const geosearchForm = document.getElementById('map')
+                .getElementsByTagName('form')[0];
+            if (!geosearchForm[0].getAttribute('class').includes('glass')) {
+                throw new Error('Got a wrong element.');
+            }
 
-        // kludge -- prevent invoking this.map.on('click'
-        // https://github.com/Leaflet/Leaflet/issues/1343#issuecomment-99494636
-        // https://github.com/Leaflet/Leaflet/blob/master/src/control/Control.Zoom.js#L46
-        const $geosearchForm = $('.leaflet-control-geosearch form');
-        // console.log('el:', $geosearchForm[0]);
-        L.DomEvent.disableClickPropagation($geosearchForm[0]);
+            // kludge -- prevent invoking this.map.on('click'
+            // https://github.com/Leaflet/Leaflet/issues/1343#issuecomment-99494636
+            // https://github.com/Leaflet/Leaflet/blob/master/src/control/Control.Zoom.js#L46
+            L.DomEvent.disableClickPropagation(geosearchForm);
 
-        // https://stackoverflow.com/questions/19347269/jquery-keypress-arrow-keys
-        $geosearchForm.on('keydown', (e) => {
-            // console.log('e:', e);
             // prevent arrow keys' interaction with the orbit control
-            e.stopPropagation();
-        });
+            geosearchForm.addEventListener(
+                'keydown', e => e.stopPropagation(), false);
+        } catch (err) {
+            console.error(`Configuring geosearchForm failed with: ${err}`);
+        }
     }
 
     static swap(ll) {
@@ -208,18 +212,32 @@ class MapHelper {
         return `${ll[0].toFixed(4)} ${ll[1].toFixed(4)}`;
     }
     static mkBuildMarker(ll, onBuild, onCancel) {
-        // https://stackoverflow.com/questions/13698975/click-link-inside-leaflet-popup-and-do-javascript
-        let container = $('<div />');
-        container.html(`<div>${MapHelper.llToString(ll)}</div>`);
-        container.append(`<div><a href='#' class='buildLink'>Build Terrain</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='#' class='cancelLink'>[x]</a></div>`);
-        // container.append($('<span class="bold">').text("abc..."))
+        const container = document.createElement('div');
 
-        container.on('click', '.buildLink', onBuild);
-        container.on('click', '.cancelLink', onCancel);
-        let pp = L.popup({
-            closeButton: false,
-        }).setContent(container[0]);
-        return L.marker(ll).bindPopup(pp);
+        const div0 = document.createElement('div');
+        container.appendChild(div0);
+        div0.appendChild(document.createTextNode(`${MapHelper.llToString(ll)}`));
+
+        const div1 = document.createElement('div');
+        container.appendChild(div1);
+
+        const aBuild = document.createElement('a');
+        div1.appendChild(aBuild);
+        aBuild.appendChild(document.createTextNode('Build Terrain'));
+        aBuild.href = '#';
+        aBuild.addEventListener('click', onBuild);
+
+        div1.appendChild(document.createTextNode(' '));
+
+        const aCancel = document.createElement('a');
+        div1.appendChild(aCancel);
+        aCancel.appendChild(document.createTextNode('[x]'));
+        aCancel.href = '#';
+        aCancel.addEventListener('click', onCancel);
+
+        // https://stackoverflow.com/questions/13698975/click-link-inside-leaflet-popup-and-do-javascript
+        return L.marker(ll).bindPopup(
+            L.popup({closeButton: false}).setContent(container));
     }
     static mkGeoJsonPoint(ll) {
         return {
@@ -312,9 +330,8 @@ class MapHelper {
             lineCam, ...cam.position.toArray(), unitsPerMeter);
     }
 
-
     toggle(tf) {
-        $('#mapWrapper').toggle(tf);
+        document.getElementById('mapWrapper').style['display'] = tf ? '' : 'none';
     }
     plotCam(cam) {
         // console.log('cam:', cam);
