@@ -10,41 +10,46 @@
     </div>
     <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
 
-    <script src="../deps/three.min.js"></script>
-    <script src="../deps/OrbitControls.js"></script>
-    <!-- <script src="../deps/stats.min.js"></script> -->
-    <script src="../deps/threelet.min.js"></script>
-
-    <script src="../../dist/three-geo.min.js"></script>
-    <!-- <script src="../../target/three-geo.js"></script> -->
-
-    <script>
-    const threelet = new Threelet({
-        canvas: document.getElementById("canvas"),
-        // optAxes: false,
-    });
-    threelet.setup('mod-controls', THREE.OrbitControls);
-    // threelet.setup('mod-stats', window.Stats);
-
-    const { scene, render } = threelet;
-    render(); // first time
-
-    const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
-    const tgeo = new ThreeGeo({
-        // tokenMapbox: '********', // <---- set your Mapbox API token here
-        tokenMapbox: ioToken,
-    });
-
-    if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
-        const warning = 'Please set your own Mapbox API token in the ThreeGeo constructor.';
-        alert(warning);
-        throw warning;
-    }
-
-    const origin = [46.5763, 7.9904];
-    const radius = 5.0;
+    <script type="module">
+    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
+    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
 
     (async () => {
+        window.THREE = await import('../deps/three/build/three.module.js');
+        const Threelet = (await import('../deps/threelet.esm.js')).default;
+
+        const ThreeGeo = (await import('../../dist/three-geo.esm.js')).default;
+        // const ThreeGeo = (await import('../../target/three-geo.esm.dev.js')).default;
+
+        //
+
+        const threelet = new Threelet({
+            canvas: document.getElementById("canvas"),
+            // optAxes: false,
+        });
+        threelet.setup('mod-controls', OrbitControls);
+        // threelet.setup('mod-stats', Stats);
+
+        const { scene, render } = threelet;
+        render(); // first time
+
+        const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
+        const tgeo = new ThreeGeo({
+            // tokenMapbox: '********', // <---- set your Mapbox API token here
+            tokenMapbox: ioToken,
+        });
+
+        if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
+            const warning = 'Please set your own Mapbox API token in the ThreeGeo constructor.';
+            alert(warning);
+            throw warning;
+        }
+
+        const origin = [46.5763, 7.9904];
+        const radius = 5.0;
+
+        //
+
         const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
         terrain.rotation.x = - Math.PI/2;
         terrain.children.forEach(mesh => {
@@ -55,24 +60,22 @@
         // add a point
 
         const { proj, unitsPerMeter } = tgeo.getProjection(origin, radius);
-        const dot = new THREE.Points(
-            new THREE.Geometry(),
+
+        // const [x, y] = proj(origin), z = 4000; // reprojection test
+        const [x, y] = proj([46.5775, 8.0052]), z = 3970; // Eiger's peak
+        // const [x, y] = proj([46.5852, 7.9610]), z = 2100; // road?
+
+        const geom = new THREE.BufferGeometry();
+        const vertices = new Float32Array([x, z * unitsPerMeter, -y]);
+        geom.setAttribute('position', new THREE.BufferAttribute(vertices,
+            3)); // 'values per vertex' https://threejs.org/docs/#api/en/core/BufferGeometry
+
+        const dot = new THREE.Points(geom,
             new THREE.PointsMaterial({
                 size: 8,
                 sizeAttenuation: false,
                 color: 0x00cccc,
             }));
-
-        // 🔵 API signature has changed
-        // proj([lng, lat]) -> [x, y]  (three-geo <= 1.2.5)
-        // proj([lat, lng]) -> [x, y]  (three-geo > 1.3.0dev)
-
-        // const [x, y] = proj(origin), z = 4000; // reprojection test
-        const [x, y] = proj([46.5775, 8.0052]), z = 3970; // Eiger's peak
-        // const [x, y] = proj([46.5852, 7.9610]), z = 2100; // town
-
-        dot.geometry.vertices.push(new THREE.Vector3(
-            x, z * unitsPerMeter, -y));
         scene.add(dot);
 
         render();

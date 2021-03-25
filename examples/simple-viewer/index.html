@@ -7,43 +7,45 @@
 <body>
     <canvas id="canvas" width="480" height="320"></canvas>
 
-    <script src="../deps/three.min.js"></script>
-    <script src="../deps/stats.min.js"></script>
-    <script src="../deps/OrbitControls.js"></script>
+    <script type="module">
+    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
+    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
 
-    <script src="../../dist/three-geo.min.js"></script>
-    <!-- <script src="../../target/three-geo.js"></script> -->
+    (async () => {
+        window.THREE = await import('../deps/three/build/three.module.js');
 
-    <script>
-    THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
+        const ThreeGeo = (await import('../../dist/three-geo.esm.js')).default;
 
-    const canvas = document.getElementById("canvas");
-    const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 1000);
-    camera.position.set(0, 0, 1.5);
+        //
 
-    const renderer = new THREE.WebGLRenderer({ canvas });
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 
-    const scene = new THREE.Scene();
-    const walls = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
-        new THREE.LineBasicMaterial({color: 0xcccccc}));
-    walls.position.set(0, 0, 0);
-    scene.add(walls);
-    scene.add(new THREE.AxesHelper(1));
+        const canvas = document.getElementById("canvas");
+        const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 1000);
+        camera.position.set(0, 0, 1.5);
 
-    const stats = new Stats();
-    stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
-    document.body.appendChild(stats.dom);
-    const render = () => {
-        stats.update();
-        renderer.render(scene, camera);
-    };
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        const controls = new OrbitControls(camera, renderer.domElement);
 
-    controls.addEventListener('change', render);
-    render(); // first time
+        const scene = new THREE.Scene();
+        const walls = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
+            new THREE.LineBasicMaterial({color: 0xcccccc}));
+        walls.position.set(0, 0, 0);
+        scene.add(walls);
+        scene.add(new THREE.AxesHelper(1));
 
-    (async () => { // main
+        const stats = new Stats();
+        stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
+        document.body.appendChild(stats.dom);
+        const render = () => {
+            stats.update();
+            renderer.render(scene, camera);
+        };
+
+        controls.addEventListener('change', render);
+        render(); // first time
+
         const tgeo = new ThreeGeo({
             tokenMapbox: '********', // <---- set your Mapbox API token here
         });
@@ -60,6 +62,7 @@
             12);               // zoom resolution
 
         scene.add(terrain);
+
         render();
     })();
     </script>
