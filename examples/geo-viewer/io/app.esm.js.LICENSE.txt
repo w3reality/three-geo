@@ -1,0 +1,40 @@
+/* @preserve
+ * Leaflet 1.6.0, a JS library for interactive maps. http://leafletjs.com
+ * (c) 2010-2019 Vladimir Agafonkin, (c) 2010-2011 CloudMade
+ */
+
+/*!
+ * Determine if an object is a Buffer
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <https://feross.org>
+ * @license  MIT
+ */
+
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+/**
+   * splaytree v3.0.1
+   * Fast Splay tree for Node and browser
+   *
+   * @author Alexander Milevski <info@w8r.name>
+   * @license MIT
+   * @preserve
+   */
+
+/**
+ * martinez v0.4.3
+ * Martinez polygon clipping algorithm, does boolean operation on polygons (multipolygons, polygons with holes etc): intersection, union, difference, xor
+ *
+ * @author Alex Milevski <info@w8r.name>
+ * @license MIT
+ * @preserve
+ */
