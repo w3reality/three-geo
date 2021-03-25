@@ -6,7 +6,7 @@ import Threelet from '../../deps/threelet.esm.js';
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
 
-const { THREE, Stats } = window;
+const { THREE } = window;
 
 class App extends Threelet {
     // override
@@ -14,11 +14,11 @@ class App extends Threelet {
         this.camera.position.set(0, 0, 1.5);
         this.camera.up.set(0, 0, 1); // The up vector is along +z for this app
 
-        const stats = this.setup('mod-stats', Stats, {panelType: 1});
         const viewer = new Viewer(env, this);
+        this.stats = null;
 
         this.render = () => { // override
-            stats.update();
+            if (this.stats) { this.stats.update(); }
             this.resizeCanvas();
             viewer.render();
             viewer.showMsg(this.camera);
@@ -39,7 +39,7 @@ class App extends Threelet {
         this.on('pointer-click', (mx, my) => viewer.updateMeasure(mx, my));
         this.on('pointer-click-right', (mx, my) => viewer.updateOrbit(mx, my));
 
-        this._appData = { stats, viewer, guiData };
+        this._appData = { viewer, guiData };
     }
 
     static createGuiData() {

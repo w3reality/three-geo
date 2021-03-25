@@ -46,10 +46,10 @@
         <div>[right-click]: set an orbital axis</div>
     </div>
 
-    <script src="../../deps/stats.min.js"></script>
     <script src="../../deps/dat-gui-defaults.min.js"></script>
 
     <script type="module">
+    import Stats from '../../deps/three/examples/jsm/libs/stats.module.js';
     import { OrbitControls } from '../../deps/three/examples/jsm/controls/OrbitControls.js';
 
     (async () => {
@@ -59,7 +59,9 @@
         const app = new App({
             canvas: document.getElementById("canvas"),
         });
+        app.stats = app.setup('mod-stats', Stats, {panelType: 1});
         app.setup('mod-controls', OrbitControls);
+
         app.render(); // first time
     })();
     </script>
