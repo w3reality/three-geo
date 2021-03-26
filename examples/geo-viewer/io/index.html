@@ -55,7 +55,7 @@
     (async () => {
         window.THREE = await import('../../deps/three/build/three.module.js');
 
-        const App = (await import('./app.js')).default;
+        const App = (await import('./app.esm.dev.js')).default;
         const app = new App({
             canvas: document.getElementById("canvas"),
         });
