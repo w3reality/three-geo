@@ -55,6 +55,13 @@ class Fetch {
     }
     static getUriMapbox(token, api, zoompos) {
         let prefix, res = '';
+        let custom_style = '';
+        console.log('api: ',api)
+        if(api.includes('mapbox-custom-')){
+            custom_style = api.split('mapbox-custom-')[1]
+            api = "mapbox-custom"
+            console.log('custom style detected: ',api, custom_style)
+        }
         switch (api) {
             case 'mapbox-terrain-vector':
                 // https://docs.mapbox.com/help/troubleshooting/access-elevation-data/#mapbox-terrain-vector-tileset
@@ -71,6 +78,11 @@ class Fetch {
                 // https://docs.mapbox.com/help/troubleshooting/migrate-legacy-static-images-api/
                 // https://docs.mapbox.com/api/maps/#static-tiles
                 prefix = 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles';
+                break;
+            case 'mapbox-custom':
+                // https://docs.mapbox.com/help/troubleshooting/migrate-legacy-static-images-api/
+                // https://docs.mapbox.com/api/maps/#static-tiles
+                prefix = `https://api.mapbox.com/styles/v1/${custom_style}/tiles`;
                 break;
             default:
                 console.log('getUriMapbox(): unsupported api:', api);
@@ -171,6 +183,7 @@ class Fetch {
             }
         } else if (api.includes('mapbox-terrain-rgb') ||
                 api.includes('mapbox-satellite') ||
+                api.includes('mapbox-custom') ||
                 api.includes('custom-terrain-rgb') ||
                 api.includes('custom-satellite')) {
 

@@ -14,7 +14,7 @@
     (async () => {
         window.THREE = await import('../deps/three/build/three.module.js');
 
-        const ThreeGeo = (await import('../../dist/three-geo.esm.js')).default;
+        const ThreeGeo = (await import('../../target/three-geo.esm.js')).default;
 
         //
 
@@ -47,7 +47,8 @@
         render(); // first time
 
         const tgeo = new ThreeGeo({
-            tokenMapbox: '********', // <---- set your Mapbox API token here
+            tokenMapbox: 'pk.eyJ1IjoiaXp6eW1pbGxlciIsImEiOiJjazBiemV0Z2IwendqM2RtcW43cHdhcXFuIn0.WhICSXv_PGSYIWgSCLQ8uA',
+            apiSatellite: 'mapbox-custom-izzymiller/ckohuxxnt2pta17nw3hz4i7za'
         });
 
         if (tgeo.tokenMapbox === '********') {
@@ -55,6 +56,9 @@
             alert(warning);
             throw warning;
         }
+        // tgeo.setApiSatellite("mapbox-custom-mapbox/satellite-v9");
+
+
 
         const terrain = await tgeo.getTerrainRgb(
             [46.5763, 7.9904], // [lat, lng]
