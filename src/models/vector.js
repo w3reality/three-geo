@@ -293,7 +293,7 @@ class VectorModel {
             bevelEnabled: false,
         });
         let extrudeShade = new THREE.Mesh(
-            extrudeGeom, new THREE.MeshBasicMaterial({
+            extrudeGeom, new THREE.MeshLambertMaterial({
                 color: color,
                 wireframe: false,
                 // wireframe: true,

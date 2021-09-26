@@ -14,8 +14,6 @@
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
-/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
-
 /**
    * splaytree v3.0.1
    * Fast Splay tree for Node and browser
@@ -24,12 +22,3 @@
    * @license MIT
    * @preserve
    */
-
-/**
- * martinez v0.4.3
- * Martinez polygon clipping algorithm, does boolean operation on polygons (multipolygons, polygons with holes etc): intersection, union, difference, xor
- *
- * @author Alex Milevski <info@w8r.name>
- * @license MIT
- * @preserve
- */

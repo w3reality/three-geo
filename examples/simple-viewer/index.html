@@ -5,11 +5,12 @@
     <title>simple-viewer</title>
 </head>
 <body>
-    <canvas id="canvas" width="480" height="320"></canvas>
+    <canvas id="canvas" width="1000px" height="1000px"></canvas>
 
     <script type="module">
     import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
     import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
+    
 
     (async () => {
         window.THREE = await import('../deps/three/build/three.module.js');
@@ -22,9 +23,13 @@
 
         const canvas = document.getElementById("canvas");
         const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 1000);
-        camera.position.set(0, 0, 1.5);
+        camera.position.set(10, 10, 10);
 
+    
         const renderer = new THREE.WebGLRenderer({ canvas });
+        renderer.shadowMapEnabled = true;
+        renderer.shadowMapType = THREE.PCFSoftShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
+
         const controls = new OrbitControls(camera, renderer.domElement);
 
         const scene = new THREE.Scene();
@@ -34,6 +39,48 @@
         walls.position.set(0, 0, 0);
         scene.add(walls);
         scene.add(new THREE.AxesHelper(1));
+
+            var lightbulb = new THREE.Mesh(
+            new THREE.SphereGeometry( 4, 4, 4 ),
+            new THREE.MeshBasicMaterial( { color: 0xffaa00 } )
+        );
+        
+        var light = new THREE.PointLight( 0xffffff, 0.75, 350 );
+        light.position.set( -10, 40, 20 );
+        light.add( lightbulb );
+        scene.add( light );
+        var directional_light = new THREE.DirectionalLight( 0xff9900, 0.55 );
+        directional_light.position.set( 25, 30, 15 );
+        directional_light.castShadow = true;
+        directional_light.shadowDarkness = 1.0;
+        directional_light.shadowCameraVisible = false;
+        directional_light.shadowCameraNear = 10;
+        directional_light.shadowCameraFar = 250;
+        directional_light.shadowCameraRight = 100;
+        directional_light.shadowCameraLeft = -100;
+        directional_light.shadowCameraTop = 100;
+        directional_light.shadowCameraBottom = -100;
+        directional_light.shadowMapWidth = 5000;
+        directional_light.shadowMapHeight = 5000;
+        scene.add( directional_light );
+
+        var ambientLight = new THREE.AmbientLight( 0x666666 );
+        var intensity = 1.0;
+        ambientLight.color.setRGB(
+            ambientLight.color.r * intensity,
+            ambientLight.color.g * intensity,
+            ambientLight.color.b * intensity );
+        scene.add( ambientLight );
+        
+        // Attach a soft light to the camera
+        var camera_light = new THREE.PointLight( 0xffffff, 0.25, 250 );
+        camera.add( camera_light );
+
+        // const amlight = new THREE.PointLight( 0xff0000, 1, 100 );
+        // amlight.position.set( 50, 50, 50 );
+        // amlight.castShadow = true
+        // scene.add( amlight );   
+
 
         const stats = new Stats();
         stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -61,11 +108,27 @@
 
 
         const terrain = await tgeo.getTerrainRgb(
-            [46.5763, 7.9904], // [lat, lng]
-            5.0,               // radius of bounding circle (km)
-            12);               // zoom resolution
+            [-109.258844,42.794645,-109.174861,42.921595],
+            2.5,               // radius of bounding circle (km)
+            17,                // zoom resolution
+            // bbox = 0           // bbox to get terrain within
+            );               
 
+        console.log(terrain.position)
+        terrain.castShadow = true;
+        terrain.receiveShadow = true;
         scene.add(terrain);
+
+        scene.traverse( function( child ) { 
+
+            if ( child.isMesh ) {
+
+                child.castShadow = true;
+                child.receiveShadow = true;
+
+            }
+
+            } );
 
         render();
     })();

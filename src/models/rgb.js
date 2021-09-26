@@ -353,7 +353,7 @@ class RgbModel {
             // geom.attributes.position.array = new Float32Array(arrBelt);
 
             let plane = new THREE.Mesh(geom,
-                new THREE.MeshBasicMaterial({
+                new THREE.MeshLambertMaterial({
                     wireframe: true,
                     color: 0xcccccc,
                 }));
@@ -370,7 +370,7 @@ class RgbModel {
 
             this.resolveTex(zoompos, apiSatellite, token, useNodePixels, tex => {
                 if (tex) {
-                    plane.material = new THREE.MeshBasicMaterial({
+                    plane.material = new THREE.MeshLambertMaterial({
                         side: THREE.FrontSide,
                         // side: THREE.DoubleSide,
                         map: tex,

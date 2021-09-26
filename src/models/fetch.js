@@ -83,6 +83,7 @@ class Fetch {
                 // https://docs.mapbox.com/help/troubleshooting/migrate-legacy-static-images-api/
                 // https://docs.mapbox.com/api/maps/#static-tiles
                 prefix = `https://api.mapbox.com/styles/v1/${custom_style}/tiles`;
+                // res = '@2x';
                 break;
             default:
                 console.log('getUriMapbox(): unsupported api:', api);

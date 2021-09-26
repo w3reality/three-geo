@@ -1,5 +1,4 @@
 import pkg from '../package.json';
-const __version = pkg.version;
 
 import 'regenerator-runtime/runtime.js';
 
@@ -9,6 +8,8 @@ import RgbModel from './models/rgb.js';
 import VectorModel from './models/vector.js';
 import Utils from './utils.js';
 import Laser from 'three-laser-pointer/src';
+const __version = pkg.version;
+
 
 // import Elevation from './elevation.js'; // WIP
 //====
@@ -53,8 +54,10 @@ class ThreeGeo {
     // ll-notation
     //   latlng: three-geo, leaflet
     //   lnglat: turf
-    getProjection(origin, radius, unitsSide=this.constUnitsSide) {
-        const wsen = Utils.originRadiusToBbox(origin, radius);
+    getProjection(bbox, radius, unitsSide=this.constUnitsSide) {
+        // const wsen = Utils.polygonToBbox(origin, radius);
+        const wsen = bbox;
+        console.log(wsen)
         // console.log('origin:', origin);
         // console.log('wsen:', wsen);
         const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
@@ -110,6 +113,36 @@ class ThreeGeo {
             .map(([x, y, z]) => [z, x, y]); // zoompos now!!
     }
 
+    static getBboxFeature(bbox) {
+        const testPolygon = {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                        ]
+                    ]
+                }
+            }]
+        };
+        const polygon = testPolygon.features[0];
+        const [w, s, e, n] = bbox;
+        console.info([w, s, e, n])
+        const nw = [w, n], se = [e, s];
+        polygon.geometry.coordinates[0] = [
+            nw, [se[0], nw[1]], se, [nw[0], se[1]], nw
+        ];
+        // console.log('testPolygon:', testPolygon);
+        return {
+            feature: polygon,
+            northWest: nw,
+            southEast: se,
+        };
+    }
+
     static getBbox(origin, radius) {
         const testPolygon = {
             "type": "FeatureCollection",
@@ -126,7 +159,8 @@ class ThreeGeo {
             }]
         };
         const polygon = testPolygon.features[0];
-        const [w, s, e, n] = Utils.originRadiusToBbox(origin, radius);
+        const [w, s, e, n] = Utils.polygonToBbox(origin, radius);
+        console.info([w, s, e, n])
         const nw = [w, n], se = [e, s];
         polygon.geometry.coordinates[0] = [
             nw, [se[0], nw[1]], se, [nw[0], se[1]], nw
@@ -170,7 +204,7 @@ class ThreeGeo {
         };
     }
 
-    getTerrain(origin, radius, zoom, cbs={}) {
+    getTerrain(bbox, radius, zoom, cbs={}) {
         return new Promise((res, rej) => {
             try {
                 const watcher = ThreeGeo._createWatcher(cbs, res);
@@ -188,9 +222,10 @@ class ThreeGeo {
                 const { onRgbDem, onSatelliteMat, onVectorDem } = cbs;
 
                 // ROI
-                const bbox = ThreeGeo.getBbox(origin, radius);
-                console.log('bbox:', bbox);
-                const zpCovered = ThreeGeo.getZoomposCovered(bbox.feature, zoom);
+                console.log('got to before the bbox')
+                const polyBbox = ThreeGeo.getBboxFeature(bbox);
+                console.log('bbox:', polyBbox);
+                const zpCovered = ThreeGeo.getZoomposCovered(polyBbox.feature, zoom);
                 console.log('(satellite-level) zpCovered:', zpCovered);
 
                 if (onRgbDem) {
@@ -198,7 +233,7 @@ class ThreeGeo {
                         unitsPerMeter, projectCoord,
                         token, useNodePixels, apiRgb, apiSatellite,
                         onRgbDem, onSatelliteMat, watcher,
-                    })).fetch(zpCovered, bbox);
+                    })).fetch(zpCovered, polyBbox);
                 }
 
                 if (onVectorDem) {
@@ -206,7 +241,7 @@ class ThreeGeo {
                         unitsPerMeter, projectCoord,
                         token, useNodePixels, apiVector,
                         onVectorDem, watcher,
-                    })).fetch(zpCovered, bbox, radius);
+                    })).fetch(zpCovered, polyBbox, radius);
                 }
             } catch (err) {
                 console.error('err:', err);
@@ -214,8 +249,8 @@ class ThreeGeo {
             }
         });
     }
-    async getTerrainRgb(origin, radius, zoom, _cb=undefined) {
-        const { rgbDem: objs } = await this.getTerrain(origin, radius, zoom, {
+    async getTerrainRgb(bbox, radius, zoom, _cb=undefined) {
+        const { rgbDem: objs } = await this.getTerrain(bbox, radius, zoom, {
             // Set dummy callbacks to trigger rgb DEM fetching
             onRgbDem: () => {},
             onSatelliteMat: () => {},

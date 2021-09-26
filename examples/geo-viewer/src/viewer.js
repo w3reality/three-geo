@@ -59,7 +59,7 @@ class Viewer {
         // ======== adding geo tiles
         this.renderer.autoClear = false;
 
-        this.wireframeMat = new THREE.MeshBasicMaterial({
+        this.wireframeMat = new THREE.MeshLambertMaterial({
             wireframe: true,
             color: 0x999999,
         });
