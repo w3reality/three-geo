@@ -6,7 +6,7 @@ import { VectorTile } from '@mapbox/vector-tile';
 
 // For browser, here we load `get-pixels` statically
 // import __getPixelsDom from 'get-pixels/dom-pixels'; // runtime error: `Buffer` not defined
-import __getPixelsDom from './dom-pixels-3.3.2-workaround.js';
+import __getPixelsDom from './dom-pixels-3.3.3-workaround.js';
 
 import Utils from '../utils.js';
 
