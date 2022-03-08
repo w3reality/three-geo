@@ -20,12 +20,12 @@ class ThreeGeo {
         this.version = __version;
 
         console.info(`ThreeGeo ${__version} with THREE r${THREE.REVISION}`);
-        console.info('Note: Since three-geo v1.4.3, when using with NodeJS, you must set the constructor option `useNodePixels` to `true` (https://github.com/w3reality/three-geo#api)');
+        console.info('Note: Since three-geo v1.4.5, when using with NodeJS, the constructor option `isNode` must be set to `true` (https://github.com/w3reality/three-geo#api)');
 
         const defaults = {
             unitsSide: 1.0,
             tokenMapbox: '',
-            useNodePixels: false, // Do enable this when using with NodeJS
+            isNode: false,
             apiVector: 'mapbox-terrain-vector',
             apiRgb: 'mapbox-terrain-rgb',
             apiSatellite: 'mapbox-satellite',
@@ -33,7 +33,7 @@ class ThreeGeo {
         const actual = Object.assign({}, defaults, opts);
         this.constUnitsSide = actual.unitsSide;
         this.tokenMapbox = actual.tokenMapbox;
-        this.useNodePixels = actual.useNodePixels;
+        this.isNode = actual.useNodePixels === true /* legacy */ || actual.isNode;
         this.apiVector = actual.apiVector;
         this.apiRgb = actual.apiRgb;
         this.apiSatellite = actual.apiSatellite;
@@ -181,7 +181,7 @@ class ThreeGeo {
                 const unitsPerMeter = ThreeGeo._getUnitsPerMeter(_unitsSide, radius);
                 const projectCoord = (coord, nw, se) =>
                         ThreeGeo._projectCoord(_unitsSide, coord, nw, se);
-                const { tokenMapbox: token, useNodePixels,
+                const { tokenMapbox: token, isNode,
                     apiRgb, apiSatellite, apiVector } = this;
 
                 // callbacks
@@ -196,7 +196,7 @@ class ThreeGeo {
                 if (onRgbDem) {
                     (new RgbModel({
                         unitsPerMeter, projectCoord,
-                        token, useNodePixels, apiRgb, apiSatellite,
+                        token, isNode, apiRgb, apiSatellite,
                         onRgbDem, onSatelliteMat, watcher,
                     })).fetch(zpCovered, bbox);
                 }
@@ -204,7 +204,7 @@ class ThreeGeo {
                 if (onVectorDem) {
                     (new VectorModel({
                         unitsPerMeter, projectCoord,
-                        token, useNodePixels, apiVector,
+                        token, isNode, apiVector,
                         onVectorDem, watcher,
                     })).fetch(zpCovered, bbox, radius);
                 }

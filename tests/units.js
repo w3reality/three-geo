@@ -1,6 +1,6 @@
 const setupApi = (tgeo, preset, base) => {
     tgeo.tokenMapbox = 'zzzz';
-    tgeo.useNodePixels = preset === 'node';
+    tgeo.isNode = preset === 'node';
     tgeo.setApiVector(`${base}/custom-terrain-vector`);
     tgeo.setApiRgb(`${base}/custom-terrain-rgb`);
     tgeo.setApiSatellite(`${base}/custom-satellite`);

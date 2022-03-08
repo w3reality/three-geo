@@ -6,7 +6,6 @@ import * as THREE from 'three';
 
 const constVertices = 128;
 const constTilePixels = new SphericalMercator({size: 128});
-// console.log('constTilePixels:', constTilePixels);
 
 // use shift = 0 when array's format is [x0, z0, y0, x1, z1, y1, ... x127, z127, y127]
 // 0: Array(128) [1, 4, 7, 10, 13, 16, 19, 22, ... 379, 382]
@@ -32,8 +31,6 @@ const computeSeamRows = (shift) => {
     return rows;
 };
 const constSeamRows = computeSeamRows(1);
-// console.log('constSeamRows:', constSeamRows);
-
 
 const sixteenthPixelRanges = (() => {
     let cols = 512;
@@ -57,7 +54,7 @@ class RgbModel {
         this.unitsPerMeter = params.unitsPerMeter;
         this.projectCoord = params.projectCoord;
         this.token = params.token;
-        this.useNodePixels = params.useNodePixels;
+        this.isNode = params.isNode;
         this.apiRgb = params.apiRgb;
         this.apiSatellite = params.apiSatellite;
 
@@ -78,7 +75,7 @@ class RgbModel {
 
         let count = 0;
         zpEle.forEach(zoompos => {
-            Fetch.fetchTile(zoompos, this.apiRgb, this.token, this.useNodePixels, tile => {
+            Fetch.fetchTile(zoompos, this.apiRgb, this.token, this.isNode, tile => {
                 if (tile) {
                     this.addTile(tile, zoompos, zpCovered, bbox);
                 } else {
@@ -307,14 +304,14 @@ class RgbModel {
 
         const meshes = RgbModel._build(
             this.dataEleCovered, this.apiSatellite,
-            this.token, this.useNodePixels, onSatelliteMatWrapper);
+            this.token, this.isNode, onSatelliteMatWrapper);
 
         this.onRgbDem(meshes); // legacy API
         if (!onSatelliteMatWrapper) {
             this.watcher({what: 'dem-rgb', data: meshes});
         }
     }
-    static _build(dataEle, apiSatellite, token, useNodePixels, onSatelliteMatWrapper) {
+    static _build(dataEle, apiSatellite, token, isNode, onSatelliteMatWrapper) {
         console.log('apiSatellite:', apiSatellite);
 
         // dataEle should be sorted so that .resolveSeams() is applied
@@ -368,7 +365,7 @@ class RgbModel {
             };
             objs.push(plane);
 
-            this.resolveTex(zoompos, apiSatellite, token, useNodePixels, tex => {
+            this.resolveTex(zoompos, apiSatellite, token, isNode, tex => {
                 if (tex) {
                     plane.material = new THREE.MeshBasicMaterial({
                         side: THREE.FrontSide,
@@ -386,8 +383,8 @@ class RgbModel {
 
     //==== THREE specific
     // _buildModelThree() {} // TODO (refactor)
-    static resolveTex(zoompos, apiSatellite, token, useNodePixels, onTex) {
-        Fetch.fetchTile(zoompos, apiSatellite, token, useNodePixels, pixels => {
+    static resolveTex(zoompos, apiSatellite, token, isNode, onTex) {
+        Fetch.fetchTile(zoompos, apiSatellite, token, isNode, pixels => {
             let tex = null;
             if (pixels) {
                 // console.log("satellite pixels", pixels.shape.slice(0));

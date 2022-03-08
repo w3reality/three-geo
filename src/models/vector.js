@@ -14,7 +14,7 @@ class VectorModel {
         this.unitsPerMeter = params.unitsPerMeter;
         this.projectCoord = params.projectCoord;
         this.token = params.token;
-        this.useNodePixels = params.useNodePixels;
+        this.isNode = params.isNode;
         this.apiVector = params.apiVector;
 
         // callbacks
@@ -37,7 +37,7 @@ class VectorModel {
 
         let count = 0;
         zpEle.forEach(zoompos => {
-            Fetch.fetchTile(zoompos, this.apiVector, this.token, this.useNodePixels, tile => {
+            Fetch.fetchTile(zoompos, this.apiVector, this.token, this.isNode, tile => {
                 if (tile) {
                     this.addTile(tile, zoompos);
                 } else {

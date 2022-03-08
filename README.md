@@ -88,7 +88,7 @@ Here is an example of how to build a geographic terrain located at GPS coordinat
 
 For standalone tests, use **examples/simple-viewer** ([source code](https://github.com/w3reality/three-geo/tree/master/examples/simple-viewer)).
 
-For use with NodeJS, do enable [this `useNodePixels` option](#note-nodejs) as well.
+For use with NodeJS, do enable [this `isNode` option](#note-nodejs) as well.
 
 ```js
 const tgeo = new ThreeGeo({
@@ -136,7 +136,7 @@ In this section, we list `three-geo`'s public API methods, where `origin`, `radi
 
   - `opts.unitsSide`=1.0 **number** The side length of the square that fits the terrain in WebGL space.
 
-  - `opts.useNodePixels`=false **boolean** <a name="note-nodejs"></a>To use three-geo with NodeJS, you must explicitly set this option to `true`. [ Added in v1.4.3 ]
+  - `opts.isNode`=false **boolean** <a name="note-nodejs"></a>To use three-geo with NodeJS, you must explicitly set this option to `true`. [ Added in v1.4.5 ]
 
 - `async getTerrainRgb(origin, radius, zoom)` [ Added in v1.4 ]
 
