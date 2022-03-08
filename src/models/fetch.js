@@ -85,46 +85,55 @@ class Fetch {
         return stat >= 200 && stat < 300 || stat === 304;
     }
 
-    static xhrDumpBlob(uri, api, zoompos) {
-        xhr({uri: uri, responseType: 'arraybuffer'}, (error, response, abuf) => {
-            if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                console.log(`xhrDumpBlob(): failed for uri: ${uri}`);
-                return;
-            }
+    static dumpBlob(uri, isNode, api, zoompos) {
+        this.resolveXhr(isNode).then(fn => {
+            fn({ uri, responseType: 'arraybuffer' }, (error, response, ab) => {
+                if (error || !this.isAjaxSuccessful(response.statusCode)) {
+                    console.log(`dumpBlob(): failed for uri: ${uri}`);
+                    return;
+                }
 
-            this.dumpBufferAsBlob(abuf, `${api}-${zoompos.join('-')}.blob`);
-        });
+                this.dumpBufferAsBlob(ab, `${api}-${zoompos.join('-')}.blob`);
+            });
+        }).catch(err => console.error('err:', err));
     }
 
-    static xhrGetBlob(uri, cb) { this._xhrGet('blob')(uri, cb); }
-    static xhrGetArrayBuffer(uri, cb) { this._xhrGet('arraybuffer')(uri, cb); }
-    static _xhrGet(type) {
-        return (uri, cb) => {
-            xhr({uri: uri, responseType: type}, (error, response, data) => {
-                if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                    return cb(null);
-                }
+    static getBlob(uri, isNode, cb) { this._xhr('blob')(uri, isNode, cb); }
+    static getArrayBuffer(uri, isNode, cb) { this._xhr('arraybuffer')(uri, isNode, cb); }
+    static _xhr(type) {
+        return (uri, isNode, cb) => {
+            this.resolveXhr(isNode).then(fn => {
+                fn({ uri, responseType: type }, (error, response, data) => {
+                    if (error || !this.isAjaxSuccessful(response.statusCode)) {
+                        return cb(null);
+                    }
 
-                switch (type) {
-                    case 'blob': {
-                        this.blobToBuffer(data, abuf =>
-                            cb(new VectorTile(new Pbf(abuf))));
-                        break;
+                    switch (type) {
+                        case 'blob': {
+                            this.blobToBuffer(data, ab =>
+                                cb(new VectorTile(new Pbf(ab))));
+                            break;
+                        }
+                        case 'arraybuffer': {
+                            cb(new VectorTile(new Pbf(data)));
+                            break;
+                        }
+                        default: cb(null);
                     }
-                    case 'arraybuffer': {
-                        cb(new VectorTile(new Pbf(data)));
-                        break;
-                    }
-                    default: cb(null);
-                }
-            });
+                });
+            }).catch(err => console.error('err:', err));
         };
     }
 
-    static async resolveGetPixels(useNodePixels) {
-        return useNodePixels ?
+    static async resolveGetPixels(isNode) {
+        return isNode ?
             await Utils.Meta.nodeRequire(global, 'get-pixels/node-pixels') :
             __getPixelsDom; // use the statically imported one
+    }
+
+    static async resolveXhr(isNode) {
+        // "API is a subset of request" - https://github.com/naugtur/xhr
+        return isNode ? await Utils.Meta.nodeRequire(global, 'request') : xhr;
     }
 
     // compute elevation tiles belonging to the gradparent zoom level
@@ -147,8 +156,7 @@ class Fetch {
             .map(triplet => triplet.split(',').map(num => parseFloat(num)));
     }
 
-    static fetchTile(zoompos, api, token, useNodePixels, cb) {
-        // console.log('token:', token);
+    static fetchTile(zoompos, api, token, isNode, cb) {
         let isMapbox = api.startsWith('mapbox-');
         let uri = isMapbox ?
             this.getUriMapbox(token, api, zoompos) :
@@ -160,28 +168,25 @@ class Fetch {
         if (api.includes('mapbox-terrain-vector') ||
             api.includes('custom-terrain-vector')) {
 
-            // TODO !!!! generalize this to pass `getTerrainVector()` in `test:main`
             if (isMapbox) {
                 if (dumpBlobForDebug) {
-                    this.xhrDumpBlob(uri, api, zoompos); // return;
+                    this.dumpBlob(uri, isNode, api, zoompos); // return;
                 }
-                this.xhrGetArrayBuffer(uri, cb);
+                this.getArrayBuffer(uri, isNode, cb);
             } else {
-                this.xhrGetBlob(uri, cb);
+                this.getBlob(uri, isNode, cb);
             }
         } else if (api.includes('mapbox-terrain-rgb') ||
                 api.includes('mapbox-satellite') ||
                 api.includes('custom-terrain-rgb') ||
                 api.includes('custom-satellite')) {
 
-            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-terrain-rgb')) {
-            // if (isMapbox && dumpBlobForDebug && api.includes('mapbox-satellite')) {
             if (isMapbox && dumpBlobForDebug) {
-                this.xhrDumpBlob(uri, api, zoompos); // return;
+                this.dumpBlob(uri, isNode, api, zoompos); // return;
             }
 
             const _cb = (err, pixels) => cb(err ? null : pixels);
-            this.resolveGetPixels(useNodePixels)
+            this.resolveGetPixels(isNode)
                 .then(fn => fn(uri, _cb))
                 .catch(err => console.error('err:', err));
         } else {
