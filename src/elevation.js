@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Utils from './utils.js';
 import Laser from 'three-laser-pointer/src';
 
-// WIP
+// WIP ? https://twitter.com/w3reality/status/1191311643491233792
 class Elevation {
     static _findIsect(x, y, lat, lng, meshes) {
 
