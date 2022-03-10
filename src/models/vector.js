@@ -15,6 +15,7 @@ class VectorModel {
         this.projectCoord = params.projectCoord;
         this.token = params.token;
         this.isNode = params.isNode;
+        this.isDebug = params.isDebug;
         this.apiVector = params.apiVector;
 
         // callbacks
@@ -23,10 +24,10 @@ class VectorModel {
 
         // state variables
         this.bottomTiles = [];
-        this.geojson = {
-            type: 'FeatureCollection',
-            features: [],
-        };
+        this.geojson = { type: 'FeatureCollection', features: [] };
+        if (this.isDebug) {
+            this.tiles = {};
+        }
     }
 
     fetch(zpCovered, bbox, radius) {
@@ -53,6 +54,10 @@ class VectorModel {
     }
 
     addTile(tile, zoompos) {
+        if (this.isDebug) {
+            this.tiles[zoompos.join('-')] = tile;
+        }
+
         const contour = tile.layers.contour;
         if (!contour) { // zoom <= 8
             console.log(`no contours! (zoom=${zoompos[0]})`);
@@ -164,6 +169,10 @@ class VectorModel {
     }
 
     build(bbox, radius) {
+        const debug = this.isDebug ? {
+            tiles: this.tiles,
+        } : undefined;
+
         const objs = this._buildModelThree(
             this._buildContours(bbox.feature, radius),
             bbox.northWest, bbox.southEast);
@@ -172,7 +181,7 @@ class VectorModel {
             this.onVectorDem(objs); // legacy API
         }
         if (this.watcher) {
-            this.watcher({what: 'dem-vec', data: objs});
+            this.watcher({ what: 'dem-vec', data: objs, debug });
         }
     }
 

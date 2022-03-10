@@ -55,6 +55,7 @@ class RgbModel {
         this.projectCoord = params.projectCoord;
         this.token = params.token;
         this.isNode = params.isNode;
+        this.isDebug = params.isDebug;
         this.apiRgb = params.apiRgb;
         this.apiSatellite = params.apiSatellite;
 
@@ -281,12 +282,14 @@ class RgbModel {
     }
 
     build() {
+        const debug = this.isDebug ? {} : undefined;
+
         console.log('dataEleCovered:', this.dataEleCovered);
 
         if (this.dataEleCovered.length === 0) {
             const meshes = [];
             this.onRgbDem(meshes);
-            this.watcher({what: 'dem-rgb', data: meshes});
+            this.watcher({ what: 'dem-rgb', data: meshes, debug });
             return;
         }
 
@@ -297,7 +300,7 @@ class RgbModel {
                 countSat++;
                 this.onSatelliteMat(mesh);
                 if (countSat === this.dataEleCovered.length) {
-                    this.watcher({what: 'dem-rgb', data: meshesAcc});
+                    this.watcher({ what: 'dem-rgb', data: meshesAcc, debug });
                 }
             };
         }
@@ -308,7 +311,7 @@ class RgbModel {
 
         this.onRgbDem(meshes); // legacy API
         if (!onSatelliteMatWrapper) {
-            this.watcher({what: 'dem-rgb', data: meshes});
+            this.watcher({ what: 'dem-rgb', data: meshes, debug });
         }
     }
     static _build(dataEle, apiSatellite, token, isNode, onSatelliteMatWrapper) {

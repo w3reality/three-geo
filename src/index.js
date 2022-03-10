@@ -11,9 +11,7 @@ import Utils from './utils.js';
 import Laser from 'three-laser-pointer/src';
 
 // import Elevation from './elevation.js'; // WIP
-//====
 const Elevation = {resolveElevation: () => undefined}; // dummy for now
-
 
 class ThreeGeo {
     constructor(opts={}) {
@@ -26,6 +24,7 @@ class ThreeGeo {
             unitsSide: 1.0,
             tokenMapbox: '',
             isNode: false,
+            isDebug: false,
             apiVector: 'mapbox-terrain-vector',
             apiRgb: 'mapbox-terrain-rgb',
             apiSatellite: 'mapbox-satellite',
@@ -34,6 +33,7 @@ class ThreeGeo {
         this.constUnitsSide = actual.unitsSide;
         this.tokenMapbox = actual.tokenMapbox;
         this.isNode = actual.useNodePixels === true /* legacy */ || actual.isNode;
+        this.isDebug = actual.isDebug;
         this.apiVector = actual.apiVector;
         this.apiRgb = actual.apiRgb;
         this.apiSatellite = actual.apiSatellite;
@@ -142,7 +142,7 @@ class ThreeGeo {
     static _createWatcher(cbs, res) {
         let isVecPending = cbs.onVectorDem ? true : false;
         let isRgbPending = cbs.onRgbDem ? true : false;
-        const ret = {vectorDem: [], rgbDem: []};
+        const ret = { vectorDem: [], rgbDem: [], debug: null };
 
         const isDone = () => !isVecPending && !isRgbPending;
 
@@ -153,8 +153,9 @@ class ThreeGeo {
         }
 
         return payload => {
-            // console.log('payload:', payload);
-            const { what, data } = payload;
+            const { what, data, debug } = payload;
+            ret.debug = debug;
+
             if (what === 'dem-vec') {
                 isVecPending = false;
                 ret.vectorDem = data;
@@ -181,7 +182,7 @@ class ThreeGeo {
                 const unitsPerMeter = ThreeGeo._getUnitsPerMeter(_unitsSide, radius);
                 const projectCoord = (coord, nw, se) =>
                         ThreeGeo._projectCoord(_unitsSide, coord, nw, se);
-                const { tokenMapbox: token, isNode,
+                const { tokenMapbox: token, isNode, isDebug,
                     apiRgb, apiSatellite, apiVector } = this;
 
                 // callbacks
@@ -196,7 +197,7 @@ class ThreeGeo {
                 if (onRgbDem) {
                     (new RgbModel({
                         unitsPerMeter, projectCoord,
-                        token, isNode, apiRgb, apiSatellite,
+                        token, isNode, isDebug, apiRgb, apiSatellite,
                         onRgbDem, onSatelliteMat, watcher,
                     })).fetch(zpCovered, bbox);
                 }
@@ -204,7 +205,7 @@ class ThreeGeo {
                 if (onVectorDem) {
                     (new VectorModel({
                         unitsPerMeter, projectCoord,
-                        token, isNode, apiVector,
+                        token, isNode, isDebug, apiVector,
                         onVectorDem, watcher,
                     })).fetch(zpCovered, bbox, radius);
                 }
@@ -215,24 +216,30 @@ class ThreeGeo {
         });
     }
     async getTerrainRgb(origin, radius, zoom, _cb=undefined) {
-        const { rgbDem: objs } = await this.getTerrain(origin, radius, zoom, {
+        const { rgbDem: objs, debug } = await this.getTerrain(origin, radius, zoom, {
             // Set dummy callbacks to trigger rgb DEM fetching
             onRgbDem: () => {},
             onSatelliteMat: () => {},
         });
-        return _cb ? _cb(objs) : ThreeGeo._createDemGroup(objs, 'dem-rgb');
+        return _cb ? _cb(objs) : ThreeGeo._createDemGroup('dem-rgb', objs, debug);
     }
     async getTerrainVector(origin, radius, zoom, _cb=undefined) {
-        const { vectorDem: objs } = await this.getTerrain(origin, radius, zoom, {
+        const { vectorDem: objs, debug } = await this.getTerrain(origin, radius, zoom, {
             // Set dummy callbacks to trigger vector DEM fetching
             onVectorDem: () => {},
         });
-        return _cb ? _cb(objs) : ThreeGeo._createDemGroup(objs, 'dem-vec');
+        return _cb ? _cb(objs) : ThreeGeo._createDemGroup('dem-vec', objs, debug);
     }
-    static _createDemGroup(objs, name) {
+    static _createDemGroup(name, objs, debug) {
         const group = new THREE.Group();
         group.name = name;
+        group.userData['debug'] = () => {
+            if (!debug) console.warn('Use the `isDebug` option to enable `debug()`.');
+
+            return debug;
+        };
         for (let obj of objs) { group.add(obj); }
+
         return group;
     }
 
