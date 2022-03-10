@@ -32,11 +32,15 @@ class ThreeGeo {
         const actual = Object.assign({}, defaults, opts);
         this.constUnitsSide = actual.unitsSide;
         this.tokenMapbox = actual.tokenMapbox;
-        this.isNode = actual.useNodePixels === true /* legacy */ || actual.isNode;
+        this.isNode = /* legacy */ actual.useNodePixels || actual.isNode;
         this.isDebug = actual.isDebug;
         this.apiVector = actual.apiVector;
         this.apiRgb = actual.apiRgb;
         this.apiSatellite = actual.apiSatellite;
+
+        if (this.isDebug) {
+            console.warn('`isDebug` is true; terrains support `.userData.debug()`.');
+        }
     }
 
     static _getUnitsPerMeter(unitsSide, radius) {
@@ -234,7 +238,7 @@ class ThreeGeo {
         const group = new THREE.Group();
         group.name = name;
         group.userData['debug'] = () => {
-            if (!debug) console.warn('Use the `isDebug` option to enable `debug()`.');
+            if (!debug) console.warn('Use the `isDebug` option to enable `.userData.debug()`.');
 
             return debug;
         };
