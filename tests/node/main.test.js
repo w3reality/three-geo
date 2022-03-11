@@ -5,7 +5,7 @@ const libName = 'three-geo';
 const outDir = path.join(__dirname, '../../target');
 
 const __modPath = `${outDir}/${libName}.min.js`;
-// const __modPath = `${outDir}/${libName}.js`; // dev
+//const __modPath = `${outDir}/${libName}.js`; // dev
 
 
 const ThreeGeo = require(__modPath);
@@ -40,4 +40,8 @@ test('rgb-table', async () => {
 
 test('vec-table', async () => {
     await units['vec-table'](ThreeGeo, dataDir);
+});
+
+test('vec-pbf', async () => {
+    await units['vec-pbf'](ThreeGeo, dataDir);
 });

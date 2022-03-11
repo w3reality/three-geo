@@ -30,6 +30,8 @@
                 await window.units['rgb-table'](ThreeGeo, dataDir, preset);
             output['vec-table'] =
                 await window.units['vec-table'](ThreeGeo, dataDir, preset);
+            output['vec-pbf'] =
+                await window.units['vec-pbf'](ThreeGeo, dataDir, preset);
 
             // store results
             window['output'] = output;

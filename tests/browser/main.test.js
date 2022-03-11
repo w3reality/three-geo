@@ -6,7 +6,7 @@ const libName = 'three-geo';
 const outDir = path.join(__dirname, '../../target');
 
 const modPath = `${outDir}/${libName}.min.js`;
-// const modPath = `${outDir}/${libName}.js`; // dev !!!!
+//const modPath = `${outDir}/${libName}.js`; // dev
 
 const tmpModPath = `${__dirname}/__tmp.min.js`;
 
@@ -32,6 +32,7 @@ beforeAll(async () => {
     fs.removeSync(tmpThreePath);
     fs.removeSync(tmpModPath);
 });
+
 afterAll(async () => {
     server.close();
     server = null;
@@ -40,6 +41,7 @@ afterAll(async () => {
 test('output', () => {
     expect(typeof output).toBe('object');
 });
+
 test('`new`', () => {
     expect(output['new']).toEqual(['function', 1]);
 });
@@ -47,6 +49,7 @@ test('`new`', () => {
 test('rgb-noexist`: case when no rgb DEM files were fetched', () => {
     expect(output['rgb-noexist']).toEqual(null);
 });
+
 test('rgb-eiger', () => {
     const { err, name, len, tile } = output['rgb-eiger'];
     expect(err).toEqual(null);
@@ -58,6 +61,7 @@ test('rgb-eiger', () => {
     expect(t1 === 1447 || t1 === 1448).toBeTruthy();
     expect(t2).toBe(12);
 });
+
 test('rgb-table', () => {
     const { err, name, len, tile } = output['rgb-table'];
     expect(err).toEqual(null);
@@ -69,9 +73,23 @@ test('rgb-table', () => {
     expect(t1 === 9836 || t1 === 9837).toBeTruthy();
     expect(t2).toBe(14);
 });
+
 test('vec-table', () => {
-    const { err, name, len } = output['vec-table'];
+    const { err, name, len, layersLen } = output['vec-table'];
     expect(err).toEqual(null);
     expect(name).toEqual('dem-vec');
-    expect(len).toBe(0); // Expect 0 for now; using an empty pbf
+
+    // Using an empty pbf: custom-terrain-vector-12-2257-2459.pbf
+    expect(len).toBe(0);
+    expect(layersLen).toBe(0);
+});
+
+test('vec-pbf', () => {
+    const { err, name, roadLen, waterLen, waterwayLen } = output['vec-pbf'];
+    expect(err).toEqual(null);
+    expect(name).toEqual('dem-vec');
+
+    expect(roadLen).toBe(247);
+    expect(waterLen).toBe(2);
+    expect(waterwayLen).toBe(7);
 });
