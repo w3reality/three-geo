@@ -98,10 +98,20 @@ class Fetch {
         }).catch(err => console.error('err:', err));
     }
 
-    static getBlob(uri, isNode, cb) { this._xhr('blob')(uri, isNode, cb); }
-    static getArrayBuffer(uri, isNode, cb) { this._xhr('arraybuffer')(uri, isNode, cb); }
-    static _xhr(type) {
+    static getBlob(uri, isNode, cb) { this._get('blob')(uri, isNode, cb); }
+    static getArrayBuffer(uri, isNode, cb) { this._get('arraybuffer')(uri, isNode, cb); }
+    static _get(type) {
         return (uri, isNode, cb) => {
+            if (isNode && !uri.startsWith('http://') && !uri.startsWith('https://')) {
+                return Utils.Meta.nodeRequire(global, 'fs').then(fs => {
+                    fs.readFile(uri, (error, data) => {
+                        if (error) return cb(null);
+
+                        cb(new VectorTile(new Pbf(data.buffer)));
+                    });
+                }).catch(err => console.error('err:', err));
+            }
+
             this.resolveXhr(isNode).then(fn => {
                 fn({ uri, responseType: type }, (error, response, data) => {
                     if (error || !this.isAjaxSuccessful(response.statusCode)) {
@@ -110,8 +120,7 @@ class Fetch {
 
                     switch (type) {
                         case 'blob': {
-                            this.blobToBuffer(data, ab =>
-                                cb(new VectorTile(new Pbf(ab))));
+                            this.blobToBuffer(data, ab => cb(new VectorTile(new Pbf(ab))));
                             break;
                         }
                         case 'arraybuffer': {
@@ -170,7 +179,7 @@ class Fetch {
 
             if (isMapbox) {
                 if (dumpBlobForDebug) {
-                    this.dumpBlob(uri, isNode, api, zoompos); // return;
+                    this.dumpBlob(uri, isNode, api, zoompos);  //return;
                 }
                 this.getArrayBuffer(uri, isNode, cb);
             } else {
@@ -182,7 +191,7 @@ class Fetch {
                 api.includes('custom-satellite')) {
 
             if (isMapbox && dumpBlobForDebug) {
-                this.dumpBlob(uri, isNode, api, zoompos); // return;
+                this.dumpBlob(uri, isNode, api, zoompos);  //return;
             }
 
             const _cb = (err, pixels) => cb(err ? null : pixels);
