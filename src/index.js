@@ -16,9 +16,7 @@ const Elevation = {resolveElevation: () => undefined}; // dummy for now
 class ThreeGeo {
     constructor(opts={}) {
         this.version = __version;
-
         console.info(`ThreeGeo ${__version} with THREE r${THREE.REVISION}`);
-        console.info('Note: Since three-geo v1.4.5, when using with NodeJS, the constructor option `isNode` must be set to `true` (https://github.com/w3reality/three-geo#api)');
 
         const defaults = {
             unitsSide: 1.0,
