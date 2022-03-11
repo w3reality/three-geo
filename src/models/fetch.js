@@ -11,25 +11,6 @@ import __getPixelsDom from './dom-pixels-3.3.3-workaround.js';
 import Utils from '../utils.js';
 
 class Fetch {
-    static dumpBufferAsBlob(buffer, name) {
-        // https://discourse.threejs.org/t/how-to-create-a-new-file-and-save-it-with-arraybuffer-content/628/2
-        let file = new Blob([buffer], {type: "application/octet-stream"});
-        let anc = document.createElement("a");
-        anc.href = URL.createObjectURL(file);
-        anc.download = name;
-        document.body.appendChild(anc);
-        anc.click();
-    }
-    static blobToBuffer(blob, cb) {
-        // https://stackoverflow.com/questions/15341912/how-to-go-from-blob-to-arraybuffer
-        let fr = new FileReader();
-        fr.onload = (e) => {
-            let buffer = e.target.result;
-            cb(buffer);
-        };
-        fr.readAsArrayBuffer(blob);
-    }
-
     static getUriCustom(api, zoompos) {
         // Resolve the api type
         // e.g. `../data/${name}/custom-terrain-rgb` -> `custom-terrain-rgb`
@@ -53,6 +34,7 @@ class Fetch {
         }
         return `${api}-${zoompos.join('-')}.${extension}`;
     }
+
     static getUriMapbox(token, api, zoompos) {
         let prefix, res = '';
         switch (api) {
@@ -79,70 +61,66 @@ class Fetch {
         return `${prefix}/${zoompos.join('/')}${res}?access_token=${token}`;
     }
 
+    static dumpBufferAsBlob(buffer, name) {
+        // https://discourse.threejs.org/t/how-to-create-a-new-file-and-save-it-with-arraybuffer-content/628/2
+        const file = new Blob([buffer], {type: 'application/octet-stream'});
+        const anc = document.createElement('a');
+        anc.href = URL.createObjectURL(file);
+        anc.download = name;
+        document.body.appendChild(anc);
+        anc.click();
+    }
+
+    static async dumpBlob(uri, isNode, api, zoompos) {
+        try {
+            const ab = await this.req(uri, isNode);
+            this.dumpBufferAsBlob(ab, `${api}-${zoompos.join('-')}.blob`);
+        } catch (err) {
+            console.error('dumpBlob(): err', err);
+        }
+    }
+
+    static async getVectorTile(uri, isNode, cb) {
+        try {
+            if (isNode && !uri.startsWith('http://') && !uri.startsWith('https://')) {
+                const fs = await this.resolveNodeFs();
+                fs.readFile(uri, (error, data) =>
+                    cb(error ? null : new VectorTile(new Pbf(data.buffer))));
+            } else {
+                cb(new VectorTile(new Pbf(await this.req(uri, isNode))));
+            }
+        } catch (err) {
+            console.log('getVectorTile(): err', err);
+            cb(null);
+        }
+    }
+
+    static async resolveNodeFs() {
+        return await Utils.Meta.nodeRequire(global, 'fs');
+    }
+
+    static async req(uri, isNode) {
+        // "API is a subset of request" - https://github.com/naugtur/xhr
+        const _req = isNode ? await Utils.Meta.nodeRequire(global, 'request') : xhr;
+
+        return new Promise((res, rej) => {
+            _req({ uri, responseType: 'arraybuffer' }, (error, response, ab) => {
+                const err = error || !this.isAjaxSuccessful(response.statusCode);
+                err ? rej(err) : res(ab);
+            });
+        });
+    }
+
     static isAjaxSuccessful(stat) {
         console.log('stat:', stat);
         // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
         return stat >= 200 && stat < 300 || stat === 304;
     }
 
-    static dumpBlob(uri, isNode, api, zoompos) {
-        this.resolveXhr(isNode).then(fn => {
-            fn({ uri, responseType: 'arraybuffer' }, (error, response, ab) => {
-                if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                    console.log(`dumpBlob(): failed for uri: ${uri}`);
-                    return;
-                }
-
-                this.dumpBufferAsBlob(ab, `${api}-${zoompos.join('-')}.blob`);
-            });
-        }).catch(err => console.error('err:', err));
-    }
-
-    static getBlob(uri, isNode, cb) { this._get('blob')(uri, isNode, cb); }
-    static getArrayBuffer(uri, isNode, cb) { this._get('arraybuffer')(uri, isNode, cb); }
-    static _get(type) {
-        return (uri, isNode, cb) => {
-            if (isNode && !uri.startsWith('http://') && !uri.startsWith('https://')) {
-                return Utils.Meta.nodeRequire(global, 'fs').then(fs => {
-                    fs.readFile(uri, (error, data) => {
-                        if (error) return cb(null);
-
-                        cb(new VectorTile(new Pbf(data.buffer)));
-                    });
-                }).catch(err => console.error('err:', err));
-            }
-
-            this.resolveXhr(isNode).then(fn => {
-                fn({ uri, responseType: type }, (error, response, data) => {
-                    if (error || !this.isAjaxSuccessful(response.statusCode)) {
-                        return cb(null);
-                    }
-
-                    switch (type) {
-                        case 'blob': {
-                            this.blobToBuffer(data, ab => cb(new VectorTile(new Pbf(ab))));
-                            break;
-                        }
-                        case 'arraybuffer': {
-                            cb(new VectorTile(new Pbf(data)));
-                            break;
-                        }
-                        default: cb(null);
-                    }
-                });
-            }).catch(err => console.error('err:', err));
-        };
-    }
-
     static async resolveGetPixels(isNode) {
         return isNode ?
             await Utils.Meta.nodeRequire(global, 'get-pixels/node-pixels') :
             __getPixelsDom; // use the statically imported one
-    }
-
-    static async resolveXhr(isNode) {
-        // "API is a subset of request" - https://github.com/naugtur/xhr
-        return isNode ? await Utils.Meta.nodeRequire(global, 'request') : xhr;
     }
 
     // compute elevation tiles belonging to the gradparent zoom level
@@ -166,33 +144,22 @@ class Fetch {
     }
 
     static fetchTile(zoompos, api, token, isNode, cb) {
-        let isMapbox = api.startsWith('mapbox-');
-        let uri = isMapbox ?
+        const isMapbox = api.startsWith('mapbox-');
+        const uri = isMapbox ?
             this.getUriMapbox(token, api, zoompos) :
             this.getUriCustom(api, zoompos);
         console.log('fetchTile(): uri:', uri);
 
-        const dumpBlobForDebug = 0;
-
         if (api.includes('mapbox-terrain-vector') ||
             api.includes('custom-terrain-vector')) {
+            //this.dumpBlob(uri, isNode, api, zoompos);
 
-            if (isMapbox) {
-                if (dumpBlobForDebug) {
-                    this.dumpBlob(uri, isNode, api, zoompos);  //return;
-                }
-                this.getArrayBuffer(uri, isNode, cb);
-            } else {
-                this.getBlob(uri, isNode, cb);
-            }
+            this.getVectorTile(uri, isNode, cb);
         } else if (api.includes('mapbox-terrain-rgb') ||
                 api.includes('mapbox-satellite') ||
                 api.includes('custom-terrain-rgb') ||
                 api.includes('custom-satellite')) {
-
-            if (isMapbox && dumpBlobForDebug) {
-                this.dumpBlob(uri, isNode, api, zoompos);  //return;
-            }
+            //this.dumpBlob(uri, isNode, api, zoompos);
 
             const _cb = (err, pixels) => cb(err ? null : pixels);
             this.resolveGetPixels(isNode)
