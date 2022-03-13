@@ -80,23 +80,19 @@ class Fetch {
         }
     }
 
-    static async getVectorTile(uri, isNode, cb) {
-        try {
-            if (isNode && !uri.startsWith('http://') && !uri.startsWith('https://')) {
-                const fs = await this.resolveNodeFs();
-                fs.readFile(uri, (error, data) =>
-                    cb(error ? null : new VectorTile(new Pbf(data.buffer))));
-            } else {
-                cb(new VectorTile(new Pbf(await this.req(uri, isNode))));
-            }
-        } catch (err) {
-            console.log('getVectorTile(): err', err);
-            cb(null);
-        }
+    static async getRgbTile(uri, isNode, res) {
+        const gp = await this.resolveGetPixels(isNode);
+        gp(uri, (error, pixels) => res(error ? null : pixels));
     }
 
-    static async resolveNodeFs() {
-        return await Utils.Meta.nodeRequire(global, 'fs');
+    static async getVectorTile(uri, isNode, res) {
+        if (isNode && !uri.startsWith('http://') && !uri.startsWith('https://')) {
+            const fs = await Utils.Meta.nodeRequire(global, 'fs');
+            fs.readFile(uri, (error, data) =>
+                res(error ? null : new VectorTile(new Pbf(data.buffer))));
+        } else {
+            res(new VectorTile(new Pbf(await this.req(uri, isNode))));
+        }
     }
 
     static async req(uri, isNode) {
@@ -143,31 +139,41 @@ class Fetch {
             .map(triplet => triplet.split(',').map(num => parseFloat(num)));
     }
 
-    static fetchTile(zoompos, api, token, isNode, cb) {
+    static fetchTile(zoompos, api, token, isNode) {
+        const tag = 'fetchTile()';
         const isMapbox = api.startsWith('mapbox-');
         const uri = isMapbox ?
             this.getUriMapbox(token, api, zoompos) :
             this.getUriCustom(api, zoompos);
-        console.log('fetchTile(): uri:', uri);
+        console.log(`${tag}: uri: ${uri}`);
 
-        if (api.includes('mapbox-terrain-vector') ||
-            api.includes('custom-terrain-vector')) {
-            //this.dumpBlob(uri, isNode, api, zoompos);
-
-            this.getVectorTile(uri, isNode, cb);
-        } else if (api.includes('mapbox-terrain-rgb') ||
+        const future = res => {
+            let ret = null;
+            if (api.includes('mapbox-terrain-vector') ||
+                api.includes('custom-terrain-vector')) {
+                ret = this.getVectorTile(uri, isNode, res);
+            } else if (api.includes('mapbox-terrain-rgb') ||
                 api.includes('mapbox-satellite') ||
                 api.includes('custom-terrain-rgb') ||
                 api.includes('custom-satellite')) {
-            //this.dumpBlob(uri, isNode, api, zoompos);
+                ret = this.getRgbTile(uri, isNode, res);
+            }
+            return ret;
+        };
 
-            const _cb = (err, pixels) => cb(err ? null : pixels);
-            this.resolveGetPixels(isNode)
-                .then(fn => fn(uri, _cb))
-                .catch(err => console.error('err:', err));
-        } else {
-            console.log('nop, unsupported api:', api);
-        }
+        return new Promise(async (res, _rej) => {
+            try {
+                const ft = future(res);
+                if (ft !== null) {
+                    await ft;
+                } else {
+                    throw new Error(`${tag}: unsupported api: ${api}`);
+                }
+            } catch (err) {
+                console.warn(`${tag}: err: ${err}`);
+                res(null);
+            }
+        });
     }
 }
 

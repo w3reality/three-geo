@@ -37,19 +37,18 @@ class VectorModel {
         console.log('VectorModel: zpEle:', zpEle);
 
         let count = 0;
-        zpEle.forEach(zoompos => {
-            Fetch.fetchTile(zoompos, this.apiVector, this.token, this.isNode, tile => {
-                if (tile) {
-                    this.addTile(tile, zoompos);
-                } else {
-                    console.log(`fetchTile() failed for vector dem of zp: ${zoompos} (count: ${count}/${zpEle.length})`);
-                }
+        zpEle.forEach(async zoompos => {
+            const tile = await Fetch.fetchTile(zoompos, this.apiVector, this.token, this.isNode);
+            if (tile !== null) {
+                this.addTile(tile, zoompos);
+            } else {
+                console.log(`fetchTile() failed for vector dem of zp: ${zoompos} (count: ${count}/${zpEle.length})`);
+            }
 
-                count++;
-                if (count === zpEle.length) {
-                    this.build(bbox, radius);
-                }
-            });
+            count++;
+            if (count === zpEle.length) {
+                this.build(bbox, radius);
+            }
         });
     }
 

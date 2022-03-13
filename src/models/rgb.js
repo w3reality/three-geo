@@ -75,19 +75,18 @@ class RgbModel {
         console.log('RgbModel: zpEle:', zpEle);
 
         let count = 0;
-        zpEle.forEach(zoompos => {
-            Fetch.fetchTile(zoompos, this.apiRgb, this.token, this.isNode, tile => {
-                if (tile) {
-                    this.addTile(tile, zoompos, zpCovered, bbox);
-                } else {
-                    console.log(`fetchTile() failed for rgb dem of zp: ${zoompos} (count: ${count}/${zpEle.length})`);
-                }
+        zpEle.forEach(async zoompos => {
+            const tile = await Fetch.fetchTile(zoompos, this.apiRgb, this.token, this.isNode);
+            if (tile !== null) {
+                this.addTile(tile, zoompos, zpCovered, bbox);
+            } else {
+                console.log(`fetchTile() failed for rgb dem of zp: ${zoompos} (count: ${count}/${zpEle.length})`);
+            }
 
-                count++;
-                if (count === zpEle.length) {
-                    this.build();
-                }
-            });
+            count++;
+            if (count === zpEle.length) {
+                this.build();
+            }
         });
     }
 
@@ -386,31 +385,31 @@ class RgbModel {
 
     //==== THREE specific
     // _buildModelThree() {} // TODO (refactor)
-    static resolveTex(zoompos, apiSatellite, token, isNode, onTex) {
-        Fetch.fetchTile(zoompos, apiSatellite, token, isNode, pixels => {
-            let tex = null;
-            if (pixels) {
-                // console.log("satellite pixels", pixels.shape.slice(0));
-                // console.log('satellite pixels:', pixels);
-                // https://threejs.org/docs/#api/textures/DataTexture
+    static async resolveTex(zoompos, apiSatellite, token, isNode, onTex) {
+        const pixels = await Fetch.fetchTile(zoompos, apiSatellite, token, isNode);
 
-                //==== On Firefox, calling it with y-flip causes the warning: "Error: WebGL warning: texImage2D: Alpha-premult and y-flip are deprecated for non-DOM-Element uploads."
-                // tex = new THREE.DataTexture(pixels.data,
-                //     pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
-                // tex.flipY = true;
-                //==== workaround: do manual y-flip
-                tex = new THREE.DataTexture(this.createDataFlipY(pixels.data, pixels.shape),
-                    pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
+        let tex = null;
+        if (pixels !== null) {
+            // console.log("satellite pixels", pixels.shape.slice(0));
+            // console.log('satellite pixels:', pixels);
+            // https://threejs.org/docs/#api/textures/DataTexture
 
-                tex.needsUpdate = true;
-            } else {
-                console.log(`fetchTile() failed for tex of zp: ${zoompos}`);
-            }
+            //==== On Firefox, calling it with y-flip causes the warning: "Error: WebGL warning: texImage2D: Alpha-premult and y-flip are deprecated for non-DOM-Element uploads."
+            // tex = new THREE.DataTexture(pixels.data,
+            //     pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
+            // tex.flipY = true;
+            //==== workaround: do manual y-flip
+            tex = new THREE.DataTexture(this.createDataFlipY(pixels.data, pixels.shape),
+                pixels.shape[0], pixels.shape[1], THREE.RGBAFormat);
 
-            if (onTex) {
-                onTex(tex);
-            }
-        });
+            tex.needsUpdate = true;
+        } else {
+            console.log(`fetchTile() failed for tex of zp: ${zoompos}`);
+        }
+
+        if (onTex) {
+            onTex(tex);
+        }
     }
 }
 
