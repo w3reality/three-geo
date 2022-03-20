@@ -1,21 +1,14 @@
 import xhr from 'xhr';
 import Pbf from 'pbf';
 import { VectorTile } from '@mapbox/vector-tile';
-
-// For NodeJs, we load `get-pixels` dynamically (see `resolveGetPixels()`)
-
-// For browser, here we load `get-pixels` statically
-// import __getPixelsDom from 'get-pixels/dom-pixels'; // runtime error: `Buffer` not defined
-import __getPixelsDom from './dom-pixels-3.3.3-workaround.js';
-
+import getPixelsDom from 'get-pixels'; // 'get-pixels/dom-pixels'
 import Utils from '../utils.js';
 
 class Fetch {
     static getUriCustom(api, zoompos) {
-        // Resolve the api type
-        // e.g. `../data/${name}/custom-terrain-rgb` -> `custom-terrain-rgb`
+        // Resolve the api type: e.g. `../data/${name}/custom-terrain-rgb` -> `custom-terrain-rgb`
         let _api = api.split('/');
-        _api = _api.length ? _api[_api.length - 1] : 'woops';
+        _api = _api.length ? _api[_api.length - 1] : 'Oops';
 
         let extension;
         switch (_api) {
@@ -81,7 +74,8 @@ class Fetch {
     }
 
     static async getRgbTile(uri, isNode, res) {
-        const gp = await this.resolveGetPixels(isNode);
+        const gp = isNode ?
+            await Utils.Meta.nodeRequire(global, 'get-pixels/node-pixels') : getPixelsDom;
         gp(uri, (error, pixels) => res(error ? null : pixels));
     }
 
@@ -111,12 +105,6 @@ class Fetch {
         console.log('stat:', stat);
         // https://stackoverflow.com/questions/21756910/how-to-use-status-codes-200-404-300-how-jquery-done-and-fail-work-internally
         return stat >= 200 && stat < 300 || stat === 304;
-    }
-
-    static async resolveGetPixels(isNode) {
-        return isNode ?
-            await Utils.Meta.nodeRequire(global, 'get-pixels/node-pixels') :
-            __getPixelsDom; // use the statically imported one
     }
 
     // compute elevation tiles belonging to the gradparent zoom level

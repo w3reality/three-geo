@@ -2,11 +2,14 @@ const path = require('path');
 const fs = require('fs');
 
 module.exports = {
-    onBundle: (webpackConfig) => {
+    onBundle: (webpackConfig, webpack) => {
         webpackConfig.externals = {'three': 'THREE'};
         webpackConfig.performance = {hints: false};
 
-        webpackConfig.module.rules[1].exclude = /(node_modules|dom-pixels)/;
+        webpackConfig.plugins.push(
+            new webpack.ProvidePlugin({
+                Buffer: ['buffer', 'Buffer'],
+            }));
     },
     onVerify: (preloadJs, units) => {
         const pathUpper = path.resolve(__dirname, './node_modules/THREE');
