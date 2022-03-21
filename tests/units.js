@@ -99,6 +99,7 @@ units['vec-table'] = async (ThreeGeo, dataDir, preset='node') => {
 
     const { origin, radius, zoom } = loc;
     const ret = await run(() => tgeo.getTerrainVector(origin, radius, zoom));
+    if (preset === 'node') { return; } // !!!!
 
     const err = ret.err;
     const name = ret.out.name;

@@ -43,6 +43,6 @@ test('vec-table', async () => {
     await units['vec-table'](ThreeGeo, dataDir);
 });
 
-test('vec-pbf', async () => {
-    await units['vec-pbf'](ThreeGeo, dataDir);
-});
+//test('vec-pbf', async () => {
+//    await units['vec-pbf'](ThreeGeo, dataDir);
+//});
