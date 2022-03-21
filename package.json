@@ -46,7 +46,7 @@
         "@turf/transform-translate": "^5.1.5",
         "@turf/union": "6.2.0-alpha.2",
         "es-pack-js": "0.5.7",
-        "get-pixels": "3.3.2",
+        "get-pixels": "^3.3.3",
         "pbf": "^3.1.0",
         "regenerator": "^0.14.2",
         "three": "^0.138.0",
