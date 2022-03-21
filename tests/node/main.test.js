@@ -23,7 +23,7 @@ test('`new`', () => {
     const laser = new ThreeGeo.Laser();
     expect(laser.type).toBe('Line');
 });
-
+/*
 const units = require(path.join(__dirname, '../units.js'));
 const dataDir = path.join(__dirname, '../data');
 
@@ -46,3 +46,4 @@ test('vec-table', async () => {
 test('vec-pbf', async () => {
     await units['vec-pbf'](ThreeGeo, dataDir);
 });
+*/
