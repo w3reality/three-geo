@@ -92,7 +92,8 @@ units['rgb-table'] = async (ThreeGeo, dataDir, preset='node') => {
 };
 
 units['vec-table'] = async (ThreeGeo, dataDir, preset='node') => {
-    const tgeo = new ThreeGeo({ isDebug: true });
+    //const tgeo = new ThreeGeo({ isDebug: true });
+    const tgeo = new ThreeGeo();
 
     const loc = {name: 'table', origin: [-33.9625, 18.4107], radius: 1.25, zoom: 14};
     setupApi(tgeo, preset, `${dataDir}/${loc.name}`);
