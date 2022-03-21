@@ -92,16 +92,14 @@ units['rgb-table'] = async (ThreeGeo, dataDir, preset='node') => {
 };
 
 units['vec-table'] = async (ThreeGeo, dataDir, preset='node') => {
-    //const tgeo = new ThreeGeo({ isDebug: true });
-    const tgeo = new ThreeGeo();
+    if (preset === 'node') { return; } // !!!! the following line fails under Node.js 10.x
+    const tgeo = new ThreeGeo({ isDebug: true });
 
     const loc = {name: 'table', origin: [-33.9625, 18.4107], radius: 1.25, zoom: 14};
     setupApi(tgeo, preset, `${dataDir}/${loc.name}`);
 
     const { origin, radius, zoom } = loc;
-    if (preset === 'node') { return; } // !!!!
     const ret = await run(() => tgeo.getTerrainVector(origin, radius, zoom));
-    if (preset === 'node') { return; } // !!!!
 
     const err = ret.err;
     const name = ret.out.name;
