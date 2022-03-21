@@ -23,7 +23,7 @@ test('`new`', () => {
     const laser = new ThreeGeo.Laser();
     expect(laser.type).toBe('Line');
 });
-/*
+
 const units = require(path.join(__dirname, '../units.js'));
 const dataDir = path.join(__dirname, '../data');
 
@@ -38,7 +38,7 @@ test('rgb-eiger', async () => {
 test('rgb-table', async () => {
     await units['rgb-table'](ThreeGeo, dataDir);
 });
-
+/*
 test('vec-table', async () => {
     await units['vec-table'](ThreeGeo, dataDir);
 });
