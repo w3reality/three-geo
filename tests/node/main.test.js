@@ -5,7 +5,8 @@ const libName = 'three-geo';
 const outDir = path.join(__dirname, '../../target');
 
 //const __modPath = `${outDir}/${libName}.min.js`;
-const __modPath = `${outDir}/${libName}.js`; // dev
+//const __modPath = `${outDir}/${libName}.js`; // dev
+const __modPath = `${outDir}/debug--${libName}.min.js`;
 
 
 const ThreeGeo = require(__modPath);
