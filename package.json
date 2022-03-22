@@ -15,6 +15,7 @@
         "test": "npm run test:verify && npm run test:main && npm run test:viewer",
         "test:verify": "es-pack build -m umd esm esm-compat --verify",
         "test:main": "es-pack test --node --browser",
+        "test:windows": "es-pack build -m umd esm esm-compat",
         "test:viewer": "(cd ./examples/geo-viewer && es-pack build);",
         "dev": "es-pack build --dev"
     },
