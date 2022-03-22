@@ -6,17 +6,20 @@ name: CI
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+      - '**/README.md'
   pull_request:
     branches: [ master ]
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         node-version: [10.x, 12.x, 14.x]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -24,8 +27,18 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - if: contains(matrix.os, 'windows')
+      name: windows - Set bash
+      run: npm config set script-shell bash
     - run: npm ci
 #    - run: npm run build --if-present
-    - run: npm test
+    - if: contains(matrix.os, 'windows')
+      name: windows - Run tests
+      run: npm run test:windows
+      env:
+        CI: true
+    - if: contains(matrix.os, 'ubuntu')
+      name: ubuntu - Run tests
+      run: npm test
       env:
         CI: true
