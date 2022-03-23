@@ -1,23 +1,11 @@
 import Fetch from './fetch.js';
-
 import SphericalMercator from '@mapbox/sphericalmercator';
-
 import * as THREE from 'three';
 
 const constVertices = 128;
 const constTilePixels = new SphericalMercator({size: 128});
 
-// use shift = 0 when array's format is [x0, z0, y0, x1, z1, y1, ... x127, z127, y127]
-// 0: Array(128) [1, 4, 7, 10, 13, 16, 19, 22, ... 379, 382]
-// 1: Array(128) [1, 385, 769, 1153, 1537, 1921, 2305, 2689, ... 48385, 48769]
-// 2: Array(128) [48769, 48772, 48775, 48778, 48781, 48784, 48787, 48790, ... 49147, 49150]
-// 3: Array(128) [382, 766, 1150, 1534, 1918, 2302, 2686, 3070, ... 48766, 49150]
-// use shift = 1 when array's format is [x0, y0, z0, x1, y1, z1, ... x127, y127, z127]
-// 0: Array(128) [2, 5, 8, 11, ... 380, 383]
-// 1: Array(128) [2, 386, 770, 1154, ... 48386, 48770]
-// 2: Array(128) [48770, 48773, 48776, 48779, ... 49148, 49151]
-// 3: Array(128) [383, 767, 1151, 1535, ... 48767, 49151]
-const computeSeamRows = (shift) => {
+const computeSeamRows = shift => {
     let totalCount = 49152; // 128 * 128 * 3
     let rowCount = 384; // 128 * 3
     let rows = [[],[],[],[]];
@@ -31,6 +19,16 @@ const computeSeamRows = (shift) => {
     return rows;
 };
 const constSeamRows = computeSeamRows(1);
+// use shift = 0 when array's format is [x0, z0, y0, x1, z1, y1, ... x127, z127, y127]
+// 0: Array(128) [1, 4, 7, 10, 13, 16, 19, 22, ... 379, 382]
+// 1: Array(128) [1, 385, 769, 1153, 1537, 1921, 2305, 2689, ... 48385, 48769]
+// 2: Array(128) [48769, 48772, 48775, 48778, 48781, 48784, 48787, 48790, ... 49147, 49150]
+// 3: Array(128) [382, 766, 1150, 1534, 1918, 2302, 2686, 3070, ... 48766, 49150]
+// use shift = 1 when array's format is [x0, y0, z0, x1, y1, z1, ... x127, y127, z127]
+// 0: Array(128) [2, 5, 8, 11, ... 380, 383]
+// 1: Array(128) [2, 386, 770, 1154, ... 48386, 48770]
+// 2: Array(128) [48770, 48773, 48776, 48779, ... 49148, 49151]
+// 3: Array(128) [383, 767, 1151, 1535, ... 48767, 49151]
 
 const sixteenthPixelRanges = (() => {
     let cols = 512;
@@ -47,6 +45,16 @@ const sixteenthPixelRanges = (() => {
     };
     return ranges;
 })();
+// 0 [0, 128] [0, 128]
+// 1 [128, 256] [0, 128]
+// 2 [256, 384] [0, 128]
+// 3 [384, 512] [0, 128]
+// 4 [0, 128] [128, 256]
+// ...
+// 12 [0, 128] [384, 512]
+// 13 [128, 256] [384, 512]
+// 14 [256, 384] [384, 512]
+// 15 [384, 512] [384, 512]
 
 class RgbModel {
     constructor(params) {
@@ -110,7 +118,7 @@ class RgbModel {
         } else {
             elevations = new Array(262144).fill(0); // 512 * 512 (=1/4 MB)
         }
-        // console.log('elevations:', elevations); // elevations: (262144) [...]
+        // console.log('elevations:', elevations); // elevations: (262144) [...]
 
         // figure out tile coordinates of the 16 grandchildren of this tile
         let sixteenths = [];
@@ -122,22 +130,8 @@ class RgbModel {
                     zoomposEle[2] * 4 + row].join('/'));
             }
         }
-        // console.log('sixteenths:', sixteenths);
 
         let zpCoveredStr = zpCovered.map((zp) => { return zp.join('/'); });
-        // console.log('zpCoveredStr:', zpCoveredStr);
-
-        // console.log('sixteenthPixelRanges:', sixteenthPixelRanges);
-        // 0 [0, 128] [0, 128]
-        // 1 [128, 256] [0, 128]
-        // 2 [256, 384] [0, 128]
-        // 3 [384, 512] [0, 128]
-        // 4 [0, 128] [128, 256]
-        //...
-        // 12 [0, 128] [384, 512]
-        // 13 [128, 256] [384, 512]
-        // 14 [256, 384] [384, 512]
-        // 15 [384, 512] [384, 512]
 
         const dataEle = [];
         sixteenths.forEach((zoomposStr, index) => {
@@ -181,38 +175,30 @@ class RgbModel {
         // add a new south row
         for (let i = 0; i < constVertices; i++) {
             let indexZ = constSeamRows[2][i] + constVertices*3; // new south row
-            let indexZNei = constSeamRows[0][i]; // north row to copy
-            array[indexZ-2] = arrayNei[indexZNei-2]; // a new x
-            array[indexZ-1] = arrayNei[indexZNei-1]; // a new y
-            array[indexZ] = arrayNei[indexZNei]; // a new z
+            let indexZNei = constSeamRows[0][i];                // north row to copy
+            array[indexZ-2] = arrayNei[indexZNei-2];            // a new x
+            array[indexZ-1] = arrayNei[indexZNei-1];            // a new y
+            array[indexZ] = arrayNei[indexZNei];                // a new z
         }
     }
     static _stitchWithNei3(array, arrayNei) {
         // add a new east col
         for (let i = 0; i < constVertices; i++) {
-            let indexZ = constSeamRows[3][i] + (1+i)*3; // new east col
-            let indexZNei = constSeamRows[1][i]; // west col to copy
-            // https://stackoverflow.com/questions/586182/how-to-insert-an-item-into-an-array-at-a-specific-index
-            // arr = [0,1,2,3]
-            // arr.splice(2, 0, 99)
-            // arr
-            // (5) [0, 1, 99, 2, 3]
+            let indexZ = constSeamRows[3][i] + (1+i)*3;         // new east col
+            let indexZNei = constSeamRows[1][i];                // west col to copy
             array.splice(indexZ-2, 0, arrayNei[indexZNei-2]);
             array.splice(indexZ-1, 0, arrayNei[indexZNei-1]);
             array.splice(indexZ, 0, arrayNei[indexZNei]);
         }
     }
     static resolveSeams(array, infoNei) {
-        // console.log('infoNei:', infoNei);
         let cSegments = [constVertices-1, constVertices-1];
 
         Object.entries(infoNei).forEach(([idxNei, arrayNei]) => {
             if (idxNei === "2") {
-                // console.log('now _stitchWithNei2()...');
                 this._stitchWithNei2(array, arrayNei);
                 cSegments[1]++;
             } else if (idxNei === "3") {
-                // console.log('now _stitchWithNei3()...');
                 this._stitchWithNei3(array, arrayNei);
                 cSegments[0]++;
             }
@@ -263,7 +249,7 @@ class RgbModel {
         // 4 0 7
         // 1 + 3
         // 5 2 6
-        //--------
+
         // 0, 1, 2, 3: north, west, south, east; +y, -x, -y, +x
         // 4, 5, 6, 7: diagonal neighbors
         const zoomposNeighborsDiff = [
@@ -344,7 +330,7 @@ class RgbModel {
             let geom = new THREE.PlaneBufferGeometry(
                 1, 1, cSegments[0], cSegments[1]);
             geom.attributes.position.array = new Float32Array(arr);
-            //--------
+
             // test identifying a 127x1 "belt"
             // let geom = new THREE.PlaneBufferGeometry(1, 1, 127, 1);
             // let arrBelt = arr;

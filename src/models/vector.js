@@ -1,11 +1,9 @@
 import Fetch from './fetch.js';
-
 import * as turfHelpers from '@turf/helpers';
 import turfArea from '@turf/area';
 import turfIntersect from '@turf/intersect';
 import turfUnion from '@turf/union';
 import uniq from 'uniq';
-
 import * as THREE from 'three';
 
 class VectorModel {
@@ -31,8 +29,7 @@ class VectorModel {
     }
 
     fetch(zpCovered, bbox, radius) {
-        // e.g. satellite's zoom: 14
-        //      dem's zoom: 12 (=14-2)
+        // e.g. satellite's zoom: 14; then dem's zoom: 12 (=14-2)
         const zpEle = Fetch.getZoomposEle(zpCovered);
         console.log('VectorModel: zpEle:', zpEle);
 
@@ -83,15 +80,11 @@ class VectorModel {
                 this.geojson.features.push(feat);
             }
         }
-        // console.log('this.bottomTiles:', this.bottomTiles);
     }
     _buildContours(polygon, radius) {
         const eleList = uniq(this.geojson.features.map(feat => feat.properties.ele))
             .sort((a, b) => a - b);
-        // console.log('eleList:', eleList);
-
         VectorModel._addBottomEle(this.geojson, this.bottomTiles, eleList);
-        // console.log('this.geojson:', this.geojson);
 
         return VectorModel._getContours(eleList, this.geojson, polygon,
             radius * radius * 2000000); // maxArea: (r * sqrt2 * 1000)**2
@@ -186,8 +179,6 @@ class VectorModel {
 
     //==== THREE specific
     _buildModelThree(contours, nw, se) {
-        // console.log('_buildThreeModel():', contours, nw, se);
-
         const _getColorRange = (range, len) => {
             const _rgb = hex => [hex >> 16, (hex & 0x00ff00) >> 8, hex & 0x0000ff];
             const arrStart = _rgb(range[0]);
@@ -196,7 +187,6 @@ class VectorModel {
                 let r = arrStart[0] + Math.floor(ic * arrDiff[0] / len);
                 let g = arrStart[1] + Math.floor(ic * arrDiff[1] / len);
                 let b = arrStart[2] + Math.floor(ic * arrDiff[2] / len);
-                // console.log('r g b:', r, g, b);
                 return (r << 16) + (g << 8) + b;
             };
         };
@@ -205,7 +195,6 @@ class VectorModel {
 
         const objs = [];
         const addSlice = (coords, ic) => {
-            // console.log('coords:', coords);
             let [lines, extrudeShade] = this._buildSlice(
                 coords, ic, colorRange(ic),
                 contours, nw, se);
@@ -216,9 +205,7 @@ class VectorModel {
         // iterate through elevations
         for (let ic = 0; ic < contours.length; ic++) {
             let level = contours[ic].geometry.geometry;
-            // if (ic !== 110) continue; // debug
 
-            // console.log('level.type:', level.type);
             if (level.type === 'Polygon') {
                 addSlice(level.coordinates, ic);
             } else if (level.type === 'MultiPolygon') {
@@ -257,7 +244,6 @@ class VectorModel {
 
         // carve out holes (if none, would automatically skip this)
         for (let k = 1; k < coords.length; k++) {
-            // console.log('holes');
             let holePath = new THREE.Path();
             geoms.push(new THREE.BufferGeometry());
 
@@ -286,7 +272,7 @@ class VectorModel {
                     color: 0xcccccc
                 }));
 
-            //======== align x-y : east-north
+            // align x-y : east-north
             line.rotation.y = Math.PI;
             line.name = `dem-vec-line-${contours[h].ele}-${line.uuid}`;
 
@@ -308,7 +294,7 @@ class VectorModel {
             }),
         );
 
-        //======== align x-y : east-north
+        // align x-y : east-north
         extrudeShade.rotation.y = Math.PI;
         extrudeShade.position.z = -pz;
         extrudeShade.name = `dem-vec-shade-${contours[h].ele}-${extrudeShade.uuid}`;

@@ -10,7 +10,7 @@ import VectorModel from './models/vector.js';
 import Utils from './utils.js';
 import Laser from 'three-laser-pointer/src';
 
-// import Elevation from './elevation.js'; // WIP
+// import Elevation from './elevation.js'; // WIP ?
 const Elevation = {resolveElevation: () => undefined}; // dummy for now
 
 class ThreeGeo {
@@ -27,6 +27,7 @@ class ThreeGeo {
             apiRgb: 'mapbox-terrain-rgb',
             apiSatellite: 'mapbox-satellite',
         };
+
         const actual = Object.assign({}, defaults, opts);
         this.constUnitsSide = actual.unitsSide;
         this.tokenMapbox = actual.tokenMapbox;
@@ -44,9 +45,9 @@ class ThreeGeo {
     static _getUnitsPerMeter(unitsSide, radius) {
         return unitsSide / (radius * Math.pow(2, 0.5) * 1000);
     }
+
     static _projectCoord(unitsSide, coord, nw, se) {
-        // lng, lat -> px, py
-        return [
+        return [ // lng, lat -> px, py
             unitsSide * (-0.5 + (coord[0]-nw[0]) / (se[0]-nw[0])),
             unitsSide * (-0.5 - (coord[1]-se[1]) / (se[1]-nw[1]))
         ];
@@ -57,8 +58,6 @@ class ThreeGeo {
     //   lnglat: turf
     getProjection(origin, radius, unitsSide=this.constUnitsSide) {
         const wsen = Utils.originRadiusToBbox(origin, radius);
-        // console.log('origin:', origin);
-        // console.log('wsen:', wsen);
         const _unitsPerMeter = ThreeGeo._getUnitsPerMeter(unitsSide, radius);
         return {
             proj: (latlng, meshes=undefined) => // `meshes`: rgbDem
@@ -69,6 +68,7 @@ class ThreeGeo {
             unitsPerMeter: _unitsPerMeter,
         };
     }
+
     static _proj(ll, meshes, wsen, unitsSide) {
         const [lat, lng] = ll;
         const [w, s, e, n] = wsen;
@@ -77,14 +77,14 @@ class ThreeGeo {
         const [x, y] = this._projectCoord(
             unitsSide, [lng, lat], [w, n], [e, s]);
 
-        // WIP (undocumented API): Resolve `z` (elevation) in case
-        //   the optional `meshes` is provided.
+        // WIP (undocumented API): Resolve `z` (elevation) in case the optional `meshes` is provided.
         const z = meshes ?
             Elevation.resolveElevation(x, y, lat, lng, meshes) : // 'maybe' `undefined`
             undefined;
 
         return z !== undefined ? [x, y, z] : [x, y];
     }
+
     static _projInv(x, y, origin, unitsPerMeter) {
         const ll = Utils.translateTurfObject(Utils.createTurfPoint(origin),
             x, y, 0, unitsPerMeter).geometry.coordinates; // lnglat
@@ -92,18 +92,18 @@ class ThreeGeo {
     }
 
     // Zoom extent - https://www.mapbox.com/studio/tilesets/
-    // satellite:  z0 ~ z22
-    // rgb dem:    z0 ~ z15
-    // vector dem: z0 ~ z15
+    //   satellite:  z0 ~ z22
+    //   rgb dem:    z0 ~ z15
+    //   vector dem: z0 ~ z15
     static getZoomposCovered(polygon, zoom) { // isochrone polygon
         // https://www.mapbox.com/vector-tiles/mapbox-terrain/#contour
-        // Zoom level  Contour Interval
-        // 9  500 meters
-        // 10  200 meters
-        // 11  100 meters
-        // 12  50 meters
-        // 13  20 meters
-        // 14+  10 meters
+        //   Zoom   Contour Interval
+        //      9   500 meters
+        //     10   200 meters
+        //     11   100 meters
+        //     12    50 meters
+        //     13    20 meters
+        //     14+   10 meters
         let limits = {
             min_zoom: zoom,
             max_zoom: zoom,
@@ -120,10 +120,7 @@ class ThreeGeo {
                 "properties": {},
                 "geometry": {
                     "type": "Polygon",
-                    "coordinates": [
-                        [
-                        ]
-                    ]
+                    "coordinates": [[]]
                 }
             }]
         };
@@ -133,7 +130,6 @@ class ThreeGeo {
         polygon.geometry.coordinates[0] = [
             nw, [se[0], nw[1]], se, [nw[0], se[1]], nw
         ];
-        // console.log('testPolygon:', testPolygon);
         return {
             feature: polygon,
             northWest: nw,
@@ -217,6 +213,7 @@ class ThreeGeo {
             }
         });
     }
+
     async getTerrainRgb(origin, radius, zoom, _cb=undefined) {
         const { rgbDem: objs, debug } = await this.getTerrain(origin, radius, zoom, {
             // Set dummy callbacks to trigger rgb DEM fetching
@@ -225,6 +222,7 @@ class ThreeGeo {
         });
         return _cb ? _cb(objs) : ThreeGeo._createDemGroup('dem-rgb', objs, debug);
     }
+
     async getTerrainVector(origin, radius, zoom, _cb=undefined) {
         const { vectorDem: objs, debug } = await this.getTerrain(origin, radius, zoom, {
             // Set dummy callbacks to trigger vector DEM fetching
@@ -232,6 +230,7 @@ class ThreeGeo {
         });
         return _cb ? _cb(objs) : ThreeGeo._createDemGroup('dem-vec', objs, debug);
     }
+
     static _createDemGroup(name, objs, debug) {
         const group = new THREE.Group();
         group.name = name;
