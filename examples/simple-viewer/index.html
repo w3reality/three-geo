@@ -7,17 +7,14 @@
 <body>
     <canvas id="canvas" width="480" height="320"></canvas>
 
+    <script src="../deps/three/build/three.min.js"></script>
+    <script src="../deps/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="../deps/three/examples/js/libs/stats.min.js"></script>
+
+    <script src="../../dist/three-geo.min.js"></script>
+
     <script type="module">
-    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
-
     (async () => {
-        window.THREE = await import('../deps/three/build/three.module.js');
-
-        const ThreeGeo = (await import('../../dist/three-geo.esm.js')).default;
-
-        //
-
         THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 
         const canvas = document.getElementById("canvas");
@@ -25,7 +22,7 @@
         camera.position.set(0, 0, 1.5);
 
         const renderer = new THREE.WebGLRenderer({ canvas });
-        const controls = new OrbitControls(camera, renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
         const scene = new THREE.Scene();
         const walls = new THREE.LineSegments(
@@ -46,11 +43,13 @@
         controls.addEventListener('change', render);
         render(); // first time
 
+        const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
+
         const tgeo = new ThreeGeo({
-            tokenMapbox: '********', // <---- set your Mapbox API token here
+            tokenMapbox: ioToken, // <---- set your Mapbox API token here
         });
 
-        if (tgeo.tokenMapbox === '********') {
+        if (tgeo.tokenMapbox === ioToken) {
             const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
             alert(warning);
             throw warning;

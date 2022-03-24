@@ -107,13 +107,12 @@ const renderer = new THREE.WebGLRenderer({ canvas });
 renderer.render(scene, camera);
 ```
 
-![image](https://w3reality.github.io/three-geo/examples/img/1.jpg)
+[![image](https://w3reality.github.io/three-geo/examples/img/1.jpg)](https://w3reality.github.io/three-geo/examples/simple-viewer/index.html)
 
 ## Who is using `three-geo`?
 
 - [jet-wasp](https://jet-wasp.glitch.me/) - Three-geo as A-Frame component ([source code](https://glitch.com/edit/#!/jet-wasp))
 - [locus-pocus](https://locus-pocus.io/) - A webapp to visualise your area using three-geo
-- *Your App* - *PR us!*
 
 ## API
 
