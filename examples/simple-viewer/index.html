@@ -49,7 +49,7 @@
             tokenMapbox: ioToken, // <---- set your Mapbox API token here
         });
 
-        if (!location.origin.startsWith('https://w3reality.github.io') && tgeo.tokenMapbox === ioToken) {
+        if (!window.location.origin.startsWith('https://w3reality.github.io') && tgeo.tokenMapbox === ioToken) {
             const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
             alert(warning);
             throw warning;

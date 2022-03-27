@@ -46,21 +46,19 @@
         <div>[right-click]: set an orbital axis</div>
     </div>
 
+    <script src="../../deps/three/build/three.min.js"></script>
+    <script src="../../deps/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="../../deps/three/examples/js/libs/stats.min.js"></script>
     <script src="../../deps/dat-gui-defaults.min.js"></script>
 
     <script type="module">
-    import Stats from '../../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../../deps/three/examples/jsm/controls/OrbitControls.js';
-
     (async () => {
-        window.THREE = await import('../../deps/three/build/three.module.js');
-
         const App = (await import('./app.esm.dev.js')).default;
         const app = new App({
             canvas: document.getElementById("canvas"),
         });
         app.stats = app.setup('mod-stats', Stats, {panelType: 1});
-        app.setup('mod-controls', OrbitControls);
+        app.setup('mod-controls', THREE.OrbitControls);
 
         app.render(); // first time
     })();

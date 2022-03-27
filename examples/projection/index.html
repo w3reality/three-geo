@@ -10,46 +10,42 @@
     </div>
     <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
 
+    <script src="../deps/three/build/three.min.js"></script>
+    <script src="../deps/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="../deps/three/examples/js/libs/stats.min.js"></script>
+    <script src="../deps/threelet.min.js"></script>
+
+    <script src="../../dist/three-geo.min.js"></script>
+
     <script type="module">
-    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
-
     (async () => {
-        window.THREE = await import('../deps/three/build/three.module.js');
-        const Threelet = (await import('../deps/threelet.esm.js')).default;
-
-        const ThreeGeo = (await import('../../dist/three-geo.esm.js')).default;
-        // const ThreeGeo = (await import('../../target/three-geo.esm.dev.js')).default;
-
-        //
-
         const threelet = new Threelet({
             canvas: document.getElementById("canvas"),
-            // optAxes: false,
+            //optAxes: false,
         });
-        threelet.setup('mod-controls', OrbitControls);
-        // threelet.setup('mod-stats', Stats);
+        threelet.setup('mod-controls', THREE.OrbitControls);
+        //threelet.setup('mod-stats', Stats);
 
         const { scene, render } = threelet;
         render(); // first time
 
+        //
+
         const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
         const tgeo = new ThreeGeo({
-            // tokenMapbox: '********', // <---- set your Mapbox API token here
-            tokenMapbox: ioToken,
+            tokenMapbox: ioToken, // <---- set your Mapbox API token here
         });
 
-        if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
-            const warning = 'Please set your own Mapbox API token in the ThreeGeo constructor.';
+        if (!window.location.origin.startsWith('https://w3reality.github.io') && tgeo.tokenMapbox === ioToken) {
+            const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
             alert(warning);
             throw warning;
         }
 
-        const origin = [46.5763, 7.9904];
-        const radius = 5.0;
-
         //
 
+        const origin = [46.5763, 7.9904];
+        const radius = 5.0;
         const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
         terrain.rotation.x = - Math.PI/2;
         terrain.children.forEach(mesh => {

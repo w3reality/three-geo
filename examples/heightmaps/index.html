@@ -17,21 +17,19 @@
         <p><a style="color: white;" href="https://github.com/w3reality/three-geo/tree/master/examples/heightmaps">Source Code</a></p>
     </div>
 
+    <script src="../deps/three/build/three.min.js"></script>
+    <script src="../deps/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="../deps/three/examples/js/libs/stats.min.js"></script>
+    <script src="../deps/threelet.min.js"></script>
+
+    <script src="../../dist/three-geo.min.js"></script>
+
     <script type="module">
-    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
-
     (async () => {
-        window.THREE = await import('../deps/three/build/three.module.js');
-        const Threelet = (await import('../deps/threelet.esm.js')).default;
-        const ThreeGeo = (await import('../../dist/three-geo.esm.js')).default;
-
-        //
-
         const threelet = new Threelet({
             canvas: document.getElementById("canvas"),
         });
-        threelet.setup('mod-controls', OrbitControls);
+        threelet.setup('mod-controls', THREE.OrbitControls);
         threelet.setup('mod-stats', Stats, {panelType: 1});
 
         const { scene, render } = threelet;
@@ -45,17 +43,16 @@
 
         const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
         const tgeo = new ThreeGeo({
-            // tokenMapbox: '********', // <---- set your Mapbox API token here
-            tokenMapbox: ioToken,
+            tokenMapbox: ioToken, // <---- set your Mapbox API token here
         });
 
-        const isDebug = 0;
-        if (isDebug) {
-            tgeo.tokenMapbox = 'zzzz';
-            tgeo.setApiVector(`../geo-viewer/cache/eiger/custom-terrain-vector`);
-            tgeo.setApiRgb(`../geo-viewer/cache/eiger/custom-terrain-rgb`);
-            tgeo.setApiSatellite(`../geo-viewer/cache/eiger/custom-satellite`);
+        if (!window.location.origin.startsWith('https://w3reality.github.io') && tgeo.tokenMapbox === ioToken) {
+            const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
+            alert(warning);
+            throw warning;
         }
+
+        //
 
         const createTextSprite = (text, color) => Threelet.Utils.createCanvasSprite(
             Threelet.Utils.createCanvasFromText(text, 256, 64, {
@@ -72,16 +69,10 @@
                 });
             // console.log('offset, size:', offset, size);
 
-            let _demUri = demUri;
-            if (isDebug) {
-                const [tx, ty, tz] = demTile;
-                _demUri = `../geo-viewer/cache/eiger/custom-terrain-rgb-${tz}-${tx}-${ty}.png`;
-            }
-
             const plane = new THREE.Mesh(
                 new THREE.PlaneGeometry(size[0], size[1]),
                 new THREE.MeshBasicMaterial({
-                    map: new THREE.TextureLoader().load(_demUri),
+                    map: new THREE.TextureLoader().load(demUri),
                     // side: THREE.DoubleSide,
                 }));
             plane.position.set(...offset);
@@ -102,12 +93,6 @@
             div.appendChild(document.createTextNode(text));
             el.appendChild(div);
         };
-
-        if (tgeo.tokenMapbox === ioToken && window.location.origin !== 'https://w3reality.github.io') {
-            const warning = 'Please set your Mapbox API token in the ThreeGeo constructor.';
-            appendText(msg, warning);
-            throw warning;
-        }
 
         // params: [lat, lng], terrain's radius (km), zoom resolution, callbacks
         // Beware the value of radius; radius > 5.0 (km) could trigger huge number of tile API calls!!
@@ -154,11 +139,11 @@
             console.log('rgb DEM mesh:', mesh);
             console.log('userData:', mesh.userData);
 
-            //======== how to access the post-processed heightmap
+            // !! how to access the post-processed heightmap
             const array = mesh.geometry.attributes.position.array;
             console.log('array.length:', array.length); // 3x128x128 (+ deltaSeams)
 
-            //======== how to visualize constituent tiles of the terrain
+            // !! how to visualize constituent tiles of the terrain
             const tile = mesh.userData.threeGeo.tile;
             const { obj, offset } = ThreeGeo.Utils.bboxToWireframe(
                 ThreeGeo.Utils.tileToBbox(tile), proj, {offsetZ: - 0.05});
@@ -167,17 +152,21 @@
             sp.position.set(offset[0], offset[1], offset[2] + 0.05);
             group.add(obj, sp);
 
-            //======== how to access src DEM being used (grand-parental tile)
-            // ref - https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
-            const { tile: srcDemTile, uri: srcDemUri } =
-                mesh.userData.threeGeo.srcDem;
+            // !! how to access src DEM being used (grand-parental tile)
+            //    https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
+            const { tile: srcDemTile, uri: srcDemUri } = mesh.userData.threeGeo.srcDem;
             appendCompositionInfo(msg, tile, srcDemTile);
 
             if (! srcDemUris[srcDemUri]) {
                 srcDemUris[srcDemUri] = true;
 
-                const { wireframe, plane, sprite } =
-                    demToObjects(srcDemUri, srcDemTile, proj);
+                let demUri = srcDemUri;
+                if (!tgeo.apiRgb.startsWith('mapbox-')) { // debug mode
+                    const [tx, ty, tz] = srcDemTile;
+                    demUri = `../cache/eiger/custom-terrain-rgb-${tz}-${tx}-${ty}.png`;
+                }
+
+                const { wireframe, plane, sprite } = demToObjects(demUri, srcDemTile, proj);
                 group.add(wireframe, plane, sprite);
             }
         });

@@ -14,31 +14,17 @@
         color: white;
         background: #00000080;">
         <div id="msg"></div>
-        <p>[WIP] <a style="color: white;" href="https://github.com/w3reality/three-geo/tree/master/examples/editor">Source Code</a></p>
+        <p>[WIP ?] <a style="color: white;" href="https://github.com/w3reality/three-geo/tree/master/examples/editor">Source Code</a></p>
     </div>
 
-    <!-- <script src="../deps/three.min.js"></script>
-    <script src="../deps/stats.min.js"></script>
-    <script src="../deps/OrbitControls.js"></script>
+    <script src="../deps/three/build/three.min.js"></script>
+    <script src="../deps/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="../deps/three/examples/js/libs/stats.min.js"></script>
 
-    <script src="../../dist/three-geo.min.js"></script> -->
-    <!-- <script src="../../target/three-geo.js"></script> -->
-
-    <!-- <script src="./index.js"></script> -->
+    <script src="../../dist/three-geo.min.js"></script>
 
     <script type="module">
-    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
-
     (async () => {
-        window.THREE = await import('../deps/three/build/three.module.js');
-        const Threelet = (await import('../deps/threelet.esm.js')).default;
-
-        const ThreeGeo = (await import('../../dist/three-geo.esm.js')).default;
-        // const ThreeGeo = (await import('../../target/three-geo.esm.dev.js')).default;
-
-        //
-
         THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 
         const canvas = document.getElementById("canvas");
@@ -50,7 +36,7 @@
             canvas: canvas,
         });
 
-        const controls = new OrbitControls(camera, renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
         // object stuff
 
@@ -72,32 +58,19 @@
             renderer.render(scene, camera);
         };
 
-        //
-
         controls.addEventListener('change', render);
         render(); // first time
 
+        //
+
+        const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
         const tgeo = new ThreeGeo({
-            tokenMapbox: '********', // <---- set your Mapbox API token here
+            tokenMapbox: ioToken, // <---- set your Mapbox API token here
         });
 
-        if (0) {
-            tgeo.tokenMapbox = 'zzzz';
-            tgeo.setApiVector(`../cache/eiger/custom-terrain-vector`);
-            tgeo.setApiRgb(`../cache/eiger/custom-terrain-rgb`);
-            tgeo.setApiSatellite(`../cache/eiger/custom-satellite`);
-        }
-
-        const msg = document.getElementById('msg');
-        const appendText = (el, text) => {
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(text));
-            el.appendChild(div);
-        };
-
-        if (tgeo.tokenMapbox.startsWith('****')) {
+        if (!window.location.origin.startsWith('https://w3reality.github.io') && tgeo.tokenMapbox === ioToken) {
             const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
-            appendText(msg, warning);
+            alert(warning);
             throw warning;
         }
 
@@ -107,6 +80,13 @@
         const radius = 5.0;
         const {proj, projInv, bbox, unitsPerMeter} =
             tgeo.getProjection(origin, radius);
+
+        const msg = document.getElementById('msg');
+        const appendText = (el, text) => {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(text));
+            el.appendChild(div);
+        };
 
         appendText(msg, `---- ROI ----`);
         appendText(msg, `lat lng: (${origin[0]}, ${origin[1]})`);
