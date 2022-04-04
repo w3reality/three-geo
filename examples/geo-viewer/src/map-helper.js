@@ -1,18 +1,15 @@
 import ThreeGeo from '../../../src';
-
-const { THREE } = window;
-
 import L from 'leaflet';
-// console.log('L:', L);
+import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 
 // import * as turf from '@turf/turf';
-//========
+//====
 import * as turfHelpers from '@turf/helpers';
 import turfDistance from '@turf/distance';
 // import turfLineDistance from '@turf/line-distance'; // ?? runtime error about distance()
 import turfCircle from '@turf/circle/index';
 
-import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
+const { THREE } = window;
 
 class MapHelper {
     constructor(options={}) {
