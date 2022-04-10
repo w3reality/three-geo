@@ -1,12 +1,11 @@
 import env from './env.js';
-// import env from './envs-ignore/env-dev.js';
-// import env from './envs-ignore/env-io.js';
+//import env from './envs-ignore/env-dev.js';
+//import env from './envs-ignore/env-io.js';
 
 import Threelet from '../../deps/threelet.esm.js';
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
-
-const { THREE } = window;
+import OoGui from 'oo-gui/src';
 
 class App extends Threelet {
     // override
@@ -26,8 +25,7 @@ class App extends Threelet {
         };
 
         const guiData = App.createGuiData();
-        viewer.setGuiHelper(
-            App.createGuiHelper(env, guiData, viewer, this.render));
+        viewer.setGuiHelper(App.createGuiHelper(env, guiData, viewer, this.render));
 
         // viewer.closeGui();
         viewer.toggleMap(guiData.leaflet);
@@ -54,6 +52,7 @@ class App extends Threelet {
             leaflet: true,
         };
     }
+
     static createAnimToggler(render) {
         let stopAnim = true;
         const animate = () => {
@@ -74,16 +73,17 @@ class App extends Threelet {
             }
         };
     }
+
     static createGuiHelper(env, guiData, viewer, render) {
-        const animToggler = this.createAnimToggler(render); // a closure
-        const guiHelper = new GuiHelper(env, guiData, {
+        const animToggler = this.createAnimToggler(render);
+        const params = {
             onCapture: () => {
                 viewer.capture();
             },
-            onChangeGrids: (value) => {
+            onChangeGrids: value => {
                 viewer.toggleGrids(value);
             },
-            onChangeAutoOrbit: (value) => {
+            onChangeAutoOrbit: value => {
                 viewer.toggleOrbiting(value);
                 if (value) {
                     if (! viewer.hasOrbit()) {
@@ -96,7 +96,7 @@ class App extends Threelet {
                     animToggler(false);
                 }
             },
-            onChangeVis: (value) => {
+            onChangeVis: value => {
                 console.log('vis:', value);
                 if (value === 'Contours') {
                     viewer.loadVectorDem(() => {
@@ -110,39 +110,37 @@ class App extends Threelet {
                     });
                 }
             },
-            onChangeVrLaser: (value) => {
+            onChangeVrLaser: value => {
                 viewer.toggleVrLaser(value);
             },
-            onChangeLeaflet: (value) => {
+            onChangeLeaflet: value => {
                 viewer.toggleMap(value);
             },
             onChangeLoc: (value, locations) => {
-                if (value === "(none)") { // dummy case
+                if (value === '(none)') { // dummy case
                     return;
                 }
 
                 if (value in locations) {
-                    let title = value.replace(' ', '_');
-                    let ll = locations[value];
-                    viewer.reloadPageWithLocation(ll, title);
+                    viewer.reloadPageWithLocation(
+                        locations[value], value.replace(' ', '_'));
                 }
             },
-        });
-        guiHelper.setDefaults({
-            isDev: () => {},
-            vis: guiData.vis,
-            capture: () => {},
-            grids: guiData.grids,
-            //----
-            autoOrbit: guiData.autoOrbit,
-            vrLaser: guiData.vrLaser,
-            reset: () => {},
-            //----
-            loc: guiData.loc,
-            leaflet: guiData.leaflet,
-            sourceCode: () => {},
-        });
-        return guiHelper;
+        };
+
+        return new GuiHelper(env, guiData, params)
+            .setDefaults({
+                isDev: () => {},
+                vis: guiData.vis,
+                capture: () => {},
+                grids: guiData.grids,
+                autoOrbit: guiData.autoOrbit,
+                vrLaser: guiData.vrLaser,
+                reset: () => {},
+                loc: guiData.loc,
+                leaflet: guiData.leaflet,
+                sourceCode: () => {},
+            });
     }
 }
 
