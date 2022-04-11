@@ -5,7 +5,6 @@ import env from './env.js';
 import Threelet from '../../deps/threelet.esm.js';
 import GuiHelper from './gui-helper.js';
 import Viewer from './viewer.js';
-import OoGui from 'oo-gui/src';
 
 class App extends Threelet {
     // override
@@ -47,8 +46,7 @@ class App extends Threelet {
             grids: true,
             autoOrbit: false,
             vrLaser: false,
-            //----
-            loc: query.title ? query.title.replace('_', ' ') : "",
+            loc: query.title ? query.title.replace('_', ' ') : '',
             leaflet: true,
         };
     }

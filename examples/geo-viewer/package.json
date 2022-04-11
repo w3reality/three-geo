@@ -16,8 +16,6 @@
         "leaflet": "^1.3.1",
         "leaflet-geosearch": "^2.7.0",
         "lil-gui": "^0.16.1",
-        "oo-gui": "0.1.0",
-        "query-string": "^6.1.0",
-        "setimmediate": "^1.0.5"
+        "oo-gui": "0.1.0"
     }
 }

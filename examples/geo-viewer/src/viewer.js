@@ -1,10 +1,7 @@
 import ThreeGeo from '../../../src';
+import MapHelper from './map-helper.js';
 
 const { THREE } = window;
-
-import MapHelper from './map-helper.js';
-import queryString from 'query-string'; // in prod, need webpack-4 to minify this
-
 class Viewer {
     constructor(env, threelet) {
         this.env = env;
@@ -79,7 +76,7 @@ class Viewer {
         // satellite zoom resolution -- min: 11, defaut: 13, max: 17
         this._zoom = this.env.zoom || 13;
         this._radius = 5.0*2**(13-this._zoom);
-        let query = Viewer.parseQuery();
+        const query = Viewer.parseQuery();
         this._origin = query.origin;
         this._vis = query.mode;
 
@@ -129,47 +126,42 @@ class Viewer {
         this._isOrbiting = false;
 
         this._showVrLaser = false;
-    } // end constructor()
+    }
 
     static parseQuery() {
-        let _parsedQ = queryString.parse(location.search);
-        console.log('_parsedQ:', _parsedQ);
+        const params = new URLSearchParams(document.location.search);
+        const lat = params.get('lat');
+        const lng = params.get('lng');
+        const md = params.get('mode');
+        const ttl = params.get('title');
 
-        let _origin, _title;
-        if (_parsedQ.lat && _parsedQ.lng) {
-            _origin = [Number(_parsedQ.lat), Number(_parsedQ.lng)];
-            _title = _parsedQ.title;
-        } else {
-            console.log('enforcing the default location...');
-            // _origin = [36.2058, -112.4413];
-            // _parsedQ.title = "Colorado River";
-            _origin = [-33.9625, 18.4107];
-            _title = "Table Mountain";
-        }
+        // const fallback = [ [ 36.2058, -112.4413 ], 'Colorado River' ];
+        const fallback = [ [ -33.9625, 18.4107 ], 'Table Mountain' ];
 
-        let _mode = _parsedQ.mode;
-        _mode = _mode ? this.capitalizeFirst(_mode.toLowerCase()) : "Satellite";
+        const [ origin, title ] = (lat && lng) ?
+            [ [ Number(lat), Number(lng) ], ttl ] : fallback;
+        const mode = this.capitalizeFirst((md || 'Satellite').toLowerCase());
 
-        return {
-            origin: _origin,
-            title: _title,
-            mode: _mode,
-        };
+        return { origin, title, mode };
     }
+
     static capitalizeFirst(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     // loading stuff --------
+
     static _disposeMaterial(mat) {
         if (mat.map) mat.map.dispose();
         mat.dispose();
     }
+
     static _disposeObject(obj) { // cf. https://gist.github.com/j-devel/6d0323264b6a1e47e2ee38bc8647c726
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) this._disposeMaterial(obj.material);
         if (obj.texture) obj.texture.dispose();
     }
+
     clearTerrainObjects() {
         this.renderer.dispose();
 
