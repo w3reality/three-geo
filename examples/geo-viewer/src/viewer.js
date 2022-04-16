@@ -71,43 +71,45 @@ class Viewer {
             tokenMapbox: this.env.tokenMapbox,
         });
 
+        // https://docs.mapbox.com/data/tilesets/guides/access-elevation-data/#mapbox-terrain-rgb
         // vector dem: 9--15 (at 8, no contour data returned)
-        // rbg dem: ?--15 per https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
-        // satellite zoom resolution -- min: 11, defaut: 13, max: 17
-        this._zoom = this.env.zoom || 13;
+        //    rbg dem: ?--15
+        this._zoom = this.env.zoom || 13; // satellite zoom resolution -- min: 11, defaut: 13, max: 17
         this._radius = 5.0*2**(13-this._zoom);
-        const query = Viewer.parseQuery();
-        this._origin = query.origin;
-        this._vis = query.mode;
 
-        this._debugLoading = this.env.debugLoading === true;
-        this._debugTitleLast = 'invalid';
-        if (this._debugLoading) { // use cache
-            this._setApiDebug(this.tgeo, query.title);
-        }
-
-        this.updateTerrain(this._vis);
+        const { origin, mode, title } = Viewer.parseQuery();
+        this._origin = origin;
+        this._vis = mode;
+        this.updateTerrain(this._vis, title);
 
         this._projection = this.tgeo.getProjection(this._origin, this._radius);
 
-        // ------- leaflet stuff
+        //
+        // leaflet stuff
+        //
+
         this.mapHelper = new MapHelper({
             origin: this._origin,
             radius: this._radius,
             projection: this._projection,
             mapId: 'map',
             enableTiles: env.enableTilesLeaflet === true,
-            onBuildTerrain: (ll) => { this.reloadPageWithLocation(ll); },
+            onBuildTerrain: ll => { this.reloadPageWithLocation(ll, Viewer.parseQuery().title); },
             onMapZoomEnd: () => { this.plotCamInMap(this.camera); },
         });
-        // console.log('this.mapHelper:', this.mapHelper);
 
-        // ------- msg stuff
+        //
+        // msg stuff
+        //
+
         this.msg = document.getElementById('msg');
         this.msgMeasure = document.getElementById('msgMeasure');
         this.msgTerrain = document.getElementById('msgTerrain');
 
+        //
         // tmp laser for measurement
+        //
+
         this._laserMarkTmp = new ThreeGeo.Laser({maxPoints: 2});
         this._laserMarkTmp.name = 'singleton-measure-mark-tmp';
         this.sceneMeasure.add(this._laserMarkTmp);
@@ -115,13 +117,19 @@ class Viewer {
         this.markPair = []; // now this.markPair.length === 0
         this._laserMarkColor = null;
 
-        // ------- marker stuff
+        //
+        // marker stuff
+        //
+
         this._laserMarker = new ThreeGeo.Laser({maxPoints: 2});
         this._laserMarker.visible = false;
         this._laserMarker.name = 'singleton-marker';
         this.scene.add(this._laserMarker);
 
-        // ------- orbit stuff -------
+        //
+        // orbit stuff
+        //
+
         this._orbit = null;
         this._isOrbiting = false;
 
@@ -149,7 +157,9 @@ class Viewer {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    // loading stuff --------
+    //
+    // loading stuff
+    //
 
     static _disposeMaterial(mat) {
         if (mat.map) mat.map.dispose();
@@ -221,7 +231,8 @@ class Viewer {
                     Viewer._disposeObject(mark);
                 });
     }
-    reloadPageWithLocation(ll, title=undefined) {
+
+    reloadPageWithLocation(ll, title) {
         let href = `./index.html?lat=${ll[0]}&lng=${ll[1]}`;
         if (title) {
             href += `&title=${title}`;
@@ -252,13 +263,23 @@ class Viewer {
             // update terrain
             this._origin = ll;
             this.showMsgTerrain();
-            if (this._debugLoading) {
-                this._setApiDebug(this.tgeo, title);
-            }
-            this.updateTerrain(this._vis);
+            this.updateTerrain(this._vis, title);
         }
     }
-    updateTerrain(vis) {
+
+    updateTerrain(vis, title) {
+        if (this.env.isDev) {
+            let loc = 'invalid';
+            if (title.includes('Table')) loc = 'table';
+            if (title.includes('Eiger')) loc = 'eiger';
+            if (title.includes('River')) loc = 'river';
+            if (title.includes('Akagi')) loc = 'akagi';
+
+            this.tgeo.setApiVector(`../../cache/${loc}/custom-terrain-vector`);
+            this.tgeo.setApiRgb(`../../cache/${loc}/custom-terrain-rgb`);
+            this.tgeo.setApiSatellite(`../../cache/${loc}/custom-satellite`);
+        }
+
         switch (vis.toLowerCase()) {
             case "satellite":
                 console.log('update to satellite');
@@ -284,25 +305,9 @@ class Viewer {
                 break;
         }
     }
-    _setApiDebug(tgeo, title) {
-        // title is undefined when called via mapHelper.onBuildTerrain(ll)
-        console.log('_setApiDebug(): title:', title);
-        if (title) {
-            this._debugTitleLast = title; // update the last
-        } else {
-            title = this._debugTitleLast; // use the last
-        }
-        let _location = 'invalid';
-        if (title.includes('Table')) _location = 'table';
-        if (title.includes('Eiger')) _location = 'eiger';
-        if (title.includes('River')) _location = 'river';
-        if (title.includes('Akagi')) _location = 'akagi';
-        tgeo.setApiVector(`../../cache/${_location}/custom-terrain-vector`);
-        tgeo.setApiRgb(`../../cache/${_location}/custom-terrain-rgb`);
-        tgeo.setApiSatellite(`../../cache/${_location}/custom-satellite`);
-    }
 
     nop() { /* nop */ }
+
     static isTokenSet(token) {
         if (token !== '********') return true;
 
@@ -311,6 +316,7 @@ class Viewer {
         alert(msg);
         return false;
     }
+
     loadRgbDem(cb=this.nop) {
         if (this._isRgbDemLoaded) { return cb(); }
         if (!Viewer.isTokenSet(this.env.tokenMapbox)) { return cb(); }
@@ -334,6 +340,7 @@ class Viewer {
             },
         });
     }
+
     async loadVectorDem(cb=this.nop) {
         if (this._isVectorDemLoaded) { return cb(); }
         if (!Viewer.isTokenSet(this.env.tokenMapbox)) { return cb(); }
@@ -350,7 +357,10 @@ class Viewer {
         cb();
     }
 
-    // marker stuff --------
+    //
+    // marker stuff
+    //
+
     _updateLaserMarker(pt=null) {
         if (pt) {
             this._laserMarker.setSource(pt);
@@ -361,6 +371,7 @@ class Viewer {
             this._laserMarker.visible = false;
         }
     }
+
     _updateLaserMarkTmp(pt0=null, pt1=null, color=0xffffff) {
         if (pt0) {
             this._laserMarkTmp.setSource(pt0);
@@ -392,6 +403,7 @@ class Viewer {
             target: pt.clone(),
         };
     }
+
     _addOrbit(orbit, segments=128) {
         const radius = orbit.rvec.length();
 
@@ -416,6 +428,7 @@ class Viewer {
         this.scene.add(this._orbit);
         // console.log('this.scene:', this.scene);
     }
+
     _removeOrbit() {
         // console.log('this._orbit:', this._orbit);
         if (!this._orbit) return;
@@ -425,19 +438,25 @@ class Viewer {
         this._orbit.material.dispose();
         this._orbit = null;
     }
+
     toggleOrbiting(tf) {
         this._isOrbiting = tf;
     }
+
     toggleVrLaser(tf) {
         this._showVrLaser = tf;
     }
+
     toggleGrids(tf) {
         this.scene.getObjectByName("singleton-walls").visible = tf;
         this.scene.getObjectByName("singleton-axes").visible = tf;
         this._render();
     }
 
-    // laser casting stuff --------
+    //
+    // laser casting stuff
+    //
+
     static _applyWithMeshesVisible(meshes, func) {
         // console.log('meshes:', meshes);
 
@@ -457,6 +476,7 @@ class Viewer {
 
         return output;
     }
+
     _doRaycast(mx, my) {
         return Viewer._applyWithMeshesVisible(
             this.objsInteractive, (meshes) =>
@@ -495,6 +515,7 @@ class Viewer {
 
         this.showMeasureStats(this.markPair);
     }
+
     updateOrbit(mx, my) {
         let isect = this._doRaycast(mx, my);
         if (isect !== null) {
@@ -519,14 +540,17 @@ class Viewer {
 
         if (this.guiHelper && !this.guiHelper.data.autoOrbit) this._render();
     }
+
     hasOrbit() {
         return this._orbit !== null;
     }
+
     setOrbitDefault() {
         this._removeOrbit();
         this._addOrbit(Viewer._calcOrbit(this.camera, new THREE.Vector3(0, 0, 0)));
         this.mapHelper.plotOrbit(this._orbit);
     }
+
     pick(mx, my) {
         if (!this._showVrLaser && this.markPair.length !== 1) {
             return;
@@ -563,9 +587,11 @@ class Viewer {
         // = 1(src point) + #(reflection points) + 1(end point)
         // console.log('#points:', this._laser.getPoints().length);
     }
+
     clearPick() {
         this._laser.clearPoints();
     }
+
     toggleMap(tf) {
         this.mapHelper.toggle(tf);
     }
