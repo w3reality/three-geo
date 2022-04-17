@@ -18,6 +18,8 @@ class App extends Threelet {
         this.render = () => { // override
             if (this.stats) { this.stats.update(); }
             this.resizeCanvas();
+
+            viewer.updateAnim();
             viewer.render();
             viewer.showMsg(this.camera);
             viewer.plotCamInMap(this.camera);

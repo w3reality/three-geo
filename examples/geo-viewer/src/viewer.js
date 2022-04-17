@@ -246,7 +246,7 @@ class Viewer {
             window.history.replaceState(null, '', href);
 
             this.clearTerrainObjects();
-            this._render();
+            this.render();
             if (1) {
                 console.log('======== ========');
                 console.log('this:', this);
@@ -284,7 +284,7 @@ class Viewer {
             case "satellite":
                 console.log('update to satellite');
                 this.loadRgbDem(() => {
-                    this._render();
+                    this.render();
                 });
                 break;
             case "wireframe":
@@ -292,13 +292,13 @@ class Viewer {
                 this.loadRgbDem(() => {
                     // override the default satellite texture
                     this.updateMode("Wireframe");
-                    this._render();
+                    this.render();
                 });
                 break;
             case "contours":
                 console.log('update to contours');
                 this.loadVectorDem(() => {
-                    this._render();
+                    this.render();
                 });
                 break;
             default:
@@ -330,12 +330,12 @@ class Viewer {
                     this.scene.add(obj);
                     // console.log('obj:', obj);
                 });
-                this._render();
+                this.render();
             },
             onSatelliteMat: (plane) => {
                 plane.material.side = THREE.DoubleSide;
                 this.satelliteMats[plane.name] = plane.material;
-                this._render();
+                this.render();
                 return cb();
             },
         });
@@ -353,7 +353,7 @@ class Viewer {
         console.log('load vector dem: end');
 
         this.scene.add(terrain);
-        this._render();
+        this.render();
         cb();
     }
 
@@ -450,7 +450,7 @@ class Viewer {
     toggleGrids(tf) {
         this.scene.getObjectByName("singleton-walls").visible = tf;
         this.scene.getObjectByName("singleton-axes").visible = tf;
-        this._render();
+        this.render();
     }
 
     //
@@ -511,7 +511,7 @@ class Viewer {
             this._updateLaserMarkTmp(null); // now this.markPair.length === 0
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this._render();
+        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
 
         this.showMeasureStats(this.markPair);
     }
@@ -538,7 +538,7 @@ class Viewer {
             }
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this._render();
+        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
     }
 
     hasOrbit() {
@@ -582,7 +582,7 @@ class Viewer {
             this._laser.clearPoints();
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this._render();
+        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
 
         // = 1(src point) + #(reflection points) + 1(end point)
         // console.log('#points:', this._laser.getPoints().length);
@@ -600,32 +600,6 @@ class Viewer {
     }
 
     //======== ======== ======== ========
-
-    render() {
-        if (this._isOrbiting && this._orbit) {
-            let pt = this._orbit.userData.target;
-            let radius = this._orbit.userData.radius;
-            let theta = this._orbit.userData.theta;
-            this.camera.position.setX(pt.x + radius * Math.cos(theta));
-            this.camera.position.setY(pt.y + radius * Math.sin(theta));
-
-            if (1) {
-                this.camera.lookAt(pt.x, pt.y, pt.z);
-            } else {
-                // look along the tangent
-                this.camera.lookAt(
-                    pt.x + radius * Math.cos(theta + 0.01),
-                    pt.y + radius * Math.sin(theta + 0.01),
-                    this.camera.position.z);
-            }
-
-            this._orbit.userData.theta += 0.01;
-
-            this.showMsg(this.camera);
-            this.plotCamInMap(this.camera);
-        }
-        this._render();
-    }
 
     static toCoords(vec, nFloats=3) {
         return `(${vec.x.toFixed(nFloats)}, ${vec.y.toFixed(nFloats)}, ${vec.z.toFixed(nFloats)})`;
@@ -672,6 +646,7 @@ class Viewer {
     }
 
     //======== ======== ======== ========
+
     updateMode(vis) {
         this._vis = vis;
         this.scene.traverse((node) => {
@@ -699,18 +674,43 @@ class Viewer {
             }
         });
     }
+
     setGuiHelper(helper) {
         this.guiHelper = helper;
     }
+
     closeGui() {
         this.guiHelper.gui.close();
     }
-    _render() {
+
+    updateAnim() {
+        if (this._isOrbiting && this._orbit) {
+            const { target: pt, radius, theta } = this._orbit.userData;
+            this.camera.position.setX(pt.x + radius * Math.cos(theta));
+            this.camera.position.setY(pt.y + radius * Math.sin(theta));
+
+            this.camera.lookAt(pt.x, pt.y, pt.z);
+            //====
+            // this.camera.lookAt( // look along the tangent
+            //     pt.x + radius * Math.cos(theta + 0.01),
+            //     pt.y + radius * Math.sin(theta + 0.01),
+            //     this.camera.position.z);
+
+            this._orbit.userData.theta += 0.01;
+        }
+
+        // There could be other animating objects
+
+        // ...
+    }
+
+    render() {
         this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
         this.renderer.clearDepth();
         this.renderer.render(this.sceneMeasure, this.camera);
     }
+
     capture() {
         this.threelet.capture();
     }
