@@ -21,8 +21,8 @@ class App extends Threelet {
 
             viewer.updateAnim();
             viewer.render();
-            viewer.showMsg(this.camera);
-            viewer.plotCamInMap(this.camera);
+            viewer.showMsg();
+            viewer.plotCamInMap();
         };
 
         const guiData = App.createGuiData();
@@ -30,8 +30,8 @@ class App extends Threelet {
 
         // viewer.closeGui();
         viewer.toggleMap(guiData.leaflet);
-        viewer.showMsg(this.camera);
-        viewer.plotCamInMap(this.camera);
+        viewer.showMsg();
+        viewer.plotCamInMap();
         viewer.showMsgTerrain();
 
         this.on('pointer-move', (mx, my) => viewer.pick(mx, my));

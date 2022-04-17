@@ -1,5 +1,6 @@
 import ThreeGeo from '../../../src';
 import MapHelper from './map-helper.js';
+import MsgHelper from './msg-helper.js';
 
 const { THREE } = window;
 class Viewer {
@@ -84,10 +85,6 @@ class Viewer {
 
         this._projection = this.tgeo.getProjection(this._origin, this._radius);
 
-        //
-        // leaflet stuff
-        //
-
         this.mapHelper = new MapHelper({
             origin: this._origin,
             radius: this._radius,
@@ -95,16 +92,14 @@ class Viewer {
             mapId: 'map',
             enableTiles: env.enableTilesLeaflet === true,
             onBuildTerrain: ll => { this.reloadPageWithLocation(ll, Viewer.parseQuery().title); },
-            onMapZoomEnd: () => { this.plotCamInMap(this.camera); },
+            onMapZoomEnd: () => { this.plotCamInMap(); },
         });
 
-        //
-        // msg stuff
-        //
-
-        this.msg = document.getElementById('msg');
-        this.msgMeasure = document.getElementById('msgMeasure');
-        this.msgTerrain = document.getElementById('msgTerrain');
+        this.msgHelper = new MsgHelper({
+            msg: document.getElementById('msg'),
+            msgTerrain: document.getElementById('msgTerrain'),
+            msgMeasure: document.getElementById('msgMeasure'),
+        });
 
         //
         // tmp laser for measurement
@@ -258,7 +253,7 @@ class Viewer {
             // update leaflet
             this.mapHelper.update(
                 ll, this.tgeo.getProjection(ll, this._radius));
-            this.plotCamInMap(this.camera);
+            this.plotCamInMap();
 
             // update terrain
             this._origin = ll;
@@ -513,7 +508,7 @@ class Viewer {
 
         if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
 
-        this.showMeasureStats(this.markPair);
+        this.showMsgMeasure(this.markPair);
     }
 
     updateOrbit(mx, my) {
@@ -550,6 +545,8 @@ class Viewer {
         this._addOrbit(Viewer._calcOrbit(this.camera, new THREE.Vector3(0, 0, 0)));
         this.mapHelper.plotOrbit(this._orbit);
     }
+
+    //
 
     pick(mx, my) {
         if (!this._showVrLaser && this.markPair.length !== 1) {
@@ -592,60 +589,31 @@ class Viewer {
         this._laser.clearPoints();
     }
 
+    //
+
     toggleMap(tf) {
         this.mapHelper.toggle(tf);
     }
-    plotCamInMap(cam) {
-        this.mapHelper.plotCam(cam);
+
+    plotCamInMap() {
+        this.mapHelper.plotCam(this.camera);
     }
 
-    //======== ======== ======== ========
+    //
 
-    static toCoords(vec, nFloats=3) {
-        return `(${vec.x.toFixed(nFloats)}, ${vec.y.toFixed(nFloats)}, ${vec.z.toFixed(nFloats)})`;
+    showMsg() {
+        this.msgHelper.showMsg(this.camera, this._projection.unitsPerMeter);
     }
-    static toCoordsArray(vecArray) {
-        return vecArray.map(vec => this.toCoords(vec)).join(', ');
-    }
-    static m2km(pt, unitsPerMeter) {
-        return pt.clone().divideScalar(unitsPerMeter * 1000);
-    }
-    static appendText(el, text) {
-        const div = document.createElement('div');
-        div.appendChild(document.createTextNode(text));
-        el.appendChild(div);
-    }
-    static clear(parent) {
-        while (parent.firstChild) {
-            parent.firstChild.remove();
-        }
-    }
-    showMsg(cam) {
-        const { unitsPerMeter } = this._projection;
-        Viewer.clear(this.msg);
-        Viewer.appendText(this.msg, `pos [km]: ${Viewer.toCoords(Viewer.m2km(cam.position, unitsPerMeter))}`);
-        Viewer.appendText(this.msg, `rot [rad]: ${Viewer.toCoords(cam.rotation)}`);
-    }
-    showMeasureStats(_markPair) {
-        const { unitsPerMeter } = this._projection;
-        Viewer.clear(this.msgMeasure);
-        if (_markPair.length === 1) {
-            Viewer.appendText(this.msgMeasure, `points: ${Viewer.toCoords(Viewer.m2km(_markPair[0], unitsPerMeter))} ->`);
-        } else if (_markPair.length === 2) {
-            const p0km = Viewer.m2km(_markPair[0], unitsPerMeter);
-            const p1km = Viewer.m2km(_markPair[1], unitsPerMeter);
-            Viewer.appendText(this.msgMeasure, `points: ${Viewer.toCoords(p0km)} -> ${Viewer.toCoords(p1km)}`);
-            Viewer.appendText(this.msgMeasure, `euclidean dist: ${p0km.distanceTo(p1km).toFixed(3)}`);
-        }
-    }
+
     showMsgTerrain() {
-        const ll = this._origin;
-        Viewer.clear(this.msgTerrain);
-        Viewer.appendText(this.msgTerrain, `lat lng: (${ll[0].toFixed(4)}, ${ll[1].toFixed(4)})`);
-        Viewer.appendText(this.msgTerrain, `satellite zoom resolution [11-17]: ${this._zoom}`);
+        this.msgHelper.showMsgTerrain(this._origin, this._zoom);
     }
 
-    //======== ======== ======== ========
+    showMsgMeasure(pair) {
+        this.msgHelper.showMsgMeasure(pair, this._projection.unitsPerMeter);
+    }
+
+    //
 
     updateMode(vis) {
         this._vis = vis;
@@ -682,6 +650,8 @@ class Viewer {
     closeGui() {
         this.guiHelper.gui.close();
     }
+
+    //
 
     updateAnim() {
         if (this._isOrbiting && this._orbit) {
