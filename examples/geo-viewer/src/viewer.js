@@ -1,18 +1,17 @@
 import ThreeGeo from '../../../src';
+import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MsgHelper from './msg-helper.js';
 
 const { THREE } = window;
 class Viewer {
-    constructor(env, threelet) {
+    constructor(threelet, env) {
         this.env = env;
 
         const { camera, renderer } = threelet;
         this.threelet = threelet;
         this.camera = camera;
         this.renderer = renderer;
-
-        this.guiHelper = null;
 
         this.scene = new THREE.Scene();
         this.sceneMeasure = new THREE.Scene();
@@ -101,6 +100,8 @@ class Viewer {
             msgMeasure: document.getElementById('msgMeasure'),
         });
 
+        this.guiHelper = null;
+
         //
         // tmp laser for measurement
         //
@@ -153,6 +154,111 @@ class Viewer {
     }
 
     //
+    // gui
+    //
+
+    initGui(env, render) {
+        const animToggler = Viewer.createAnimToggler(render);
+        const cbs = {
+            onCapture: () => {
+                this.capture();
+            },
+            onChangeGrids: value => {
+                this.toggleGrids(value);
+            },
+            onChangeAutoOrbit: value => {
+                this.toggleOrbiting(value);
+                if (value) {
+                    if (! this.hasOrbit()) {
+                        this.setOrbitDefault();
+                    }
+                    console.log('starting anim...');
+                    animToggler(true);
+                } else {
+                    console.log('stopping anim...');
+                    animToggler(false);
+                }
+            },
+            onChangeVis: value => {
+                console.log('vis:', value);
+                if (value === 'Contours') {
+                    this.loadVectorDem(() => {
+                        this.updateMode(value);
+                        render();
+                    });
+                } else {
+                    this.loadRgbDem(() => {
+                        this.updateMode(value);
+                        render();
+                    });
+                }
+            },
+            onChangeVrLaser: value => {
+                this.toggleVrLaser(value);
+            },
+            onChangeLeaflet: value => {
+                this.toggleMap(value);
+            },
+            onChangeLoc: (value, locations) => {
+                if (value === '(none)') { // dummy case
+                    return;
+                }
+
+                if (value in locations) {
+                    this.reloadPageWithLocation(
+                        locations[value], value.replace(' ', '_'));
+                }
+            },
+        };
+
+        //
+
+        const defaults = Viewer.guiDefaults();
+        const data = Object.assign({}, defaults);
+
+        this.guiHelper = new GuiHelper(data, cbs, env)
+            .setDefaults(defaults);
+    }
+
+    static guiDefaults() {
+        const { mode: vis, title } = this.parseQuery();
+
+        return {
+            isDev: () => {},
+            vis,
+            capture: () => {},
+            grids: true,
+            autoOrbit: false,
+            vrLaser: false,
+            reset: () => {},
+            loc: title ? title.replace('_', ' ') : '',
+            leaflet: true,
+            sourceCode: () => {},
+        };
+    }
+
+    static createAnimToggler(render) {
+        let stopAnim = true;
+        const animate = () => {
+            if (stopAnim) {
+                console.log('animate(): stopping');
+                return;
+            }
+            requestAnimationFrame(animate);
+            render();
+        };
+
+        return (tf) => {
+            if (tf) {
+                stopAnim = false;
+                animate();
+            } else {
+                stopAnim = true;
+            }
+        };
+    }
+
+    //
     // loading stuff
     //
 
@@ -161,7 +267,7 @@ class Viewer {
         mat.dispose();
     }
 
-    static _disposeObject(obj) { // cf. https://gist.github.com/j-devel/6d0323264b6a1e47e2ee38bc8647c726
+    static _disposeObject(obj) {
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) this._disposeMaterial(obj.material);
         if (obj.texture) obj.texture.dispose();
@@ -641,10 +747,6 @@ class Viewer {
                 node.visible = vis === "Contours";
             }
         });
-    }
-
-    setGuiHelper(helper) {
-        this.guiHelper = helper;
     }
 
     closeGui() {

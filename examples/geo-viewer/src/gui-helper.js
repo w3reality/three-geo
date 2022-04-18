@@ -1,13 +1,12 @@
 import OoGui from 'oo-gui/src';
 
 class GuiHelper extends OoGui {
-    constructor(env, data, cbs={}) {
+    constructor(data, cbs, env={}) {
         super(data, {
             title: 'geo-viewer',
             width: 240,
         });
 
-        this.env = env;
         this.onChangeGrids = cbs.onChangeGrids;
         this.onCapture = cbs.onCapture;
         this.onChangeAutoOrbit = cbs.onChangeAutoOrbit;
@@ -15,6 +14,8 @@ class GuiHelper extends OoGui {
         this.onChangeVrLaser = cbs.onChangeVrLaser;
         this.onChangeLeaflet = cbs.onChangeLeaflet;
         this.onChangeLoc = cbs.onChangeLoc;
+
+        this.env = env;
     }
 
     // impl
