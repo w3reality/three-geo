@@ -22,7 +22,7 @@
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
-   * splaytree v3.0.1
+   * splaytree v3.1.0
    * Fast Splay tree for Node and browser
    *
    * @author Alexander Milevski <info@w8r.name>
@@ -31,10 +31,9 @@
    */
 
 /**
- * martinez v0.4.3
- * Martinez polygon clipping algorithm, does boolean operation on polygons (multipolygons, polygons with holes etc): intersection, union, difference, xor
- *
- * @author Alex Milevski <info@w8r.name>
+ * lil-gui
+ * https://lil-gui.georgealways.com
+ * @version 0.16.1
+ * @author George Michael Brower
  * @license MIT
- * @preserve
  */
