@@ -56,10 +56,6 @@
         const app = new App({
             canvas: document.getElementById("canvas"),
         });
-        app.stats = app.setup('mod-stats', Stats, {panelType: 1});
-        app.setup('mod-controls', THREE.OrbitControls);
-
-        app.render(); // first time
     })();
     </script>
 </body>

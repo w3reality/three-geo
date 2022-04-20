@@ -5,6 +5,7 @@ import env from './env.js';
 import Threelet from '../../deps/threelet.esm.js';
 import Viewer from './viewer.js';
 
+const { THREE, Stats } = window;
 class App extends Threelet {
     // override
     onCreate(params) {
@@ -12,10 +13,10 @@ class App extends Threelet {
         this.camera.up.set(0, 0, 1); // The up vector is along +z for this app
 
         const viewer = new Viewer(this, env);
-        this.stats = null;
 
+        this.stats = this.setup('mod-stats', Stats, {panelType: 1});
         this.render = () => { // override
-            if (this.stats) { this.stats.update(); }
+            this.stats.update();
             this.resizeCanvas();
 
             viewer.updateAnim();
@@ -23,6 +24,8 @@ class App extends Threelet {
             viewer.showMsg();
             viewer.plotCamInMap();
         };
+        this.setup('mod-controls', THREE.OrbitControls);
+        this.render(); // first time
 
         viewer.initGui(env, this.render);
         //viewer.closeGui();
