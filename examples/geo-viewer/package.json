@@ -1,7 +1,7 @@
 {
     "private": true,
     "name": "app",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "",
     "scripts": {
         "build": "../../node_modules/.bin/es-pack build -m esm -d ./dist",
