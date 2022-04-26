@@ -2,11 +2,13 @@ import env from './env.js';
 //import env from './envs-ignore/env-dev.js';
 //import env from './envs-ignore/env-io.js';
 
+import Threelet from '../../deps/threelet.esm.js';
+import ThreeGeo from '../../../src';
+import LaserHelper from './laser.js';
+import MarkerHelper from './marker.js';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MsgHelper from './msg-helper.js';
-import Threelet from '../../deps/threelet.esm.js';
-import ThreeGeo from '../../../src';
 
 const { THREE, Stats } = window;
 
@@ -87,10 +89,7 @@ class App extends Threelet {
 
         //
 
-        //======== add laser
-        this._laser = new ThreeGeo.Laser({ color: 0xffffff });
-        this._laser.name = 'singleton-laser-vr';
-        this.scene.add(this._laser);
+        this.laser = new LaserHelper('singleton-laser-vr', this.scene, this.camera);
 
         // ======== adding geo tiles
         this.renderer.autoClear = false;
@@ -697,20 +696,15 @@ class App extends Threelet {
             return;
         }
 
-        let isect = this._doRaycast(mx, my);
+        const isect = this._doRaycast(mx, my);
         if (isect !== null) {
-            // console.log('isect:', isect);
-            let pt = isect.point;
-            // console.log('pt:', pt);
+            const pt = isect.point;
 
-            let ptSrc = new THREE.Vector3(0.003, -0.004, 0.002);
-            this._laser.setSource(ptSrc, this.camera);
+            this.laser.prepare();
             if (this._showVrLaser) {
-                // this._laser.point(pt, 0xffffff);
-                //----
                 App._applyWithMeshesVisible(
-                    this.objsInteractive, (meshes) =>
-                        this._laser.pointWithRaytrace(pt, meshes, 0xffffff, 16));
+                    this.objsInteractive,
+                    meshes => this.laser.shoot(pt, meshes));
             }
 
             if (this.markPair.length === 1) {
@@ -719,18 +713,10 @@ class App extends Threelet {
                 this._updateLaserMarkTmp(null); // now this.markPair.length === 0
             }
         } else {
-            // console.log('no isects');
-            this._laser.clearPoints();
+            this.laser.clear();
         }
 
         if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
-
-        // = 1(src point) + #(reflection points) + 1(end point)
-        // console.log('#points:', this._laser.getPoints().length);
-    }
-
-    clearPick() {
-        this._laser.clearPoints();
     }
 
     //
