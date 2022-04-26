@@ -9,13 +9,18 @@ import Threelet from '../../deps/threelet.esm.js';
 import ThreeGeo from '../../../src';
 
 const { THREE, Stats } = window;
+
 class App extends Threelet {
     // override
     onCreate(params) {
+        this.env = env;
+        this.scene = new THREE.Scene();
+        this.sceneMeasure = new THREE.Scene();
+
         this.initComponents();
 
         this.camera.position.set(0, 0, 1.5);
-        this.camera.up.set(0, 0, 1); // The up vector is along +z for this app
+        this.camera.up.set(0, 0, 1);
 
         this.stats = this.setup('mod-stats', Stats, {panelType: 1});
         this.render = () => { // override
@@ -50,11 +55,6 @@ class App extends Threelet {
     }
 
     initComponents() {
-        this.env = env;
-
-        this.scene = new THREE.Scene();
-        this.sceneMeasure = new THREE.Scene();
-
         //======== add light
         if (0) {
             // https://github.com/mrdoob/three.js/blob/master/examples/webvr_cubes.html
@@ -76,7 +76,7 @@ class App extends Threelet {
         //======== add walls and axes
         const walls = new THREE.LineSegments(
             new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
-            new THREE.LineBasicMaterial({color: 0xcccccc}));
+            new THREE.LineBasicMaterial({ color: 0xcccccc }));
         walls.position.set(0, 0, 0);
         walls.name = "singleton-walls";
         this.scene.add(walls);
@@ -85,10 +85,10 @@ class App extends Threelet {
         axes.name = "singleton-axes";
         this.scene.add(axes);
 
+        //
+
         //======== add laser
-        this._laser = new ThreeGeo.Laser({
-            color: 0xffffff,
-        });
+        this._laser = new ThreeGeo.Laser({ color: 0xffffff });
         this._laser.name = 'singleton-laser-vr';
         this.scene.add(this._laser);
 
