@@ -5,7 +5,7 @@ import env from './env.js';
 import Threelet from '../../deps/threelet.esm.js';
 import ThreeGeo from '../../../src';
 import LaserHelper from './laser.js';
-import MarkerHelper from './marker.js';
+import Marker from './marker.js';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MsgHelper from './msg-helper.js';
@@ -17,7 +17,7 @@ class App extends Threelet {
     onCreate(params) {
         this.env = env;
         this.scene = new THREE.Scene();
-        this.sceneMeasure = new THREE.Scene();
+        this.sceneMarker = new THREE.Scene();
 
         this.initComponents();
 
@@ -53,7 +53,7 @@ class App extends Threelet {
         this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
         this.renderer.clearDepth();
-        this.renderer.render(this.sceneMeasure, this.camera);
+        this.renderer.render(this.sceneMarker, this.camera);
     }
 
     initComponents() {
@@ -140,34 +140,33 @@ class App extends Threelet {
 
         this.guiHelper = null;
 
-        //
-        // tmp laser for measurement
-        //
+        this._showVrLaser = false;
 
-        this._laserMarkTmp = new ThreeGeo.Laser({maxPoints: 2});
-        this._laserMarkTmp.name = 'singleton-measure-mark-tmp';
-        this.sceneMeasure.add(this._laserMarkTmp);
-
-        this.markPair = []; // now this.markPair.length === 0
-        this._laserMarkColor = null;
-
-        //
-        // marker stuff
-        //
-
-        this._laserMarker = new ThreeGeo.Laser({maxPoints: 2});
-        this._laserMarker.visible = false;
-        this._laserMarker.name = 'singleton-marker';
-        this.scene.add(this._laserMarker);
+        this.marker = new Marker(this.sceneMarker);
 
         //
         // orbit stuff
         //
+        //>>>>>>>>
+        this._orbitAxis = new ThreeGeo.Laser({ maxPoints: 2 });
+        this._orbitAxis.visible = false;
+        this._orbitAxis.name = 'singleton-orbit-axis';
+        this.scene.add(this._orbitAxis);
 
         this._orbit = null;
         this._isOrbiting = false;
+        //>>>>>>>>
+    }
 
-        this._showVrLaser = false;
+    _updateOrbitAxis(pt=null) {
+        if (pt) {
+            this._orbitAxis.setSource(pt);
+            this._orbitAxis.point(pt.clone().setZ(pt.z + 1.0), 0xff00ff);
+            this._orbitAxis.visible = true;
+        } else {
+            this._orbitAxis.clearPoints();
+            this._orbitAxis.visible = false;
+        }
     }
 
     static parseQuery() {
@@ -322,9 +321,8 @@ class App extends Threelet {
         //   dem-rgb-...                 to be cleared
         //   dem-rgb-...                 to be cleared
         //   ...                         to be cleared
-        //========
+        //====
         this.objsInteractive.length = 0;
-        //--
         this._isRgbDemLoaded = false;
         this._isVectorDemLoaded = false;
         Object.entries(this.satelliteMats).forEach(([k, mat]) => {
@@ -336,39 +334,35 @@ class App extends Threelet {
         //   ::Mesh walls                intact
         //   ::Mesh dem-rgb-...          to be cleared
         //   ::Group dem-vec             to be cleared
-        //   ::Laser ""     orbit        this._updateLaserMarker(null)
+        //   ::Laser ""     orbit        this._updateOrbitAxis(null)
         //   ::LineLoop ""  orbit        this._removeOrbit()
         //   ::Laser ""     pointer      intact
-        //========
+        //====
         this.scene.children.filter(
             obj => obj.name.startsWith('dem-'))
                 .forEach(dem => {
                     dem.parent.remove(dem);
                     App._disposeObject(dem);
                 });
-        //--
-        this._updateLaserMarker(null);
-        //--
+
+        this._updateOrbitAxis(null);
         this._removeOrbit();
         this.mapHelper.plotOrbit(null);
         if (this.guiHelper) {
             this.guiHelper.autoOrbitController.setValue(false);
         }
 
-        // this.sceneMeasure.children
-        //   ::Laser ""     this._laserMarkTmp   this._updateLaserMarkTmp(null)
-        //   ::Laser ""     measure              to be cleared
-        //   ::Laser ""     measure              to be cleared
-        //   ...                                 to be cleared
-        //========
-        this._updateLaserMarkTmp(null);
-        //--
-        this.sceneMeasure.children.filter(
-            obj => obj.name.startsWith('measure-mark-'))
-                .forEach(mark => {
-                    mark.parent.remove(mark);
-                    App._disposeObject(mark);
-                });
+        // this.sceneMarker.children
+        //   ::Laser ""     singleton-mark-tmp   this.marker.updateTmp(null)
+        //   ::Laser ""     mark-<date>          to be cleared
+        //   ::Laser ""     mark-<date>          to be cleared
+        //   ......................              to be cleared
+        //====
+        this.marker.updateTmp(null);
+        this.marker.marks().forEach(mark => {
+            mark.parent.remove(mark);
+            App._disposeObject(mark);
+        });
     }
 
     reloadPageWithLocation(ll, title) {
@@ -390,7 +384,7 @@ class App extends Threelet {
                 console.log('======== ========');
                 console.log('this:', this);
                 console.log('this.scene.children:', this.scene.children);
-                console.log('this.sceneMeasure.children:', this.sceneMeasure.children);
+                console.log('this.sceneMarker.children:', this.sceneMarker.children);
                 console.log('======== ========');
             }
 
@@ -496,38 +490,11 @@ class App extends Threelet {
         cb();
     }
 
-    //
-    // marker stuff
-    //
-
-    _updateLaserMarker(pt=null) {
-        if (pt) {
-            this._laserMarker.setSource(pt);
-            this._laserMarker.point(pt.clone().setZ(pt.z + 1.0), 0xff00ff);
-            this._laserMarker.visible = true;
-        } else {
-            this._laserMarker.clearPoints();
-            this._laserMarker.visible = false;
-        }
-    }
-
-    _updateLaserMarkTmp(pt0=null, pt1=null, color=0xffffff) {
-        if (pt0) {
-            this._laserMarkTmp.setSource(pt0);
-            this._laserMarkTmp.point(pt1, color);
-            this._laserMarkTmp.visible = true;
-        } else {
-            this.markPair.length = 0; // now this.markPair.length === 0
-            this._laserMarkTmp.visible = false;
-        }
-    }
-
     static _calcOrbit(cam, pt) {
         let campos = cam.position.clone();
 
         // shrink the cone by 5 meters so the orbit is visible to the cam
         // let shift = pt.clone().sub(campos).normalize().multiplyScalar(0.005);
-        //----
         let shift = new THREE.Vector3(0, 0, 0);
 
         let camposShifted = campos.add(shift);
@@ -592,7 +559,7 @@ class App extends Threelet {
     }
 
     //
-    // laser casting stuff
+    // laser casting
     //
 
     static _applyWithMeshesVisible(meshes, func) {
@@ -622,53 +589,34 @@ class App extends Threelet {
     }
 
     updateMeasure(mx, my) {
-        let isect = this._doRaycast(mx, my);
+        const isect = this._doRaycast(mx, my);
         if (isect !== null) {
-            // console.log('isect:', isect);
-            let pt = isect.point;
-            // console.log('pt (measure):', pt);
-            if (this.markPair.length === 1) {
-                this.markPair.push(pt); // now this.markPair.length === 2
-                // console.log('registering this.markPair:', this.markPair);
-                let laser = new ThreeGeo.Laser({
-                    maxPoints: 2,
-                    color: this._laserMarkColor,
-                });
-                laser.updatePoints(this.markPair);
-                laser.name = `measure-mark-${Date.now()}`;
-                this.sceneMeasure.add(laser);
-            } else { // when this.markPair.length === 0 or 2
-                this.markPair = [pt,]; // now this.markPair.length === 1
-                this._laserMarkColor = 0x00ffff;
-                // get a new random color
-                // this._laserMarkColor = Math.floor(0xffffff * Math.random());
-                // console.log('new color:', this._laserMarkColor);
-            }
-            // console.log('this.markPair:', this.markPair);
+            this.marker.update(isect.point);
         } else {
-            this._updateLaserMarkTmp(null); // now this.markPair.length === 0
+            this.marker.updateTmp(null);
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
+        if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
+            this.render();
+        }
 
-        this.showMsgMeasure(this.markPair);
+        this.showMsgMeasure(this.marker.pair);
     }
 
     updateOrbit(mx, my) {
-        let isect = this._doRaycast(mx, my);
+        const isect = this._doRaycast(mx, my);
         if (isect !== null) {
-            // console.log('isect:', isect);
-            let pt = isect.point;
-            // console.log('pt (orbit):', pt);
-            // console.log('meshHit:', isect.object.name);
+            const pt = isect.point;
+            console.log('(orbit) mesh hit:', isect.object.name);
 
-            this._updateLaserMarker(pt);
+            this._updateOrbitAxis(pt);
             this._removeOrbit();
             this._addOrbit(App._calcOrbit(this.camera, pt));
             this.mapHelper.plotOrbit(this._orbit);
         } else {
-            console.log('no isects (orbit)');
-            this._updateLaserMarker(null);
+            console.log('(orbit) no isects');
+
+            this._updateOrbitAxis(null);
             this._removeOrbit();
             this.mapHelper.plotOrbit(null);
             if (this.guiHelper) {
@@ -676,7 +624,9 @@ class App extends Threelet {
             }
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
+        if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
+            this.render();
+        }
     }
 
     hasOrbit() {
@@ -692,7 +642,7 @@ class App extends Threelet {
     //
 
     pick(mx, my) {
-        if (!this._showVrLaser && this.markPair.length !== 1) {
+        if (!this._showVrLaser && this.marker.pair.length !== 1) {
             return;
         }
 
@@ -703,20 +653,17 @@ class App extends Threelet {
             this.laser.prepare();
             if (this._showVrLaser) {
                 App._applyWithMeshesVisible(
-                    this.objsInteractive,
-                    meshes => this.laser.shoot(pt, meshes));
+                    this.objsInteractive, meshes => this.laser.shoot(pt, meshes));
             }
 
-            if (this.markPair.length === 1) {
-                this._updateLaserMarkTmp(this.markPair[0], pt, this._laserMarkColor);
-            } else {
-                this._updateLaserMarkTmp(null); // now this.markPair.length === 0
-            }
+            this.marker.pick(pt);
         } else {
             this.laser.clear();
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) this.render();
+        if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
+            this.render();
+        }
     }
 
     //
