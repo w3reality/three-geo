@@ -1,13 +1,11 @@
 import ThreeGeo from '../../../src';
 
-const { Laser } = ThreeGeo;
-
-class LaserHelper {
+class Laser {
     constructor(name, scene, camera) {
         this._cam = camera;
         this._src = new THREE.Vector3(0.003, -0.004, 0.002);
 
-        this._laser = new Laser({ color: 0xffffff });
+        this._laser = new ThreeGeo.Laser({ color: 0xffffff });
         this._laser.name = name;
         scene.add(this._laser);
     }
@@ -25,4 +23,4 @@ class LaserHelper {
     }
 }
 
-export default LaserHelper;
+export default Laser;

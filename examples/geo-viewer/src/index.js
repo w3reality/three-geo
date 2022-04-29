@@ -4,8 +4,9 @@ import env from './env.js';
 
 import Threelet from '../../deps/threelet.esm.js';
 import ThreeGeo from '../../../src';
-import LaserHelper from './laser.js';
 import Marker from './marker.js';
+import Laser from './laser.js';
+import Orbit from './orbit.js';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MsgHelper from './msg-helper.js';
@@ -87,10 +88,6 @@ class App extends Threelet {
         axes.name = "singleton-axes";
         this.scene.add(axes);
 
-        //
-
-        this.laser = new LaserHelper('singleton-laser-vr', this.scene, this.camera);
-
         // ======== adding geo tiles
         this.renderer.autoClear = false;
 
@@ -122,6 +119,8 @@ class App extends Threelet {
 
         this._projection = this.tgeo.getProjection(this._origin, this._radius);
 
+        //
+
         this.mapHelper = new MapHelper({
             origin: this._origin,
             radius: this._radius,
@@ -140,13 +139,13 @@ class App extends Threelet {
 
         this.guiHelper = null;
 
+        //
+
         this._showVrLaser = false;
+        this.laser = new Laser('singleton-laser-vr', this.scene, this.camera);
 
-        this.marker = new Marker(this.sceneMarker);
-
-        //
-        // orbit stuff
-        //
+        //>>>>>>>>
+        this.orbit00 = new Orbit(this.scene);
         //>>>>>>>>
         this._orbitAxis = new ThreeGeo.Laser({ maxPoints: 2 });
         this._orbitAxis.visible = false;
@@ -156,6 +155,8 @@ class App extends Threelet {
         this._orbit = null;
         this._isOrbiting = false;
         //>>>>>>>>
+
+        this.marker = new Marker(this.sceneMarker);
     }
 
     _updateOrbitAxis(pt=null) {

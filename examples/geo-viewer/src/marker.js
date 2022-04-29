@@ -1,7 +1,5 @@
 import ThreeGeo from '../../../src';
 
-const { Laser } = ThreeGeo;
-
 class Marker {
     constructor(sceneMarker) {
         this.sceneMarker = sceneMarker;
@@ -9,7 +7,7 @@ class Marker {
         this.pair = [];
         this._laserColor = null;
 
-        const laser = new Laser({ maxPoints: 2 });
+        const laser = new ThreeGeo.Laser({ maxPoints: 2 });
         laser.name = 'singleton-mark-tmp';
         this.sceneMarker.add(laser);
         this._laser = laser;
@@ -42,7 +40,7 @@ class Marker {
         if (this.pair.length === 1) {
             this.pair.push(pt);
 
-            const laser = new Laser({ maxPoints: 2, color: this._laserColor });
+            const laser = new ThreeGeo.Laser({ maxPoints: 2, color: this._laserColor });
             laser.updatePoints(this.pair);
             laser.name = `mark-${Date.now()}`;
             this.sceneMarker.add(laser);
