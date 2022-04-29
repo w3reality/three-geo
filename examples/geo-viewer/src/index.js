@@ -562,34 +562,30 @@ class App extends Threelet {
     // laser casting
     //
 
-    static _applyWithMeshesVisible(meshes, func) {
-        // console.log('meshes:', meshes);
+    static applyCustom(meshes, func) {
+        const visibilities = {};
 
-        // save mesh visibilities
-        let visibilities = {};
-        meshes.forEach((mesh) => {
+        meshes.forEach(mesh => {
             visibilities[mesh.uuid] = mesh.visible; // save
             mesh.visible = true; // forcing for raycast
         });
 
-        let output = func(meshes);
+        const output = func(meshes); // apply
 
-        // restore mesh visibilities
-        meshes.forEach((mesh) => {
+        meshes.forEach(mesh => {
             mesh.visible = visibilities[mesh.uuid]; // restore
         });
 
         return output;
     }
 
-    _doRaycast(mx, my) {
-        return App._applyWithMeshesVisible(
-            this.objsInteractive, (meshes) =>
-                this.raycastFromMouse(mx, my, meshes));
+    raycastCustom(mx, my) {
+        return App.applyCustom(
+            this.objsInteractive, meshes => this.raycastFromMouse(mx, my, meshes));
     }
 
     updateMeasure(mx, my) {
-        const isect = this._doRaycast(mx, my);
+        const isect = this.raycastCustom(mx, my);
         if (isect !== null) {
             this.marker.update(isect.point);
         } else {
@@ -604,7 +600,7 @@ class App extends Threelet {
     }
 
     updateOrbit(mx, my) {
-        const isect = this._doRaycast(mx, my);
+        const isect = this.raycastCustom(mx, my);
         if (isect !== null) {
             const pt = isect.point;
             console.log('(orbit) mesh hit:', isect.object.name);
@@ -646,13 +642,13 @@ class App extends Threelet {
             return;
         }
 
-        const isect = this._doRaycast(mx, my);
+        const isect = this.raycastCustom(mx, my);
         if (isect !== null) {
             const pt = isect.point;
 
             this.laser.prepare();
             if (this._showVrLaser) {
-                App._applyWithMeshesVisible(
+                App.applyCustom(
                     this.objsInteractive, meshes => this.laser.shoot(pt, meshes));
             }
 
