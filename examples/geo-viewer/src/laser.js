@@ -1,5 +1,7 @@
 import ThreeGeo from '../../../src';
 
+const { THREE } = window;
+
 class Laser {
     constructor(name, scene, camera) {
         this._cam = camera;

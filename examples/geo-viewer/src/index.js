@@ -4,12 +4,12 @@ import env from './env.js';
 
 import Threelet from '../../deps/threelet.esm.js';
 import ThreeGeo from '../../../src';
-import Marker from './marker.js';
-import Laser from './laser.js';
-import Orbit from './orbit.js';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MsgHelper from './msg-helper.js';
+import Laser from './laser.js';
+import Orbit from './orbit.js';
+import Marker from './marker.js';
 
 const { THREE, Stats } = window;
 
@@ -121,6 +121,8 @@ class App extends Threelet {
 
         //
 
+        this.guiHelper = null;
+
         this.mapHelper = new MapHelper({
             origin: this._origin,
             radius: this._radius,
@@ -137,37 +139,14 @@ class App extends Threelet {
             msgMeasure: document.getElementById('msgMeasure'),
         });
 
-        this.guiHelper = null;
-
         //
 
         this._showVrLaser = false;
         this.laser = new Laser('singleton-laser-vr', this.scene, this.camera);
 
-        //>>>>>>>>
-        this.orbit00 = new Orbit(this.scene);
-        //>>>>>>>>
-        this._orbitAxis = new ThreeGeo.Laser({ maxPoints: 2 });
-        this._orbitAxis.visible = false;
-        this._orbitAxis.name = 'singleton-orbit-axis';
-        this.scene.add(this._orbitAxis);
-
-        this._orbit = null;
-        this._isOrbiting = false;
-        //>>>>>>>>
+        this.orbit = new Orbit(this.scene);
 
         this.marker = new Marker(this.sceneMarker);
-    }
-
-    _updateOrbitAxis(pt=null) {
-        if (pt) {
-            this._orbitAxis.setSource(pt);
-            this._orbitAxis.point(pt.clone().setZ(pt.z + 1.0), 0xff00ff);
-            this._orbitAxis.visible = true;
-        } else {
-            this._orbitAxis.clearPoints();
-            this._orbitAxis.visible = false;
-        }
     }
 
     static parseQuery() {
@@ -205,11 +184,8 @@ class App extends Threelet {
                 this.toggleGrids(value);
             },
             onChangeAutoOrbit: value => {
-                this.toggleOrbiting(value);
+                this.toggleAutoOrbit(value);
                 if (value) {
-                    if (! this.hasOrbit()) {
-                        this.setOrbitDefault();
-                    }
                     console.log('starting anim...');
                     animToggler(true);
                 } else {
@@ -335,8 +311,8 @@ class App extends Threelet {
         //   ::Mesh walls                intact
         //   ::Mesh dem-rgb-...          to be cleared
         //   ::Group dem-vec             to be cleared
-        //   ::Laser ""     orbit        this._updateOrbitAxis(null)
-        //   ::LineLoop ""  orbit        this._removeOrbit()
+        //   ::Laser ""     orbit        this.orbit.updateAxis(null)
+        //   ::LineLoop ""  orbit        this.orbit.remove()
         //   ::Laser ""     pointer      intact
         //====
         this.scene.children.filter(
@@ -345,9 +321,8 @@ class App extends Threelet {
                     dem.parent.remove(dem);
                     App._disposeObject(dem);
                 });
-
-        this._updateOrbitAxis(null);
-        this._removeOrbit();
+        this.orbit.updateAxis(null);
+        this.orbit.remove();
         this.mapHelper.plotOrbit(null);
         if (this.guiHelper) {
             this.guiHelper.autoOrbitController.setValue(false);
@@ -491,62 +466,15 @@ class App extends Threelet {
         cb();
     }
 
-    static _calcOrbit(cam, pt) {
-        let campos = cam.position.clone();
+    toggleAutoOrbit(tf) {
+        this.orbit.active = tf;
 
-        // shrink the cone by 5 meters so the orbit is visible to the cam
-        // let shift = pt.clone().sub(campos).normalize().multiplyScalar(0.005);
-        let shift = new THREE.Vector3(0, 0, 0);
-
-        let camposShifted = campos.add(shift);
-
-        let center = pt.clone().setZ(camposShifted.z);
-        let rvec = new THREE.Vector2(
-            camposShifted.x - pt.x,
-            camposShifted.y - pt.y);
-        return {
-            center: center,
-            rvec: rvec,
-            target: pt.clone(),
-        };
-    }
-
-    _addOrbit(orbit, segments=128) {
-        const radius = orbit.rvec.length();
-
-        const geomTemp = new THREE.CircleGeometry(radius, segments);
-        const { array } = geomTemp.attributes.position;
-
-        // Hackish: Create a clone of `array` with the center vertex removed
-        const arr = [];
-        for (let idx = 3; idx < array.length; idx++) { arr.push(array[idx]); }
-
-        const geom = new THREE.BufferGeometry();
-        geom.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
-
-        this._orbit = new THREE.LineLoop(geom,
-            new THREE.LineBasicMaterial({color: 0xff00ff}));
-        this._orbit.position.set(orbit.center.x, orbit.center.y, orbit.center.z);
-        this._orbit.userData.radius = radius;
-        this._orbit.userData.target = orbit.target;
-        this._orbit.userData.theta = Math.atan2(orbit.rvec.y, orbit.rvec.x);
-        // console.log('theta ini:', this._orbit.userData.theta);
-
-        this.scene.add(this._orbit);
-        // console.log('this.scene:', this.scene);
-    }
-
-    _removeOrbit() {
-        if (!this._orbit) return;
-
-        this.scene.remove(this._orbit);
-        this._orbit.geometry.dispose();
-        this._orbit.material.dispose();
-        this._orbit = null;
-    }
-
-    toggleOrbiting(tf) {
-        this._isOrbiting = tf;
+        if (tf && !this.orbit.exists()) {
+            const pt = new THREE.Vector3(0, 0, 0);
+            this.orbit.updateAxis(pt);
+            this.orbit.add(this.camera, pt);
+            this.mapHelper.plotOrbit(this.orbit.data());
+        }
     }
 
     toggleVrLaser(tf) {
@@ -603,19 +531,20 @@ class App extends Threelet {
     updateOrbit(mx, my) {
         const isect = this.raycastCustom(mx, my);
         if (isect !== null) {
-            const pt = isect.point;
             console.log('(orbit) mesh hit:', isect.object.name);
 
-            this._updateOrbitAxis(pt);
-            this._removeOrbit();
-            this._addOrbit(App._calcOrbit(this.camera, pt));
-            this.mapHelper.plotOrbit(this._orbit);
+            const pt = isect.point;
+            this.orbit.updateAxis(pt);
+            this.orbit.remove();
+            this.orbit.add(this.camera, pt);
+            this.mapHelper.plotOrbit(this.orbit.data());
         } else {
             console.log('(orbit) no isects');
 
-            this._updateOrbitAxis(null);
-            this._removeOrbit();
+            this.orbit.updateAxis(null);
+            this.orbit.remove();
             this.mapHelper.plotOrbit(null);
+
             if (this.guiHelper) {
                 this.guiHelper.autoOrbitController.setValue(false);
             }
@@ -624,16 +553,6 @@ class App extends Threelet {
         if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
             this.render();
         }
-    }
-
-    hasOrbit() {
-        return this._orbit !== null;
-    }
-
-    setOrbitDefault() {
-        this._removeOrbit();
-        this._addOrbit(App._calcOrbit(this.camera, new THREE.Vector3(0, 0, 0)));
-        this.mapHelper.plotOrbit(this._orbit);
     }
 
     //
@@ -724,23 +643,9 @@ class App extends Threelet {
     //
 
     updateAnim() {
-        if (this._isOrbiting && this._orbit) {
-            const { target: pt, radius, theta } = this._orbit.userData;
-            this.camera.position.setX(pt.x + radius * Math.cos(theta));
-            this.camera.position.setY(pt.y + radius * Math.sin(theta));
+        this.orbit.move(this.camera);
 
-            this.camera.lookAt(pt.x, pt.y, pt.z);
-            //====
-            // this.camera.lookAt( // look along the tangent
-            //     pt.x + radius * Math.cos(theta + 0.01),
-            //     pt.y + radius * Math.sin(theta + 0.01),
-            //     this.camera.position.z);
-
-            this._orbit.userData.theta += 0.01;
-        }
-
-        // There could be other animating objects
-
+        // There could be new animating objects
         // ...
     }
 }

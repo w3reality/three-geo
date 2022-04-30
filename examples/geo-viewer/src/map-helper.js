@@ -346,9 +346,7 @@ class MapHelper {
             console.log('this.camMarker:', this.camMarker);
         }
     }
-    plotOrbit(orbit) {
-        console.log('plotOrbit(): orbit:', orbit);
-
+    plotOrbit(orbitData) {
         if (this.orbitMarker) {
             this.map.removeLayer(this.orbitMarker);
             this.orbitMarker = null;
@@ -357,12 +355,12 @@ class MapHelper {
             this.map.removeLayer(this.orbitCircle);
             this.orbitCircle = null;
         }
-        if (! orbit) return;
+        if (!orbitData) return;
 
         const { projInv, unitsPerMeter } = this.projection;
 
         // add orbitMarker
-        const target = orbit.userData.target;
+        const target = orbitData.target;
         const llTarget = projInv(target.x, target.y);
         console.log('llTarget:', llTarget);
 
@@ -376,7 +374,7 @@ class MapHelper {
         // add orbitCircle
         const circle = turfCircle(
             MapHelper.swap(llTarget),
-            orbit.userData.radius / unitsPerMeter, {
+            orbitData.radius / unitsPerMeter, {
                 units: 'meters',
             });
         this.orbitCircle =
