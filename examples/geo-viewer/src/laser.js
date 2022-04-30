@@ -3,12 +3,13 @@ import ThreeGeo from '../../../src';
 const { THREE } = window;
 
 class Laser {
-    constructor(name, scene, camera) {
+    constructor(scene, camera) {
         this._cam = camera;
         this._src = new THREE.Vector3(0.003, -0.004, 0.002);
 
+        this.active = false;
         this._laser = new ThreeGeo.Laser({ color: 0xffffff });
-        this._laser.name = name;
+        this._laser.name = 'singleton-laser-vr';
         scene.add(this._laser);
     }
 

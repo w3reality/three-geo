@@ -141,8 +141,7 @@ class App extends Threelet {
 
         //
 
-        this._showVrLaser = false;
-        this.laser = new Laser('singleton-laser-vr', this.scene, this.camera);
+        this.laser = new Laser(this.scene, this.camera);
 
         this.orbit = new Orbit(this.scene);
 
@@ -478,7 +477,7 @@ class App extends Threelet {
     }
 
     toggleVrLaser(tf) {
-        this._showVrLaser = tf;
+        this.laser.active = tf;
     }
 
     toggleGrids(tf) {
@@ -558,7 +557,7 @@ class App extends Threelet {
     //
 
     pick(mx, my) {
-        if (!this._showVrLaser && this.marker.pair.length !== 1) {
+        if (!this.laser.active && this.marker.pair.length !== 1) {
             return;
         }
 
@@ -567,7 +566,7 @@ class App extends Threelet {
             const pt = isect.point;
 
             this.laser.prepare();
-            if (this._showVrLaser) {
+            if (this.laser.active) {
                 App.applyCustom(
                     this.objsInteractive, meshes => this.laser.shoot(pt, meshes));
             }
