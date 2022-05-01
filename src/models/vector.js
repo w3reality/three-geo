@@ -308,7 +308,46 @@ class VectorModel {
       }
       setVertices(geoms[k], vertices);
 
+<<<<<<< HEAD
       shape.holes.push(holePath);
+=======
+        const lines = [];
+        geoms.forEach((_loop, _index) => {
+            let line = new THREE.Line(
+                geoms[0],
+                new THREE.LineBasicMaterial({
+                    color: 0xcccccc
+                }));
+
+            //======== align x-y : east-north
+            line.rotation.y = Math.PI;
+            line.name = `dem-vec-line-${contours[h].ele}-${line.uuid}`;
+
+            // line.visible = false;
+            lines.push(line);
+        });
+
+        let extrudeGeom = new THREE.ExtrudeGeometry(shape, {
+            depth: contours[h+1] ?
+                this.unitsPerMeter * (contours[h+1].ele - contours[h].ele) :
+                this.unitsPerMeter * (contours[h].ele - contours[h-1].ele),
+            bevelEnabled: false,
+        });
+        let extrudeShade = new THREE.Mesh(
+            extrudeGeom, new THREE.MeshLambertMaterial({
+                color: color,
+                wireframe: false,
+                // wireframe: true,
+            }),
+        );
+
+        //======== align x-y : east-north
+        extrudeShade.rotation.y = Math.PI;
+        extrudeShade.position.z = -pz;
+        extrudeShade.name = `dem-vec-shade-${contours[h].ele}-${extrudeShade.uuid}`;
+
+        return [lines, extrudeShade];
+>>>>>>> 54a2a0614b2fcac0c41e50749bae0b3415d39e79
     }
 
     const lines = [];
