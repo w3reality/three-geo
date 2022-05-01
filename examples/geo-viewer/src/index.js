@@ -191,7 +191,7 @@ class App extends Threelet {
                 }
             },
             onChangeMode: mode => {
-                this.load(mode.toLowerCase());
+                this._updateTerrain(mode.toLowerCase());
             },
             onChangeVrLaser: value => {
                 this.toggleVrLaser(value);
@@ -375,7 +375,7 @@ class App extends Threelet {
             this.tgeo.setApiSatellite(`../../cache/${loc}/custom-satellite`);
         }
 
-        this.load(vis);
+        this._updateTerrain(vis);
     }
 
     static isTokenSet(token) {
@@ -387,9 +387,35 @@ class App extends Threelet {
         return false;
     }
 
-    load(vis) {
+    updateVisibility(vis) {
+        this._vis = vis;
+        this.scene.traverse(node => {
+            if (!(node instanceof THREE.Mesh) &&
+                !(node instanceof THREE.Line)) return;
+
+            if (!node.name) return;
+
+            if (node.name.startsWith('dem-rgb-')) {
+                if (vis === 'satellite' && node.name in this.satelliteMats) {
+                    node.material = this.satelliteMats[node.name];
+                    node.material.needsUpdate = true;
+                    node.visible = true;
+                } else if (vis === 'wireframe') {
+                    node.material = this.wireframeMat;
+                    node.material.needsUpdate = true;
+                    node.visible = true;
+                } else if (vis === 'contours') {
+                    node.visible = false;
+                }
+            } else if (node.name.startsWith('dem-vec-')) {
+                node.visible = vis === 'contours';
+            }
+        });
+    }
+
+    _updateTerrain(vis) {
         const refresh = () => {
-            this.updateMode(vis);
+            this.updateVisibility(vis);
             this.render();
         };
 
@@ -397,10 +423,12 @@ class App extends Threelet {
             return refresh();
         }
 
-        if (vis === 'contours') {
-            this._isVectorDemLoaded ? refresh() : this.loadVectorDem(refresh);
+        if (vis === 'contours' && !this._isVectorDemLoaded) {
+            this.loadVectorDem(refresh);
+        } else if (vis !== 'contours' && !this._isRgbDemLoaded) {
+            this.loadRgbDem(refresh);
         } else {
-            this._isRgbDemLoaded ? refresh() : this.loadRgbDem(refresh);
+            refresh();
         }
     }
 
@@ -412,6 +440,7 @@ class App extends Threelet {
                 objs.forEach(obj => { // dem-rgb-<zoompos>
                     this.objsInteractive.push(obj);
                     this.scene.add(obj);
+                    cb();
                 });
             },
             onSatelliteMat: plane => { // to be called *after* `onRgbDem`
@@ -562,33 +591,6 @@ class App extends Threelet {
 
     showMsgMeasure(pair) {
         this.msgHelper.showMsgMeasure(pair, this._projection.unitsPerMeter);
-    }
-
-    updateMode(vis) {
-        this._vis = vis;
-        this.scene.traverse((node) => {
-            if (!(node instanceof THREE.Mesh) &&
-                !(node instanceof THREE.Line)) return;
-
-            if (!node.name) return;
-
-            if (node.name.startsWith('dem-rgb-')) {
-                // console.log(`updating vis of ${node.name}`);
-                if (vis === 'satellite' && node.name in this.satelliteMats) {
-                    node.material = this.satelliteMats[node.name];
-                    node.material.needsUpdate = true;
-                    node.visible = true;
-                } else if (vis === 'wireframe') {
-                    node.material = this.wireframeMat;
-                    node.material.needsUpdate = true;
-                    node.visible = true;
-                } else if (vis === 'contours') {
-                    node.visible = false;
-                }
-            } else if (node.name.startsWith('dem-vec-')) {
-                node.visible = vis === 'contours';
-            }
-        });
     }
 
     closeGui() {
