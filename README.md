@@ -92,13 +92,14 @@ For use with NodeJS, do enable [this `useNodePixels` option](#note-nodejs) as we
 
 ```js
 const tgeo = new ThreeGeo({
-    tokenMapbox: '********', // <---- set your Mapbox API token here
+  tokenMapbox: "********", // <---- set your Mapbox API token here
 });
 
 const terrain = await tgeo.getTerrainRgb(
-    [46.5763, 7.9904], // [lat, lng]
-    5.0,               // radius of bounding circle (km)
-    12);               // zoom resolution
+  [46.5763, 7.9904], // [lat, lng]
+  5.0, // radius of bounding circle (km)
+  12
+); // zoom resolution
 
 const scene = new THREE.Scene();
 scene.add(terrain);
@@ -113,18 +114,17 @@ renderer.render(scene, camera);
 
 - [jet-wasp](https://jet-wasp.glitch.me/) - Three-geo as A-Frame component ([source code](https://glitch.com/edit/#!/jet-wasp))
 - [locus-pocus](https://locus-pocus.io/) - A webapp to visualise your area using three-geo
-- *Your App* - *PR us!*
+- _Your App_ - _PR us!_
 
 ## API
 
 In this section, we list `three-geo`'s public API methods, where `origin`, `radius`, and `zoom` are parameters common to them:
 
-  - `origin` **Array\<number\>** Center of the terrain represented as GPS coordinates `[latitude, longitude]`.
+- `origin` **Array\<number\>** Center of the terrain represented as GPS coordinates `[latitude, longitude]`.
 
-  - `radius` **number** Radius of the circle that fits the terrain.
+- `radius` **number** Radius of the circle that fits the terrain.
 
-  - `zoom` **number (integer)** Satellite zoom resolution of the tiles in the terrain. Select from {11, 12, 13, 14, 15, 16, 17}, where 17 is the highest value supported. For a fixed radius, higher zoom resolution results in more tileset API calls.
-
+- `zoom` **number (integer)** Satellite zoom resolution of the tiles in the terrain. Select from {11, 12, 13, 14, 15, 16, 17}, where 17 is the highest value supported. For a fixed radius, higher zoom resolution results in more tileset API calls.
 
 `ThreeGeo`
 

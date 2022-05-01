@@ -15,7 +15,7 @@
 .leaflet-control-geosearch a.leaflet-bar-part:after {
   position: absolute;
   display: block;
-  content: '';
+  content: "";
 }
 
 /* magnifying glass */
@@ -54,7 +54,7 @@
 
 /* pending icon */
 .leaflet-control-geosearch.pending a.leaflet-bar-part:after {
-  content: '';
+  content: "";
   border: 2px solid #555;
   border-top: 2px solid #f3f3f3;
   animation: spin 1s linear infinite;
@@ -62,7 +62,7 @@
 
 /* error icon */
 .leaflet-control-geosearch.error a.leaflet-bar-part:after {
-  content: '!';
+  content: "!";
   line-height: initial;
   font-weight: 600;
   font-size: 18px;
@@ -131,10 +131,10 @@
 
 /* add missing border to form */
 .leaflet-control-geosearch .results.active:after {
-  content: '';
+  content: "";
   display: block;
   width: 0;
-  border-left: 2px solid rgba(0, 0, 0, .2);
+  border-left: 2px solid rgba(0, 0, 0, 0.2);
   position: absolute;
   left: -2px;
   bottom: -2px;
@@ -143,8 +143,12 @@
 
 /* animations */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .leaflet-top .leaflet-control-geosearch.bar,
@@ -177,7 +181,7 @@
 }
 
 .leaflet-control-geosearch.bar .results.active:after {
-  opacity: .2;
+  opacity: 0.2;
 }
 
 .leaflet-right .leaflet-control-geosearch form {

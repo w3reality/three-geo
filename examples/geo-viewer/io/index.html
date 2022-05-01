@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <link rel="stylesheet" href="./leaflet.css" />
     <!-- <style type="text/css">
         .leaflet-container {
@@ -10,60 +10,72 @@
 
     <!-- copied node_modules/leaflet-geosearch/assets/css/leaflet.css -->
     <link rel="stylesheet" href="./assets/css/leaflet.css" />
-</head>
-<body>
-    <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
-    <div id="mapWrapper" style="
+  </head>
+  <body>
+    <canvas id="canvas" style="width: 100%; height: 100%"></canvas>
+    <div
+      id="mapWrapper"
+      style="
         position: absolute;
         z-index: 100;
-        width: 520px; height: 340px;
-        top: 60px;">
-        <div id="map" style="height: 100%;"></div>
+        width: 520px;
+        height: 340px;
+        top: 60px;
+      "
+    >
+      <div id="map" style="height: 100%"></div>
     </div>
-    <div style="
-        position: absolute;
-        z-index: 50;
-        top: 75%;
-        color: white;
-        background: #00000080;">
-        <div>---- Map ----</div>
-        <div>[left-click]: build a new terrain</div>
-        <div>---- Camera ----</div>
-        <div id="msg"></div>
-        <div>---- Measurement [km] ----</div>
-        <div id="msgMeasure"></div>
-    </div>
-    <div style="
+    <div
+      style="
         position: absolute;
         z-index: 50;
         top: 75%;
         color: white;
         background: #00000080;
-        left: 65%; width: 30%;">
-        <div>---- Terrain ----</div>
-        <div id="msgTerrain"></div>
-        <div>[left-click]: pick a point for measurement</div>
-        <div>[right-click]: set an orbital axis</div>
+      "
+    >
+      <div>---- Map ----</div>
+      <div>[left-click]: build a new terrain</div>
+      <div>---- Camera ----</div>
+      <div id="msg"></div>
+      <div>---- Measurement [km] ----</div>
+      <div id="msgMeasure"></div>
+    </div>
+    <div
+      style="
+        position: absolute;
+        z-index: 50;
+        top: 75%;
+        color: white;
+        background: #00000080;
+        left: 65%;
+        width: 30%;
+      "
+    >
+      <div>---- Terrain ----</div>
+      <div id="msgTerrain"></div>
+      <div>[left-click]: pick a point for measurement</div>
+      <div>[right-click]: set an orbital axis</div>
     </div>
 
     <script src="../../deps/dat-gui-defaults.min.js"></script>
 
     <script type="module">
-    import Stats from '../../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../../deps/three/examples/jsm/controls/OrbitControls.js';
+      import Stats from "../../deps/three/examples/jsm/libs/stats.module.js";
+      import { OrbitControls } from "../../deps/three/examples/jsm/controls/OrbitControls.js";
 
-    (async () => {
-        window.THREE = await import('../../deps/three/build/three.module.js');
+      (async () => {
+        window.THREE = await import("../../deps/three/build/three.module.js");
 
-        const App = (await import('./app.esm.dev.js')).default;
+        const App = (await import("./app.esm.dev.js")).default;
         const app = new App({
-            canvas: document.getElementById("canvas"),
+          canvas: document.getElementById("canvas"),
         });
-        app.stats = app.setup('mod-stats', Stats, {panelType: 1});
-        app.setup('mod-controls', OrbitControls);
+        app.stats = app.setup("mod-stats", Stats, { panelType: 1 });
+        app.setup("mod-controls", OrbitControls);
 
         app.render(); // first time
-    })();
+      })();
     </script>
-</body>
+  </body>
 </html>

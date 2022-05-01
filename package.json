@@ -41,7 +41,7 @@
         "@turf/area": "^6.0.1",
         "@turf/destination": "^6.0.1",
         "@turf/helpers": "^6.1.4",
-        "@turf/intersect": "^6.1.2",
+        "@turf/intersect": "6.2.0-alpha.2",
         "@turf/transform-rotate": "^5.1.5",
         "@turf/transform-translate": "^5.1.5",
         "@turf/union": "6.2.0-alpha.2",
@@ -53,5 +53,12 @@
         "three-laser-pointer": "^1.2.2",
         "uniq": "^1.0.1",
         "xhr": "^2.5.0"
+    },
+    "dependencies": {
+        "@turf/bbox": "^6.3.0",
+        "@turf/bbox-polygon": "^6.3.0",
+        "@turf/center": "^6.3.0",
+        "@turf/circle": "^6.3.0",
+        "@turf/distance": "^6.3.0"
     }
 }

@@ -1,36 +1,43 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <title>simple-viewer</title>
-</head>
-<body>
-    <canvas id="canvas" width="480" height="320"></canvas>
+  </head>
+  <body>
+    <canvas id="canvas" width="1000px" height="1000px"></canvas>
 
     <script type="module">
-    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
+      import Stats from "../deps/three/examples/jsm/libs/stats.module.js";
+      import { OrbitControls } from "../deps/three/examples/jsm/controls/OrbitControls.js";
 
-    (async () => {
-        window.THREE = await import('../deps/three/build/three.module.js');
+      (async () => {
+        window.THREE = await import("../deps/three/build/three.module.js");
 
-        const ThreeGeo = (await import('../../target/three-geo.esm.js')).default;
+        const ThreeGeo = (await import("../../target/three-geo.esm.js"))
+          .default;
 
         //
 
         THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 
         const canvas = document.getElementById("canvas");
-        const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 1000);
-        camera.position.set(0, 0, 1.5);
+        const camera = new THREE.PerspectiveCamera(
+          75,
+          canvas.width / canvas.height,
+          0.1,
+          1000
+        );
+        camera.position.set(50, 100, 100);
 
         const renderer = new THREE.WebGLRenderer({ canvas });
         const controls = new OrbitControls(camera, renderer.domElement);
 
         const scene = new THREE.Scene();
         const walls = new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
-            new THREE.LineBasicMaterial({color: 0xcccccc}));
+          new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
+          new THREE.LineBasicMaterial({ color: 0xcccccc })
+        );
         walls.position.set(0, 0, 0);
         scene.add(walls);
         scene.add(new THREE.AxesHelper(1));
@@ -39,36 +46,39 @@
         stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
         document.body.appendChild(stats.dom);
         const render = () => {
-            stats.update();
-            renderer.render(scene, camera);
+          stats.update();
+          renderer.render(scene, camera);
         };
 
-        controls.addEventListener('change', render);
+        controls.addEventListener("change", render);
         render(); // first time
 
         const tgeo = new ThreeGeo({
-            tokenMapbox: 'pk.eyJ1IjoiaXp6eW1pbGxlciIsImEiOiJjazBiemV0Z2IwendqM2RtcW43cHdhcXFuIn0.WhICSXv_PGSYIWgSCLQ8uA',
-            apiSatellite: 'mapbox-custom-izzymiller/ckohuxxnt2pta17nw3hz4i7za'
+          tokenMapbox:
+            "pk.eyJ1IjoiaXp6eW1pbGxlciIsImEiOiJjazBiemV0Z2IwendqM2RtcW43cHdhcXFuIn0.WhICSXv_PGSYIWgSCLQ8uA",
+          apiSatellite: "mapbox-custom-izzymiller/ckohuxxnt2pta17nw3hz4i7za",
         });
 
-        if (tgeo.tokenMapbox === '********') {
-            const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
-            alert(warning);
-            throw warning;
+        if (tgeo.tokenMapbox === "********") {
+          const warning =
+            "Please set your Mapbox API token in ThreeGeo constructor.";
+          alert(warning);
+          throw warning;
         }
         // tgeo.setApiSatellite("mapbox-custom-mapbox/satellite-v9");
 
-
-
         const terrain = await tgeo.getTerrainRgb(
-            [46.5763, 7.9904], // [lat, lng]
-            5.0,               // radius of bounding circle (km)
-            12);               // zoom resolution
+          [37.935319, -119.34418], // [lat, lng]
+          0.025, // radius of bounding circle (km)
+          12 // zoom resolution
+          // bbox = 0           // bbox to get terrain within
+        );
 
+        console.log(terrain.position);
         scene.add(terrain);
 
         render();
-    })();
+      })();
     </script>
-</body>
+  </body>
 </html>
