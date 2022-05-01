@@ -103,6 +103,7 @@ class RgbModel {
             this._addTile(tile, zoomposEle, zpCovered, bbox));
         console.log(`now ${this.dataEleCovered.length} satellite tiles in dataEleCovered`);
     }
+
     _addTile(pixels, zoomposEle, zpCovered, bbox) {
         const { unitsPerMeter, projectCoord } = this;
 
@@ -181,6 +182,7 @@ class RgbModel {
             array[indexZ] = arrayNei[indexZNei];                // a new z
         }
     }
+
     static _stitchWithNei3(array, arrayNei) {
         // add a new east col
         for (let i = 0; i < constVertices; i++) {
@@ -191,6 +193,7 @@ class RgbModel {
             array.splice(indexZ, 0, arrayNei[indexZNei]);
         }
     }
+
     static resolveSeams(array, infoNei) {
         let cSegments = [constVertices-1, constVertices-1];
 
@@ -220,6 +223,7 @@ class RgbModel {
         }
         return cSegments;
     }
+
     static createDataFlipY(data, shape) {
         const [w, h, size] = shape;
         const out = new Uint8Array(data.length);
@@ -232,6 +236,7 @@ class RgbModel {
         }
         return out;
     }
+
     static getNeighborsInfo(dataEle, dataEleIds, zoompos) {
         const infoNei = {};
         this.getNeighbors8(zoompos).forEach((zoomposNei, idxNei) => {
@@ -244,6 +249,7 @@ class RgbModel {
         });
         return infoNei;
     }
+
     static getNeighbors8(zoompos) {
         // 8-neighbors:
         // 4 0 7
@@ -283,7 +289,9 @@ class RgbModel {
             let countSat = 0;
             onSatelliteMatWrapper = (mesh, meshesAcc) => {
                 countSat++;
-                this.onSatelliteMat(mesh);
+
+                this.onSatelliteMat(mesh); // legacy API
+
                 if (countSat === this.dataEleCovered.length) {
                     this.watcher({ what: 'dem-rgb', data: meshesAcc, debug });
                 }
@@ -295,10 +303,12 @@ class RgbModel {
             this.token, this.isNode, onSatelliteMatWrapper);
 
         this.onRgbDem(meshes); // legacy API
+
         if (!onSatelliteMatWrapper) {
             this.watcher({ what: 'dem-rgb', data: meshes, debug });
         }
     }
+
     static _build(dataEle, apiSatellite, token, isNode, onSatelliteMatWrapper) {
         console.log('apiSatellite:', apiSatellite);
 
@@ -354,6 +364,7 @@ class RgbModel {
             objs.push(plane);
 
             this.resolveTex(zoompos, apiSatellite, token, isNode, tex => {
+                //console.log(`resolve tex done for ${zoompos}`);
                 if (tex) {
                     plane.material = new THREE.MeshBasicMaterial({
                         side: THREE.FrontSide,
@@ -361,8 +372,9 @@ class RgbModel {
                         map: tex,
                     });
                 }
+
                 if (onSatelliteMatWrapper) {
-                    onSatelliteMatWrapper(plane, objs); // legacy API
+                    onSatelliteMatWrapper(plane, objs);
                 }
             });
         });
