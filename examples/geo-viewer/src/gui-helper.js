@@ -10,7 +10,7 @@ class GuiHelper extends OoGui {
         this.onChangeGrids = cbs.onChangeGrids;
         this.onCapture = cbs.onCapture;
         this.onChangeAutoOrbit = cbs.onChangeAutoOrbit;
-        this.onChangeVis = cbs.onChangeVis;
+        this.onChangeMode = cbs.onChangeMode;
         this.onChangeVrLaser = cbs.onChangeVrLaser;
         this.onChangeLeaflet = cbs.onChangeLeaflet;
         this.onChangeLoc = cbs.onChangeLoc;
@@ -43,11 +43,11 @@ class GuiHelper extends OoGui {
                     }
                 });
 
-        gui.add(params, 'vis', ['Satellite', 'Wireframe', 'Contours'])
+        gui.add(params, 'mode', ['Satellite', 'Wireframe', 'Contours'])
             .name('Terrain')
             .onChange(value => {
-                this.onChangeVis(value);
-                data.vis = value;
+                this.onChangeMode(value);
+                data.mode = value;
             });
 
         gui.add(params, 'capture')
@@ -82,7 +82,7 @@ class GuiHelper extends OoGui {
             .name('Reset')
             .domElement.addEventListener('click', ev => {
                 this.applyDefaults();
-                this.onChangeVis(params.vis);
+                this.onChangeMode(params.mode);
                 this.onChangeAutoOrbit(params.autoOrbit);
                 //this.onChangeVrLaser(value);
                 Object.assign(data, params);

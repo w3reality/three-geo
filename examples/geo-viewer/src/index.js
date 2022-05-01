@@ -114,7 +114,7 @@ class App extends Threelet {
 
         const { origin, mode, title } = App.parseQuery();
         this._origin = origin;
-        this._vis = mode;
+        this._vis = mode.toLowerCase();
         this.updateTerrain(this._vis, title);
 
         this._projection = this.tgeo.getProjection(this._origin, this._radius);
@@ -138,8 +138,6 @@ class App extends Threelet {
             msgTerrain: document.getElementById('msgTerrain'),
             msgMeasure: document.getElementById('msgMeasure'),
         });
-
-        //
 
         this.laser = new Laser(this.scene, this.camera);
 
@@ -192,19 +190,8 @@ class App extends Threelet {
                     animToggler(false);
                 }
             },
-            onChangeVis: value => {
-                console.log('vis:', value);
-                if (value === 'Contours') {
-                    this.loadVectorDem(() => {
-                        this.updateMode(value);
-                        this.render();
-                    });
-                } else {
-                    this.loadRgbDem(() => {
-                        this.updateMode(value);
-                        this.render();
-                    });
-                }
+            onChangeMode: mode => {
+                this.load(mode.toLowerCase());
             },
             onChangeVrLaser: value => {
                 this.toggleVrLaser(value);
@@ -234,11 +221,11 @@ class App extends Threelet {
     }
 
     static guiDefaults() {
-        const { mode: vis, title } = this.parseQuery();
+        const { mode, title } = this.parseQuery();
 
         return {
             isDev: () => {},
-            vis,
+            mode,
             capture: () => {},
             grids: true,
             autoOrbit: false,
@@ -388,33 +375,8 @@ class App extends Threelet {
             this.tgeo.setApiSatellite(`../../cache/${loc}/custom-satellite`);
         }
 
-        switch (vis.toLowerCase()) {
-            case "satellite":
-                console.log('update to satellite');
-                this.loadRgbDem(() => {
-                    this.render();
-                });
-                break;
-            case "wireframe":
-                console.log('update to wireframe');
-                this.loadRgbDem(() => {
-                    // override the default satellite texture
-                    this.updateMode("Wireframe");
-                    this.render();
-                });
-                break;
-            case "contours":
-                console.log('update to contours');
-                this.loadVectorDem(() => {
-                    this.render();
-                });
-                break;
-            default:
-                break;
-        }
+        this.load(vis);
     }
-
-    nop() { /* nop */ }
 
     static isTokenSet(token) {
         if (token !== '********') return true;
@@ -425,43 +387,50 @@ class App extends Threelet {
         return false;
     }
 
-    loadRgbDem(cb=this.nop) {
-        if (this._isRgbDemLoaded) { return cb(); }
-        if (!App.isTokenSet(this.env.tokenMapbox)) { return cb(); }
+    load(vis) {
+        const refresh = () => {
+            this.updateMode(vis);
+            this.render();
+        };
 
+        if (!App.isTokenSet(this.env.tokenMapbox)) {
+            return refresh();
+        }
+
+        if (vis === 'contours') {
+            this._isVectorDemLoaded ? refresh() : this.loadVectorDem(refresh);
+        } else {
+            this._isRgbDemLoaded ? refresh() : this.loadRgbDem(refresh);
+        }
+    }
+
+    loadRgbDem(cb) {
         this._isRgbDemLoaded = true;
+
         this.tgeo.getTerrain(this._origin, this._radius, this._zoom, {
-            onRgbDem: (objs) => {
-                // dem-rgb-<zoompos>
-                objs.forEach((obj) => {
+            onRgbDem: objs => {
+                objs.forEach(obj => { // dem-rgb-<zoompos>
                     this.objsInteractive.push(obj);
                     this.scene.add(obj);
-                    // console.log('obj:', obj);
                 });
-                this.render();
             },
-            onSatelliteMat: (plane) => {
+            onSatelliteMat: plane => { // to be called *after* `onRgbDem`
                 plane.material.side = THREE.DoubleSide;
                 this.satelliteMats[plane.name] = plane.material;
-                this.render();
-                return cb();
+                cb();
             },
         });
     }
 
-    async loadVectorDem(cb=this.nop) {
-        if (this._isVectorDemLoaded) { return cb(); }
-        if (!App.isTokenSet(this.env.tokenMapbox)) { return cb(); }
-
-        console.log('load vector dem: start');
+    async loadVectorDem(cb) {
         this._isVectorDemLoaded = true;
 
+        console.log('load vector dem: start');
         const terrain = await this.tgeo.getTerrainVector(
             this._origin, this._radius, this._zoom);
         console.log('load vector dem: end');
 
         this.scene.add(terrain);
-        this.render();
         cb();
     }
 
@@ -485,10 +454,6 @@ class App extends Threelet {
         this.scene.getObjectByName("singleton-axes").visible = tf;
         this.render();
     }
-
-    //
-    // laser casting
-    //
 
     static applyCustom(meshes, func) {
         const visibilities = {};
@@ -554,8 +519,6 @@ class App extends Threelet {
         }
     }
 
-    //
-
     pick(mx, my) {
         if (!this.laser.active && this.marker.pair.length !== 1) {
             return;
@@ -581,8 +544,6 @@ class App extends Threelet {
         }
     }
 
-    //
-
     toggleMap(tf) {
         this.mapHelper.toggle(tf);
     }
@@ -590,8 +551,6 @@ class App extends Threelet {
     plotCamInMap() {
         this.mapHelper.plotCam(this.camera);
     }
-
-    //
 
     showMsg() {
         this.msgHelper.showMsg(this.camera, this._projection.unitsPerMeter);
@@ -605,32 +564,29 @@ class App extends Threelet {
         this.msgHelper.showMsgMeasure(pair, this._projection.unitsPerMeter);
     }
 
-    //
-
     updateMode(vis) {
         this._vis = vis;
         this.scene.traverse((node) => {
             if (!(node instanceof THREE.Mesh) &&
                 !(node instanceof THREE.Line)) return;
 
-            // console.log(node.name);
             if (!node.name) return;
 
             if (node.name.startsWith('dem-rgb-')) {
                 // console.log(`updating vis of ${node.name}`);
-                if (vis === "Satellite" && node.name in this.satelliteMats) {
+                if (vis === 'satellite' && node.name in this.satelliteMats) {
                     node.material = this.satelliteMats[node.name];
                     node.material.needsUpdate = true;
                     node.visible = true;
-                } else if (vis === "Wireframe") {
+                } else if (vis === 'wireframe') {
                     node.material = this.wireframeMat;
                     node.material.needsUpdate = true;
                     node.visible = true;
-                } else if (vis === "Contours") {
+                } else if (vis === 'contours') {
                     node.visible = false;
                 }
             } else if (node.name.startsWith('dem-vec-')) {
-                node.visible = vis === "Contours";
+                node.visible = vis === 'contours';
             }
         });
     }
@@ -638,8 +594,6 @@ class App extends Threelet {
     closeGui() {
         this.guiHelper.gui.close();
     }
-
-    //
 
     updateAnim() {
         this.orbit.move(this.camera);
