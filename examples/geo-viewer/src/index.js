@@ -1,12 +1,13 @@
-import env from './env.js';
-//import env from './envs-ignore/env-dev.js';
-//import env from './envs-ignore/env-io.js';
+import Env from './env.js';
+//import Env from './envs-ignore/env-dev.js';
+//import Env from './envs-ignore/env-io.js';
 
 import Threelet from '../../deps/threelet.esm.js';
 import ThreeGeo from '../../../src';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MsgHelper from './msg-helper.js';
+import Loader from './loader.js';
 import Laser from './laser.js';
 import Orbit from './orbit.js';
 import Marker from './marker.js';
@@ -16,7 +17,7 @@ const { THREE, Stats } = window;
 class App extends Threelet {
     // override
     onCreate(params) {
-        this.env = env;
+        this.env = Env;
         this.scene = new THREE.Scene();
         this.sceneMarker = new THREE.Scene();
 
@@ -88,9 +89,10 @@ class App extends Threelet {
         axes.name = "singleton-axes";
         this.scene.add(axes);
 
-        // ======== adding geo tiles
-        this.renderer.autoClear = false;
+        //
 
+        this.renderer.autoClear = false;
+        //>>>>>>>> >>>>>>>> ======== adding geo tiles
         this.wireframeMat = new THREE.MeshBasicMaterial({
             wireframe: true,
             color: 0x999999,
@@ -101,32 +103,29 @@ class App extends Threelet {
         this._isVectorDemLoaded = false;
         this.unitsSide = 1.0;
 
+        //
+
         this.tgeo = new ThreeGeo({
             unitsSide: this.unitsSide,
             tokenMapbox: this.env.tokenMapbox,
         });
 
-        // https://docs.mapbox.com/data/tilesets/guides/access-elevation-data/#mapbox-terrain-rgb
-        // vector dem: 9--15 (at 8, no contour data returned)
-        //    rbg dem: ?--15
-        this._zoom = this.env.zoom || 13; // satellite zoom resolution -- min: 11, defaut: 13, max: 17
-        this._radius = 5.0*2**(13-this._zoom);
+        this.loader = new Loader(this.scene, this.tgeo);
 
-        const { origin, mode, title } = App.parseQuery();
+        const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
+        const projection = this.loader.projection(origin, radius);
+
         this._origin = origin;
-        this._vis = mode.toLowerCase();
-        this.updateTerrain(this._vis, title);
+        this._radius = radius;
+        this._zoom = zoom;
+        this._vis = vis;
+        this._projection = projection;
 
-        this._projection = this.tgeo.getProjection(this._origin, this._radius);
+        this.updateTerrain(vis, title);
 
         //
 
-        this.guiHelper = null;
-
-        this.mapHelper = new MapHelper({
-            origin: this._origin,
-            radius: this._radius,
-            projection: this._projection,
+        this.mapHelper = new MapHelper({ origin, radius, projection,
             mapId: 'map',
             enableTiles: this.env.enableTilesLeaflet === true,
             onBuildTerrain: ll => { this.reloadPageWithLocation(ll, App.parseQuery().title); },
@@ -139,11 +138,23 @@ class App extends Threelet {
             msgMeasure: document.getElementById('msgMeasure'),
         });
 
+        this.guiHelper = null;
         this.laser = new Laser(this.scene, this.camera);
-
         this.orbit = new Orbit(this.scene);
-
         this.marker = new Marker(this.sceneMarker);
+    }
+
+    static resolveParams(env) {
+        const { origin, mode, title } = this.parseQuery();
+        const vis = mode.toLowerCase();
+
+        // https://docs.mapbox.com/data/tilesets/guides/access-elevation-data/#mapbox-terrain-rgb
+        // vector dem: 9--15 (at 8, no contour data returned)
+        //    rbg dem: ?--15
+        const zoom = env.zoom || 13; // satellite zoom resolution -- min: 11, defaut: 13, max: 17
+        const radius = 5.0 * 2**(13 - zoom);
+
+        return { origin, radius, zoom, vis, title };
     }
 
     static parseQuery() {
@@ -351,8 +362,7 @@ class App extends Threelet {
             }
 
             // update leaflet
-            this.mapHelper.update(
-                ll, this.tgeo.getProjection(ll, this._radius));
+            this.mapHelper.update(ll, this.loader.projection(ll, this._radius));
             this.plotCamInMap();
 
             // update terrain
@@ -455,8 +465,7 @@ class App extends Threelet {
         this._isVectorDemLoaded = true;
 
         console.log('load vector dem: start');
-        const terrain = await this.tgeo.getTerrainVector(
-            this._origin, this._radius, this._zoom);
+        const terrain = await this.tgeo.getTerrainVector(this._origin, this._radius, this._zoom);
         console.log('load vector dem: end');
 
         this.scene.add(terrain);
