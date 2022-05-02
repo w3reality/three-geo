@@ -113,20 +113,20 @@ class App extends Threelet {
         this.loader = new Loader(this.scene, this.tgeo);
 
         const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
-        const proj = this.loader.projection(origin, radius);
+        const projection = this.loader.projection(origin, radius);
 
         this.origin = origin;
         this.radius = radius;
         this.zoom = zoom;
         this.vis = vis;
-        this.projection = proj;
+        this.projection = projection;
 
         this.updateTerrain(vis, title);
 
         //
 
         this.map = new MapHelper({
-            origin, radius, proj,
+            origin, radius, projection,
             mapId: 'map',
             enableTiles: this.env.enableTilesLeaflet === true,
             onBuildTerrain: ll => { this.reloadPageWithLocation(ll, App.parseQuery().title); },
