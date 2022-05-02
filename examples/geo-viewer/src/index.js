@@ -33,7 +33,7 @@ class App extends Threelet {
 
             this.updateAnim();
             this._render();
-            this.msg.update(this.camera, this._projection);
+            this.msg.update(this.camera, this.projection);
             this.map.plotCam(this.camera);
         };
         this.setup('mod-controls', THREE.OrbitControls);
@@ -42,8 +42,8 @@ class App extends Threelet {
         this.initGui();
         //this.closeGui();
 
-        this.msg.update(this.camera, this._projection);
-        this.msg.updateTerrain(this._origin, this._zoom);
+        this.msg.update(this.camera, this.projection);
+        this.msg.updateTerrain(this.origin, this.zoom);
         this.map.plotCam(this.camera);
 
         this.on('pointer-move', (mx, my) => this.pick(mx, my));
@@ -113,20 +113,20 @@ class App extends Threelet {
         this.loader = new Loader(this.scene, this.tgeo);
 
         const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
-        const projection = this.loader.projection(origin, radius);
+        const proj = this.loader.projection(origin, radius);
 
-        this._origin = origin;
-        this._radius = radius;
-        this._zoom = zoom;
-        this._vis = vis;
-        this._projection = projection;
+        this.origin = origin;
+        this.radius = radius;
+        this.zoom = zoom;
+        this.vis = vis;
+        this.projection = proj;
 
         this.updateTerrain(vis, title);
 
         //
 
         this.map = new MapHelper({
-            origin, radius, projection,
+            origin, radius, proj,
             mapId: 'map',
             enableTiles: this.env.enableTilesLeaflet === true,
             onBuildTerrain: ll => { this.reloadPageWithLocation(ll, App.parseQuery().title); },
@@ -362,14 +362,14 @@ class App extends Threelet {
                 console.log('======== ========');
             }
 
-            const projection = this.loader.projection(ll, this._radius);
-            this.map.update(ll, projection);
+            const proj = this.loader.projection(ll, this.radius);
+            this.map.update(ll, proj);
             this.map.plotCam(this.camera);
-            this.msg.updateTerrain(ll, this._zoom);
-            this.updateTerrain(this._vis, title);
+            this.msg.updateTerrain(ll, this.zoom);
+            this.updateTerrain(this.vis, title);
 
-            this._origin = ll;
-            this._projection = projection;
+            this.origin = ll;
+            this.projection = proj;
         }
     }
 
@@ -399,7 +399,7 @@ class App extends Threelet {
     }
 
     updateVisibility(vis) {
-        this._vis = vis;
+        this.vis = vis;
         this.scene.traverse(node => {
             if (!(node instanceof THREE.Mesh) &&
                 !(node instanceof THREE.Line)) return;
@@ -446,7 +446,7 @@ class App extends Threelet {
     loadRgbDem(cb) {
         this._isRgbDemLoaded = true;
 
-        this.tgeo.getTerrain(this._origin, this._radius, this._zoom, {
+        this.tgeo.getTerrain(this.origin, this.radius, this.zoom, {
             onRgbDem: objs => {
                 objs.forEach(obj => { // dem-rgb-<zoompos>
                     this.objsInteractive.push(obj);
@@ -466,7 +466,7 @@ class App extends Threelet {
         this._isVectorDemLoaded = true;
 
         console.log('load vector dem: start');
-        const terrain = await this.tgeo.getTerrainVector(this._origin, this._radius, this._zoom);
+        const terrain = await this.tgeo.getTerrainVector(this.origin, this.radius, this.zoom);
         console.log('load vector dem: end');
 
         this.scene.add(terrain);
@@ -528,7 +528,7 @@ class App extends Threelet {
             this.render();
         }
 
-        this.msg.updateMeasure(this.marker.pair, this._projection);
+        this.msg.updateMeasure(this.marker.pair, this.projection);
     }
 
     updateOrbit(mx, my) {
