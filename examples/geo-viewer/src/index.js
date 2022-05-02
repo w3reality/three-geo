@@ -6,7 +6,7 @@ import Threelet from '../../deps/threelet.esm.js';
 import ThreeGeo from '../../../src';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
-import MsgHelper from './msg-helper.js';
+import Msg from './msg-helper.js';
 import Loader from './loader.js';
 import Laser from './laser.js';
 import Orbit from './orbit.js';
@@ -33,8 +33,8 @@ class App extends Threelet {
 
             this.updateAnim();
             this._render();
-            this.showMsg();
-            this.plotCamInMap();
+            this.msg.update(this.camera, this._projection);
+            this.map.plotCam(this.camera);
         };
         this.setup('mod-controls', THREE.OrbitControls);
         this.render(); // first time
@@ -42,9 +42,9 @@ class App extends Threelet {
         this.initGui();
         //this.closeGui();
 
-        this.showMsg();
-        this.plotCamInMap();
-        this.showMsgTerrain();
+        this.msg.update(this.camera, this._projection);
+        this.msg.updateTerrain(this._origin, this._zoom);
+        this.map.plotCam(this.camera);
 
         this.on('pointer-move', (mx, my) => this.pick(mx, my));
         this.on('pointer-click', (mx, my) => this.updateMeasure(mx, my));
@@ -125,14 +125,15 @@ class App extends Threelet {
 
         //
 
-        this.mapHelper = new MapHelper({ origin, radius, projection,
+        this.map = new MapHelper({
+            origin, radius, projection,
             mapId: 'map',
             enableTiles: this.env.enableTilesLeaflet === true,
             onBuildTerrain: ll => { this.reloadPageWithLocation(ll, App.parseQuery().title); },
-            onMapZoomEnd: () => { this.plotCamInMap(); },
+            onMapZoomEnd: () => { this.map.plotCam(this.camera); },
         });
 
-        this.msgHelper = new MsgHelper({
+        this.msg = new Msg({
             msg: document.getElementById('msg'),
             msgTerrain: document.getElementById('msgTerrain'),
             msgMeasure: document.getElementById('msgMeasure'),
@@ -320,7 +321,7 @@ class App extends Threelet {
                 });
         this.orbit.updateAxis(null);
         this.orbit.remove();
-        this.mapHelper.plotOrbit(null);
+        this.map.plotOrbit(null);
         if (this.guiHelper) {
             this.guiHelper.autoOrbitController.setValue(false);
         }
@@ -361,13 +362,11 @@ class App extends Threelet {
                 console.log('======== ========');
             }
 
-            // update leaflet
-            this.mapHelper.update(ll, this.loader.projection(ll, this._radius));
-            this.plotCamInMap();
+            this.map.update(ll, this.loader.projection(ll, this._radius));
+            this.map.plotCam(this.camera);
 
-            // update terrain
             this._origin = ll;
-            this.showMsgTerrain();
+            this.msg.updateTerrain(this._origin, this._zoom);
             this.updateTerrain(this._vis, title);
         }
     }
@@ -479,7 +478,7 @@ class App extends Threelet {
             const pt = new THREE.Vector3(0, 0, 0);
             this.orbit.updateAxis(pt);
             this.orbit.add(this.camera, pt);
-            this.mapHelper.plotOrbit(this.orbit.data());
+            this.map.plotOrbit(this.orbit.data());
         }
     }
 
@@ -527,7 +526,7 @@ class App extends Threelet {
             this.render();
         }
 
-        this.showMsgMeasure(this.marker.pair);
+        this.msg.updateMeasure(this.marker.pair, this._projection);
     }
 
     updateOrbit(mx, my) {
@@ -539,13 +538,13 @@ class App extends Threelet {
             this.orbit.updateAxis(pt);
             this.orbit.remove();
             this.orbit.add(this.camera, pt);
-            this.mapHelper.plotOrbit(this.orbit.data());
+            this.map.plotOrbit(this.orbit.data());
         } else {
             console.log('(orbit) no isects');
 
             this.orbit.updateAxis(null);
             this.orbit.remove();
-            this.mapHelper.plotOrbit(null);
+            this.map.plotOrbit(null);
 
             if (this.guiHelper) {
                 this.guiHelper.autoOrbitController.setValue(false);
@@ -583,23 +582,7 @@ class App extends Threelet {
     }
 
     toggleMap(tf) {
-        this.mapHelper.toggle(tf);
-    }
-
-    plotCamInMap() {
-        this.mapHelper.plotCam(this.camera);
-    }
-
-    showMsg() {
-        this.msgHelper.showMsg(this.camera, this._projection.unitsPerMeter);
-    }
-
-    showMsgTerrain() {
-        this.msgHelper.showMsgTerrain(this._origin, this._zoom);
-    }
-
-    showMsgMeasure(pair) {
-        this.msgHelper.showMsgMeasure(pair, this._projection.unitsPerMeter);
+        this.map.toggle(tf);
     }
 
     closeGui() {
