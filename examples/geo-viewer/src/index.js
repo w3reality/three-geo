@@ -362,12 +362,14 @@ class App extends Threelet {
                 console.log('======== ========');
             }
 
-            this.map.update(ll, this.loader.projection(ll, this._radius));
+            const projection = this.loader.projection(ll, this._radius);
+            this.map.update(ll, projection);
             this.map.plotCam(this.camera);
+            this.msg.updateTerrain(ll, this._zoom);
+            this.updateTerrain(this._vis, title);
 
             this._origin = ll;
-            this.msg.updateTerrain(this._origin, this._zoom);
-            this.updateTerrain(this._vis, title);
+            this._projection = projection;
         }
     }
 
