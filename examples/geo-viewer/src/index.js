@@ -120,7 +120,6 @@ class App extends Threelet {
         this.zoom = zoom;
         this.vis = vis;
         this.projection = projection;
-
         this.updateTerrain(vis, title);
 
         //
@@ -366,10 +365,10 @@ class App extends Threelet {
             this.map.update(ll, proj);
             this.map.plotCam(this.camera);
             this.msg.updateTerrain(ll, this.zoom);
-            this.updateTerrain(this.vis, title);
 
             this.origin = ll;
             this.projection = proj;
+            this.updateTerrain(this.vis, title);
         }
     }
 
@@ -424,7 +423,7 @@ class App extends Threelet {
         });
     }
 
-    _updateTerrain(vis) {
+    async _updateTerrain(vis) {
         const refresh = () => {
             this.updateVisibility(vis);
             this.render();
@@ -435,7 +434,8 @@ class App extends Threelet {
         }
 
         if (vis === 'contours' && !this._isVectorDemLoaded) {
-            this.loadVectorDem(refresh);
+            await this.loadVectorDem();
+            refresh();
         } else if (vis !== 'contours' && !this._isRgbDemLoaded) {
             this.loadRgbDem(refresh);
         } else {
@@ -462,7 +462,7 @@ class App extends Threelet {
         });
     }
 
-    async loadVectorDem(cb) {
+    async loadVectorDem() {
         this._isVectorDemLoaded = true;
 
         console.log('load vector dem: start');
@@ -470,7 +470,6 @@ class App extends Threelet {
         console.log('load vector dem: end');
 
         this.scene.add(terrain);
-        cb();
     }
 
     toggleAutoOrbit(tf) {
