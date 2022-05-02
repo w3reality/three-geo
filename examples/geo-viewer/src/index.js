@@ -92,25 +92,21 @@ class App extends Threelet {
         //
 
         this.renderer.autoClear = false;
-        //>>>>>>>> >>>>>>>> ======== adding geo tiles
         this.wireframeMat = new THREE.MeshBasicMaterial({
             wireframe: true,
             color: 0x999999,
         });
-        this.satelliteMats = {};
-        this.objsInteractive = [];
-        this._isRgbDemLoaded = false;
-        this._isVectorDemLoaded = false;
+        //>>>>>>>> >>>>>>>>
+        this.satelliteMats = {}; // !!!!!!!!
+        this.objsInteractive = []; // !!!!!!!!
         this.unitsSide = 1.0;
-
-        //
-
         this.tgeo = new ThreeGeo({
             unitsSide: this.unitsSide,
             tokenMapbox: this.env.tokenMapbox,
         });
-
         this.loader = new Loader(this.scene, this.tgeo);
+
+        //
 
         const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
         const projection = this.loader.projection(origin, radius);
@@ -288,17 +284,15 @@ class App extends Threelet {
         this.renderer.dispose();
 
         // this.wireframeMat             intact
-        // this.objsInteractive          to be cleared
-        // this._isRgbDemLoaded          to be set false
-        // this._isVectorDemLoaded       to be set false
+        // this.objsInteractive          to be cleared // !!!!!!!!
         // ::this.satelliteMats          to be cleared
         //   dem-rgb-...                 to be cleared
         //   dem-rgb-...                 to be cleared
         //   ...                         to be cleared
         //====
-        this.objsInteractive.length = 0;
-        this._isRgbDemLoaded = false;
-        this._isVectorDemLoaded = false;
+        this.objsInteractive.length = 0; // !!!!!!!!
+        this.loader.doneVector = false;
+        this.loader.doneRgb = false;
         Object.entries(this.satelliteMats).forEach(([k, mat]) => {
             delete this.satelliteMats[k];
             App._disposeMaterial(mat);
@@ -433,43 +427,18 @@ class App extends Threelet {
             return refresh();
         }
 
-        if (vis === 'contours' && !this._isVectorDemLoaded) {
-            await this.loadVectorDem();
-            refresh();
-        } else if (vis !== 'contours' && !this._isRgbDemLoaded) {
-            this.loadRgbDem(refresh);
-        } else {
-            refresh();
+        const { origin, radius, zoom } = this;
+        try {
+            if (vis === 'contours' && !this.loader.doneVector) {
+                await this.loader.getTerrainVector(origin, radius, zoom, refresh);
+            } else if (vis !== 'contours' && !this.loader.doneRgb) {
+                await this.loader.getTerrainRgb(origin, radius, zoom, refresh);
+            } else {
+                refresh();
+            }
+        } catch (err) {
+            console.error('_updateTerrain(): err:', err);
         }
-    }
-
-    loadRgbDem(cb) {
-        this._isRgbDemLoaded = true;
-
-        this.tgeo.getTerrain(this.origin, this.radius, this.zoom, {
-            onRgbDem: objs => {
-                objs.forEach(obj => { // dem-rgb-<zoompos>
-                    this.objsInteractive.push(obj);
-                    this.scene.add(obj);
-                    cb();
-                });
-            },
-            onSatelliteMat: plane => { // to be called *after* `onRgbDem`
-                plane.material.side = THREE.DoubleSide;
-                this.satelliteMats[plane.name] = plane.material;
-                cb();
-            },
-        });
-    }
-
-    async loadVectorDem() {
-        this._isVectorDemLoaded = true;
-
-        console.log('load vector dem: start');
-        const terrain = await this.tgeo.getTerrainVector(this.origin, this.radius, this.zoom);
-        console.log('load vector dem: end');
-
-        this.scene.add(terrain);
     }
 
     toggleAutoOrbit(tf) {
