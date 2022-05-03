@@ -174,10 +174,6 @@ class App extends Threelet {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    //
-    // gui
-    //
-
     initGui() {
         const animToggler = App.createAnimToggler(this.render);
         const cbs = {
@@ -217,8 +213,6 @@ class App extends Threelet {
                 }
             },
         };
-
-        //
 
         const defaults = App.guiDefaults();
         const data = Object.assign({}, defaults);
@@ -291,12 +285,13 @@ class App extends Threelet {
         //   ...                         to be cleared
         //====
         this.objsInteractive.length = 0; // !!!!!!!!
-        this.loader.doneVector = false;
+        this.loader.doneVec = false;
         this.loader.doneRgb = false;
-        Object.entries(this.satelliteMats).forEach(([k, mat]) => {
-            delete this.satelliteMats[k];
-            App._disposeMaterial(mat);
-        });
+        Object.entries(this.satelliteMats)
+            .forEach(([k, mat]) => {
+                delete this.satelliteMats[k];
+                App._disposeMaterial(mat);
+            });
 
         // this.scene.children
         //   ::Mesh walls                intact
@@ -306,12 +301,12 @@ class App extends Threelet {
         //   ::LineLoop ""  orbit        this.orbit.remove()
         //   ::Laser ""     pointer      intact
         //====
-        this.scene.children.filter(
-            obj => obj.name.startsWith('dem-'))
-                .forEach(dem => {
-                    dem.parent.remove(dem);
-                    App._disposeObject(dem);
-                });
+        this.scene.children
+            .filter(obj => obj.name.startsWith('dem-'))
+            .forEach(dem => {
+                dem.parent.remove(dem);
+                App._disposeObject(dem);
+            });
         this.orbit.updateAxis(null);
         this.orbit.remove();
         this.map.plotOrbit(null);
@@ -429,10 +424,10 @@ class App extends Threelet {
 
         const { origin, radius, zoom } = this;
         try {
-            if (vis === 'contours' && !this.loader.doneVector) {
-                await this.loader.getTerrainVector(origin, radius, zoom, refresh);
+            if (vis === 'contours' && !this.loader.doneVec) {
+                await this.loader.getVec(origin, radius, zoom, refresh);
             } else if (vis !== 'contours' && !this.loader.doneRgb) {
-                await this.loader.getTerrainRgb(origin, radius, zoom, refresh);
+                await this.loader.getRgb(origin, radius, zoom, refresh);
             } else {
                 refresh();
             }
@@ -467,10 +462,10 @@ class App extends Threelet {
 
         meshes.forEach(mesh => {
             visibilities[mesh.uuid] = mesh.visible; // save
-            mesh.visible = true; // forcing for raycast
+            mesh.visible = true;                    // force visible for raycast
         });
 
-        const output = func(meshes); // apply
+        const output = func(meshes);                // apply
 
         meshes.forEach(mesh => {
             mesh.visible = visibilities[mesh.uuid]; // restore
