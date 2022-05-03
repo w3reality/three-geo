@@ -96,9 +96,7 @@ class App extends Threelet {
             wireframe: true,
             color: 0x999999,
         });
-        //>>>>>>>> >>>>>>>>
-        this.satelliteMats = {}; // !!!!!!!!
-        this.objsInteractive = []; // !!!!!!!!
+
         this.unitsSide = 1.0;
         this.tgeo = new ThreeGeo({
             unitsSide: this.unitsSide,
@@ -259,39 +257,18 @@ class App extends Threelet {
         };
     }
 
-    //
-    // loading stuff
-    //
-
-    static _disposeMaterial(mat) {
-        if (mat.map) mat.map.dispose();
-        mat.dispose();
-    }
-
-    static _disposeObject(obj) {
-        if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) this._disposeMaterial(obj.material);
-        if (obj.texture) obj.texture.dispose();
-    }
-
     clearTerrainObjects() {
         this.renderer.dispose();
 
         // this.wireframeMat             intact
-        // this.objsInteractive          to be cleared // !!!!!!!!
-        // ::this.satelliteMats          to be cleared
         //   dem-rgb-...                 to be cleared
         //   dem-rgb-...                 to be cleared
         //   ...                         to be cleared
         //====
-        this.objsInteractive.length = 0; // !!!!!!!!
         this.loader.doneVec = false;
         this.loader.doneRgb = false;
-        Object.entries(this.satelliteMats)
-            .forEach(([k, mat]) => {
-                delete this.satelliteMats[k];
-                App._disposeMaterial(mat);
-            });
+        this.loader.clearRgbMaterials();
+        this.loader.clearInteractives();
 
         // this.scene.children
         //   ::Mesh walls                intact
@@ -305,7 +282,7 @@ class App extends Threelet {
             .filter(obj => obj.name.startsWith('dem-'))
             .forEach(dem => {
                 dem.parent.remove(dem);
-                App._disposeObject(dem);
+                Loader.disposeObject(dem);
             });
         this.orbit.updateAxis(null);
         this.orbit.remove();
@@ -323,7 +300,7 @@ class App extends Threelet {
         this.marker.updateTmp(null);
         this.marker.marks().forEach(mark => {
             mark.parent.remove(mark);
-            App._disposeObject(mark);
+            Loader.disposeObject(mark);
         });
     }
 
@@ -395,10 +372,13 @@ class App extends Threelet {
             if (!node.name) return;
 
             if (node.name.startsWith('dem-rgb-')) {
-                if (vis === 'satellite' && node.name in this.satelliteMats) {
-                    node.material = this.satelliteMats[node.name];
-                    node.material.needsUpdate = true;
-                    node.visible = true;
+                if (vis === 'satellite') {
+                    const rgbMats = this.loader.getRgbMaterials();
+                    if (node.name in rgbMats) {
+                        node.material = rgbMats[node.name];
+                        node.material.needsUpdate = true;
+                        node.visible = true;
+                    }
                 } else if (vis === 'wireframe') {
                     node.material = this.wireframeMat;
                     node.material.needsUpdate = true;
@@ -425,9 +405,9 @@ class App extends Threelet {
         const { origin, radius, zoom } = this;
         try {
             if (vis === 'contours' && !this.loader.doneVec) {
-                await this.loader.getVec(origin, radius, zoom, refresh);
+                await this.loader.getVecTerrain(origin, radius, zoom, refresh);
             } else if (vis !== 'contours' && !this.loader.doneRgb) {
-                await this.loader.getRgb(origin, radius, zoom, refresh);
+                await this.loader.getRgbTerrain(origin, radius, zoom, refresh);
             } else {
                 refresh();
             }
@@ -457,30 +437,8 @@ class App extends Threelet {
         this.render();
     }
 
-    static applyCustom(meshes, func) {
-        const visibilities = {};
-
-        meshes.forEach(mesh => {
-            visibilities[mesh.uuid] = mesh.visible; // save
-            mesh.visible = true;                    // force visible for raycast
-        });
-
-        const output = func(meshes);                // apply
-
-        meshes.forEach(mesh => {
-            mesh.visible = visibilities[mesh.uuid]; // restore
-        });
-
-        return output;
-    }
-
-    raycastCustom(mx, my) {
-        return App.applyCustom(
-            this.objsInteractive, meshes => this.raycastFromMouse(mx, my, meshes));
-    }
-
     updateMeasure(mx, my) {
-        const isect = this.raycastCustom(mx, my);
+        const isect = this.raycastInteractives(mx, my);
         if (isect !== null) {
             this.marker.update(isect.point);
         } else {
@@ -495,7 +453,7 @@ class App extends Threelet {
     }
 
     updateOrbit(mx, my) {
-        const isect = this.raycastCustom(mx, my);
+        const isect = this.raycastInteractives(mx, my);
         if (isect !== null) {
             console.log('(orbit) mesh hit:', isect.object.name);
 
@@ -521,19 +479,22 @@ class App extends Threelet {
         }
     }
 
+    raycastInteractives(mx, my) {
+        return this.loader.interact(meshes => this.raycastFromMouse(mx, my, meshes));
+    }
+
     pick(mx, my) {
         if (!this.laser.active && this.marker.pair.length !== 1) {
             return;
         }
 
-        const isect = this.raycastCustom(mx, my);
+        const isect = this.raycastInteractives(mx, my);
         if (isect !== null) {
             const pt = isect.point;
 
             this.laser.prepare();
             if (this.laser.active) {
-                App.applyCustom(
-                    this.objsInteractive, meshes => this.laser.shoot(pt, meshes));
+                this.loader.interact(meshes => this.laser.shoot(pt, meshes));
             }
 
             this.marker.pick(pt);
