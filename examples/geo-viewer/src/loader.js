@@ -1,9 +1,14 @@
+import ThreeGeo from '../../../src';
+
 const { THREE } = window;
 
 class Loader {
-    constructor(scene, tgeo) {
+    constructor(scene, env) {
         this._scene = scene;
-        this._tgeo = tgeo; // !!!!!!!! !!!!
+        this._tgeo = new ThreeGeo({
+            unitsSide: 1.0,
+            tokenMapbox: env.tokenMapbox,
+        });
 
         this.doneVec = false;
         this.doneRgb = false;
@@ -42,6 +47,18 @@ class Loader {
                 });
             } catch (err) { rej(err); }
         });
+    }
+
+    setDebugApis(title) {
+        let loc = 'invalid';
+        if (title.includes('Table')) loc = 'table';
+        if (title.includes('Eiger')) loc = 'eiger';
+        if (title.includes('River')) loc = 'river';
+        if (title.includes('Akagi')) loc = 'akagi';
+
+        this._tgeo.setApiVector(`../../cache/${loc}/custom-terrain-vector`);
+        this._tgeo.setApiRgb(`../../cache/${loc}/custom-terrain-rgb`);
+        this._tgeo.setApiSatellite(`../../cache/${loc}/custom-satellite`);
     }
 
     getRgbMaterials() {

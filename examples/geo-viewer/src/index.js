@@ -3,7 +3,6 @@ import Env from './env.js';
 //import Env from './envs-ignore/env-io.js';
 
 import Threelet from '../../deps/threelet.esm.js';
-import ThreeGeo from '../../../src';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import Msg from './msg-helper.js';
@@ -97,12 +96,7 @@ class App extends Threelet {
             color: 0x999999,
         });
 
-        this.unitsSide = 1.0;
-        this.tgeo = new ThreeGeo({
-            unitsSide: this.unitsSide,
-            tokenMapbox: this.env.tokenMapbox,
-        });
-        this.loader = new Loader(this.scene, this.tgeo);
+        this.loader = new Loader(this.scene, this.env);
 
         //
 
@@ -340,15 +334,7 @@ class App extends Threelet {
 
     updateTerrain(vis, title) {
         if (this.env.isDev) {
-            let loc = 'invalid';
-            if (title.includes('Table')) loc = 'table';
-            if (title.includes('Eiger')) loc = 'eiger';
-            if (title.includes('River')) loc = 'river';
-            if (title.includes('Akagi')) loc = 'akagi';
-
-            this.tgeo.setApiVector(`../../cache/${loc}/custom-terrain-vector`);
-            this.tgeo.setApiRgb(`../../cache/${loc}/custom-terrain-rgb`);
-            this.tgeo.setApiSatellite(`../../cache/${loc}/custom-satellite`);
+            this.loader.setDebugApis(title);
         }
 
         this._updateTerrain(vis);
