@@ -53,9 +53,8 @@
     <script type="module">
     (async () => {
         const App = (await import('./app.esm.dev.js')).default;
-        const app = new App({
-            canvas: document.getElementById("canvas"),
-        });
+        const canvas = document.getElementById('canvas');
+        const app = new App({ canvas });
     })();
     </script>
 </body>

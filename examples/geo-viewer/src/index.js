@@ -17,13 +17,12 @@ class App extends Threelet {
     // override
     onCreate(params) {
         this.env = Env;
-        this.scene = new THREE.Scene();
-        this.sceneMarker = new THREE.Scene();
-
-        this.initComponents();
 
         this.camera.position.set(0, 0, 1.5);
         this.camera.up.set(0, 0, 1);
+        this.renderer.autoClear = false;
+
+        this.initComponents();
 
         this.stats = this.setup('mod-stats', Stats, {panelType: 1});
         this.render = () => { // override
@@ -39,7 +38,9 @@ class App extends Threelet {
         this.render(); // first time
 
         this.initGui();
-        //this.closeGui();
+        if (this.env.isGuiClosed) {
+            this.closeGui();
+        }
 
         this.msg.update(this.camera, this.projection);
         this.msg.updateTerrain(this.origin, this.zoom);
@@ -58,57 +59,21 @@ class App extends Threelet {
     }
 
     initComponents() {
-        //======== add light
-        if (0) {
-            // https://github.com/mrdoob/three.js/blob/master/examples/webvr_cubes.html
-            this.scene.add(new THREE.HemisphereLight(0x606060, 0x404040));
-            const light = new THREE.DirectionalLight(0xffffff);
-            light.position.set(0, 0, 1).normalize();
-            this.scene.add(light);
-        }
-
-        //======== add sub-camera
-        if (0) {
-            const cam = new THREE.PerspectiveCamera(60, 1, 0.01, 0.5);
-            this.scene.add(new THREE.CameraHelper(cam));
-            cam.position.set(0, 0, 2);
-            cam.rotation.x = Math.PI / 4;
-            cam.updateMatrixWorld();  // reflect pose change to CameraHelper
-        }
-
-        //======== add walls and axes
-        const walls = new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
-            new THREE.LineBasicMaterial({ color: 0xcccccc }));
-        walls.position.set(0, 0, 0);
-        walls.name = "singleton-walls";
-        this.scene.add(walls);
-
-        const axes = new THREE.AxesHelper(1);
-        axes.name = "singleton-axes";
-        this.scene.add(axes);
-
-        //
-
-        this.renderer.autoClear = false;
-        this.wireframeMat = new THREE.MeshBasicMaterial({
-            wireframe: true,
-            color: 0x999999,
-        });
-
-        this.loader = new Loader(this.scene, this.env);
-
-        //
-
+        const loader = new Loader(this.scene, this.env);
         const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
-        const projection = this.loader.projection(origin, radius);
+        const projection = loader.projection(origin, radius);
 
+        //
+
+        this.loader = loader;
         this.origin = origin;
         this.radius = radius;
         this.zoom = zoom;
         this.vis = vis;
         this.projection = projection;
-        this.updateTerrain(vis, title);
+        this.wireframeMat = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x999999 });
+
+        this.updateTerrain(title);
 
         //
 
@@ -129,6 +94,8 @@ class App extends Threelet {
         this.guiHelper = null;
         this.laser = new Laser(this.scene, this.camera);
         this.orbit = new Orbit(this.scene);
+
+        this.sceneMarker = new THREE.Scene();
         this.marker = new Marker(this.sceneMarker);
     }
 
@@ -313,7 +280,7 @@ class App extends Threelet {
 
             this.clearTerrainObjects();
             this.render();
-            if (1) {
+            if (this.env.isDev) {
                 console.log('======== ========');
                 console.log('this:', this);
                 console.log('this.scene.children:', this.scene.children);
@@ -328,16 +295,16 @@ class App extends Threelet {
 
             this.origin = ll;
             this.projection = proj;
-            this.updateTerrain(this.vis, title);
+            this.updateTerrain(title);
         }
     }
 
-    updateTerrain(vis, title) {
+    updateTerrain(title) {
         if (this.env.isDev) {
             this.loader.setDebugApis(title);
         }
 
-        this._updateTerrain(vis);
+        this._updateTerrain(this.vis);
     }
 
     static isTokenSet(token) {
@@ -418,8 +385,8 @@ class App extends Threelet {
     }
 
     toggleGrids(tf) {
-        this.scene.getObjectByName("singleton-walls").visible = tf;
-        this.scene.getObjectByName("singleton-axes").visible = tf;
+        this.scene.getObjectByName('walls').visible = tf;
+        this.scene.getObjectByName('axes').visible = tf;
         this.render();
     }
 
