@@ -14,8 +14,7 @@ import Marker from './marker.js';
 const { THREE, Stats } = window;
 
 class App extends Threelet {
-    // override
-    onCreate(params) {
+    onCreate(_params) { // override
         this.env = Env;
 
         this.camera.position.set(0, 0, 1.5);
@@ -55,10 +54,15 @@ class App extends Threelet {
         this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
         this.renderer.clearDepth();
-        this.renderer.render(this.sceneMarker, this.camera);
+        this.renderer.render(this.marker.scene, this.camera);
     }
 
     initComponents() {
+        this.scene.getObjectByName('walls').name = 'singleton-walls';
+        this.scene.getObjectByName('axes').name = 'singleton-axes';
+
+        //
+
         const loader = new Loader(this.scene, this.env);
         const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
         const projection = loader.projection(origin, radius);
@@ -94,9 +98,7 @@ class App extends Threelet {
         this.guiHelper = null;
         this.laser = new Laser(this.scene, this.camera);
         this.orbit = new Orbit(this.scene);
-
-        this.sceneMarker = new THREE.Scene();
-        this.marker = new Marker(this.sceneMarker);
+        this.marker = new Marker(new THREE.Scene());
     }
 
     static resolveParams(env) {
@@ -232,12 +234,13 @@ class App extends Threelet {
         this.loader.clearInteractives();
 
         // this.scene.children
-        //   ::Mesh walls                intact
-        //   ::Mesh dem-rgb-...          to be cleared
-        //   ::Group dem-vec             to be cleared
-        //   ::Laser ""     orbit        this.orbit.updateAxis(null)
-        //   ::LineLoop ""  orbit        this.orbit.remove()
-        //   ::Laser ""     pointer      intact
+        //   ::LineSegments  singleton-walls       intact
+        //   ::AxesHelper    singleton-axes        intact
+        //   ::Laser         singleton-laser-vr    intact
+        //   ::Mesh          dem-rgb-...           to be cleared
+        //   ::Group         dem-vec               to be cleared
+        //   ::Laser         singleton-orbit-axis  this.orbit.updateAxis(null)
+        //   ::LineLoop      orbit                 this.orbit.remove()
         //====
         this.scene.children
             .filter(obj => obj.name.startsWith('dem-'))
@@ -252,11 +255,11 @@ class App extends Threelet {
             this.guiHelper.autoOrbitController.setValue(false);
         }
 
-        // this.sceneMarker.children
+        // this.marker.scene.children
         //   ::Laser ""     singleton-mark-tmp   this.marker.updateTmp(null)
         //   ::Laser ""     mark-<date>          to be cleared
-        //   ::Laser ""     mark-<date>          to be cleared
-        //   ......................              to be cleared
+        //                  mark-<date>          to be cleared
+        //                  ...
         //====
         this.marker.updateTmp(null);
         this.marker.marks().forEach(mark => {
@@ -284,7 +287,7 @@ class App extends Threelet {
                 console.log('======== ========');
                 console.log('this:', this);
                 console.log('this.scene.children:', this.scene.children);
-                console.log('this.sceneMarker.children:', this.sceneMarker.children);
+                console.log('this.marker.scene.children:', this.marker.scene.children);
                 console.log('======== ========');
             }
 
@@ -385,8 +388,8 @@ class App extends Threelet {
     }
 
     toggleGrids(tf) {
-        this.scene.getObjectByName('walls').visible = tf;
-        this.scene.getObjectByName('axes').visible = tf;
+        this.scene.getObjectByName('singleton-walls').visible = tf;
+        this.scene.getObjectByName('singleton-axes').visible = tf;
         this.render();
     }
 

@@ -1,20 +1,19 @@
 import ThreeGeo from '../../../src';
 
 class Marker {
-    constructor(sceneMarker) {
-        this._scene = sceneMarker;
-
+    constructor(scene) {
+        this.scene = scene;
         this.pair = [];
         this._laserColor = null;
 
         const laser = new ThreeGeo.Laser({ maxPoints: 2 });
         laser.name = 'singleton-mark-tmp';
-        this._scene.add(laser);
+        this.scene.add(laser);
         this._laser = laser;
     }
 
     marks() { // excludes tmp (sigleton) one
-        return this._scene.children.filter(obj => obj.name.startsWith('mark-'));
+        return this.scene.children.filter(obj => obj.name.startsWith('mark-'));
     }
 
     updateTmp(pt0=null, pt1=null, color=0xffffff) {
@@ -43,7 +42,7 @@ class Marker {
             const laser = new ThreeGeo.Laser({ maxPoints: 2, color: this._laserColor });
             laser.updatePoints(this.pair);
             laser.name = `mark-${Date.now()}`;
-            this._scene.add(laser);
+            this.scene.add(laser);
         } else {
             this.pair = [pt,];
             this._laserColor = 0x00ffff;
