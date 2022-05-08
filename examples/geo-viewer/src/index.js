@@ -59,13 +59,9 @@ class App extends Threelet {
         this.scene.getObjectByName('walls').name = 'singleton-walls';
         this.scene.getObjectByName('axes').name = 'singleton-axes';
 
-        //
-
         const loader = new Loader(this.scene, this.env);
         const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
         const projection = loader.projection(origin, radius);
-
-        //
 
         this.loader = loader;
         this.origin = origin;
@@ -76,8 +72,6 @@ class App extends Threelet {
         this.wireframeMat = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x999999 });
 
         this.updateTerrain(title);
-
-        //
 
         this.map = new MapHelper({
             dom: document.getElementById('map'),
@@ -173,14 +167,14 @@ class App extends Threelet {
             .setDefaults(defaults);
 
         if (this.env.isGuiClosed) {
-            gh.gui.close();
+            gh.close();
         }
 
-        const div = gh.gui.domElement.getElementsByClassName('children')[0];
         statsDom.style.position = ''; // clear the default
-        div.appendChild(statsDom);
+        gh.appendToFooter(statsDom);
+
         msgWrapper.style.display = '';
-        div.appendChild(msgWrapper);
+        gh.appendToFooter(msgWrapper);
 
         return gh;
     }

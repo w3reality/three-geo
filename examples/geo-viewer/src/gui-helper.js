@@ -16,6 +16,7 @@ class GuiHelper extends OoGui {
         this.onChangeLoc = cbs.onChangeLoc;
 
         this.env = env;
+        this.footer = document.createElement('div');
     }
 
     // impl
@@ -32,16 +33,15 @@ class GuiHelper extends OoGui {
             // 'giza': [29.9791, 31.1342],
         };
 
-        this.env.isDev &&
-            gui.add(params, 'isDev')
-                .name('isDev: true !!')
-                .domElement.addEventListener('click', ev => {
-                    console.log('this.env:', this.env);
-                    if (1) {
-                        const { origin, pathname } = window.location;
-                        window.location.href = `${origin}${pathname}`;
-                    }
-                });
+        this.env.isDev && gui.add(params, 'isDev')
+            .name('isDev: true !!')
+            .domElement.addEventListener('click', ev => {
+                console.log('this.env:', this.env);
+                if (1) {
+                    const { origin, pathname } = window.location;
+                    window.location.href = `${origin}${pathname}`;
+                }
+            });
 
         gui.add(params, 'mode', ['Satellite', 'Wireframe', 'Contours'])
             .name('Terrain')
@@ -107,6 +107,18 @@ class GuiHelper extends OoGui {
             .domElement.addEventListener('click', ev => {
                 window.location.href = "https://github.com/w3reality/three-geo/tree/master/examples/geo-viewer";
             });
+
+        gui.domElement
+            .getElementsByClassName('children')[0]
+            .appendChild(this.footer);
+    }
+
+    appendToFooter(el) {
+        this.footer.appendChild(el);
+    }
+
+    close() {
+        this.gui.close();
     }
 }
 
