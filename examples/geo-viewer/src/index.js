@@ -23,7 +23,7 @@ class App extends Threelet {
 
         this.initComponents();
 
-        this.stats = this.setup('mod-stats', Stats, {panelType: 1});
+        this.stats = this.setup('mod-stats', Stats, { panelType: 1 });
         this.render = () => { // override
             this.stats.update();
             this.resizeCanvas();
@@ -36,10 +36,8 @@ class App extends Threelet {
         this.setup('mod-controls', THREE.OrbitControls);
         this.render(); // first time
 
-        this.initGui();
-        if (this.env.isGuiClosed) {
-            this.closeGui();
-        }
+        this.guiHelper = this.initGui(
+            this.stats.dom, document.getElementById('msg-wrapper'));
 
         this.msg.update(this.camera, this.projection);
         this.msg.updateTerrain(this.origin, this.zoom);
@@ -82,8 +80,9 @@ class App extends Threelet {
         //
 
         this.map = new MapHelper({
+            dom: document.getElementById('map'),
+            domWrapper: document.getElementById('map-wrapper'),
             origin, radius, projection,
-            mapId: 'map',
             enableTiles: this.env.enableTilesLeaflet === true,
             onBuildTerrain: ll => { this.reloadPageWithLocation(ll, App.parseQuery().title); },
             onMapZoomEnd: () => { this.map.plotCam(this.camera); },
@@ -91,11 +90,10 @@ class App extends Threelet {
 
         this.msg = new Msg({
             msg: document.getElementById('msg'),
-            msgTerrain: document.getElementById('msgTerrain'),
-            msgMeasure: document.getElementById('msgMeasure'),
+            msgTerrain: document.getElementById('msg-terrain'),
+            msgMeasure: document.getElementById('msg-measure'),
         });
 
-        this.guiHelper = null;
         this.laser = new Laser(this.scene, this.camera);
         this.orbit = new Orbit(this.scene);
         this.marker = new Marker(new THREE.Scene());
@@ -135,7 +133,7 @@ class App extends Threelet {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    initGui() {
+    initGui(statsDom, msgWrapper) {
         const animToggler = App.createAnimToggler(this.render);
         const cbs = {
             onCapture: () => {
@@ -144,15 +142,9 @@ class App extends Threelet {
             onChangeGrids: value => {
                 this.toggleGrids(value);
             },
-            onChangeAutoOrbit: value => {
-                this.toggleAutoOrbit(value);
-                if (value) {
-                    console.log('starting anim...');
-                    animToggler(true);
-                } else {
-                    console.log('stopping anim...');
-                    animToggler(false);
-                }
+            onChangeAutoOrbit: tf => {
+                this.toggleAutoOrbit(tf);
+                animToggler(tf);
             },
             onChangeMode: mode => {
                 this._updateTerrain(mode.toLowerCase());
@@ -177,9 +169,20 @@ class App extends Threelet {
 
         const defaults = App.guiDefaults();
         const data = Object.assign({}, defaults);
-
-        this.guiHelper = new GuiHelper(data, cbs, this.env)
+        const gh = new GuiHelper(data, cbs, this.env)
             .setDefaults(defaults);
+
+        if (this.env.isGuiClosed) {
+            gh.gui.close();
+        }
+
+        const div = gh.gui.domElement.getElementsByClassName('children')[0];
+        statsDom.style.position = ''; // clear the default
+        div.appendChild(statsDom);
+        msgWrapper.style.display = '';
+        div.appendChild(msgWrapper);
+
+        return gh;
     }
 
     static guiDefaults() {
@@ -465,10 +468,6 @@ class App extends Threelet {
 
     toggleMap(tf) {
         this.map.toggle(tf);
-    }
-
-    closeGui() {
-        this.guiHelper.gui.close();
     }
 
     updateAnim() {

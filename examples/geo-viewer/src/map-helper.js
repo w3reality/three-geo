@@ -14,10 +14,11 @@ const { THREE } = window;
 class MapHelper {
     constructor(options={}) {
         const defaults = {
+            dom: null,
+            domWrapper: null,
             origin: null,
             radius: null,
             projection: null,
-            mapId: 'map',
             enableTiles: false,
             onBuildTerrain: null,
             onMapZoomEnd: null,
@@ -26,26 +27,25 @@ class MapHelper {
         if (!actual.origin || !actual.radius || !actual.projection) {
             throw "Invalid origin, radius or projection";
         }
+        this.dom = actual.dom;
+        this.domWrapper = actual.domWrapper;
         this.origin = actual.origin;
         this.radius = actual.radius;
         this.projection = actual.projection;
-        this.mapId = actual.mapId;
         this.enableTiles = actual.enableTiles;
         this.onBuildTerrain = actual.onBuildTerrain;
         this.onMapZoomEnd = actual.onMapZoomEnd;
 
         const _origin = actual.origin;
         const _radius = actual.radius;
-        const _mapId = actual.mapId;
         const _enableTiles = actual.enableTiles;
 
 
-        // this.map = L.map(_mapId, {center: latlng, zoom: 13});
-        this.map = L.map(_mapId).setView(_origin, 12);
+        //this.map = L.map(this.dom.id, {center: latlng, zoom: 13});
+        this.map = L.map(this.dom.id).setView(_origin, 12);
 
-        MapHelper.addSearchControl(this.map, (ll) => { // latlng
-            this.buildTerrain(ll);
-        });
+        MapHelper.addSearchControl(
+            this.map, this.dom, ll /* latlng */ => { this.buildTerrain(ll); });
 
         // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png?{foo}', {
         //     foo: 'bar',
@@ -133,7 +133,7 @@ class MapHelper {
 
     } // end constructor()
 
-    static addSearchControl(map, onLocationSelected) {
+    static addSearchControl(map, dom, onLocationSelected) {
         // https://github.com/smeijer/leaflet-geosearch#geosearchcontrol
         const searchControl = new GeoSearchControl({
             provider: new OpenStreetMapProvider(),
@@ -183,8 +183,7 @@ class MapHelper {
         // that solves this issue.  FIXME later...
 
         try {
-            const geosearchForm = document.getElementById('map')
-                .getElementsByTagName('form')[0];
+            const geosearchForm = dom.getElementsByTagName('form')[0];
             if (!geosearchForm[0].getAttribute('class').includes('glass')) {
                 throw new Error('Got a wrong element.');
             }
@@ -328,7 +327,7 @@ class MapHelper {
     }
 
     toggle(tf) {
-        document.getElementById('mapWrapper').style['display'] = tf ? '' : 'none';
+        this.domWrapper.style['display'] = tf ? '' : 'none';
     }
     plotCam(cam) {
         // console.log('cam:', cam);
