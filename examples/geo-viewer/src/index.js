@@ -10,6 +10,7 @@ import Loader from './loader.js';
 import Laser from './laser.js';
 import Orbit from './orbit.js';
 import Marker from './marker.js';
+import Anim from './anim.js';
 
 const { THREE, Stats } = window;
 
@@ -28,7 +29,6 @@ class App extends Threelet {
             this.stats.update();
             this.resizeCanvas();
 
-            this.updateAnim();
             this._render();
             this.msg.update(this.camera, this.projection);
             this.map.plotCam(this.camera);
@@ -36,6 +36,7 @@ class App extends Threelet {
         this.setup('mod-controls', THREE.OrbitControls);
         this.render(); // first time
 
+        this.anim = new Anim(this.render, this.onAnimate.bind(this));
         this.guiHelper = this.initGui(
             this.stats.dom, document.getElementById('msg-wrapper'));
 
@@ -55,7 +56,15 @@ class App extends Threelet {
         this.renderer.render(this.marker.scene, this.camera);
     }
 
+    onAnimate(t, dt) {
+        this.orbit.move(this.camera);
+
+        if (this.env.isDev) { Anim._updateTestObjects(this, t, dt); } // dev
+    }
+
     initComponents() {
+        if (this.env.isDev) { Anim._addTestObjects(this, Threelet); } // dev
+
         this.scene.getObjectByName('walls').name = 'singleton-walls';
         this.scene.getObjectByName('axes').name = 'singleton-axes';
 
@@ -128,7 +137,6 @@ class App extends Threelet {
     }
 
     initGui(statsDom, msgWrapper) {
-        const animToggler = App.createAnimToggler(this.render);
         const cbs = {
             onCapture: () => {
                 this.capture();
@@ -138,7 +146,7 @@ class App extends Threelet {
             },
             onChangeAutoOrbit: tf => {
                 this.toggleAutoOrbit(tf);
-                animToggler(tf);
+                this.anim.toggle(tf);
             },
             onChangeMode: mode => {
                 this._updateTerrain(mode.toLowerCase());
@@ -193,27 +201,6 @@ class App extends Threelet {
             loc: title ? title.replace('_', ' ') : '',
             leaflet: true,
             sourceCode: () => {},
-        };
-    }
-
-    static createAnimToggler(render) {
-        let stopAnim = true;
-        const animate = () => {
-            if (stopAnim) {
-                console.log('animate(): stopping');
-                return;
-            }
-            requestAnimationFrame(animate);
-            render();
-        };
-
-        return (tf) => {
-            if (tf) {
-                stopAnim = false;
-                animate();
-            } else {
-                stopAnim = true;
-            }
         };
     }
 
@@ -462,13 +449,6 @@ class App extends Threelet {
 
     toggleMap(tf) {
         this.map.toggle(tf);
-    }
-
-    updateAnim() {
-        this.orbit.move(this.camera);
-
-        // There could be new animating objects
-        // ...
     }
 }
 
