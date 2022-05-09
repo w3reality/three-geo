@@ -249,7 +249,7 @@ class App extends Threelet {
         this.orbit.remove();
         this.map.plotOrbit(null);
         if (this.guiHelper) {
-            this.guiHelper.autoOrbitController.setValue(false);
+            this.guiHelper.setAutoOrbit(false);
         }
 
         // this.marker.scene.children
@@ -423,7 +423,7 @@ class App extends Threelet {
             this.map.plotOrbit(null);
 
             if (this.guiHelper) {
-                this.guiHelper.autoOrbitController.setValue(false);
+                this.guiHelper.setAutoOrbit(false);
             }
         }
 

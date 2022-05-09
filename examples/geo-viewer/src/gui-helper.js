@@ -16,6 +16,7 @@ class GuiHelper extends OoGui {
         this.onChangeLoc = cbs.onChangeLoc;
 
         this.env = env;
+        this._autoOrbitController = null;
         this.footer = document.createElement('div');
     }
 
@@ -63,7 +64,7 @@ class GuiHelper extends OoGui {
                 data.grids = value;
             });
 
-        this.autoOrbitController = gui.add(params, 'autoOrbit')
+        this._autoOrbitController = gui.add(params, 'autoOrbit')
             .name('Orbit')
             .onChange(value => {
                 this.onChangeAutoOrbit(value);
@@ -111,6 +112,10 @@ class GuiHelper extends OoGui {
         gui.domElement
             .getElementsByClassName('children')[0]
             .appendChild(this.footer);
+    }
+
+    setAutoOrbit(tf) {
+        this._autoOrbitController.setValue(tf);
     }
 
     appendToFooter(el) {
