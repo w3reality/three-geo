@@ -13,6 +13,7 @@ class GuiHelper extends OoGui {
         this.onChangeMode = cbs.onChangeMode;
         this.onChangeVrLaser = cbs.onChangeVrLaser;
         this.onChangeLeaflet = cbs.onChangeLeaflet;
+        this.onChangeMedia = cbs.onChangeMedia;
         this.onChangeLoc = cbs.onChangeLoc;
 
         this.env = env;
@@ -59,23 +60,23 @@ class GuiHelper extends OoGui {
 
         gui.add(params, 'grids')
             .name('Grids')
-            .onChange(value => {
-                this.onChangeGrids(value);
-                data.grids = value;
+            .onChange(tf => {
+                this.onChangeGrids(tf);
+                data.grids = tf;
             });
 
         this._autoOrbitController = gui.add(params, 'autoOrbit')
             .name('Orbit')
-            .onChange(value => {
-                this.onChangeAutoOrbit(value);
-                data.autoOrbit = value;
+            .onChange(tf => {
+                this.onChangeAutoOrbit(tf);
+                data.autoOrbit = tf;
             });
 
         gui.add(params, 'vrLaser')
             .name('Laser')
-            .onChange(value => {
-                this.onChangeVrLaser(value);
-                data.vrLaser = value;
+            .onChange(tf => {
+                this.onChangeVrLaser(tf);
+                data.vrLaser = tf;
             });
 
         // debug
@@ -91,9 +92,16 @@ class GuiHelper extends OoGui {
 
         gui.add(params, 'leaflet')
             .name('Map')
-            .onChange(value => {
-                this.onChangeLeaflet(value);
-                data.leaflet = value;
+            .onChange(tf => {
+                this.onChangeLeaflet(tf);
+                data.leaflet = tf;
+            });
+
+        gui.add(params, 'media')
+            .name('Media')
+            .onChange(tf => {
+                this.onChangeMedia(tf);
+                data.media = tf;
             });
 
         gui.add(params, 'loc', Object.keys(this.locations))

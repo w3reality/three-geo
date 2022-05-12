@@ -10,16 +10,29 @@
 
     <!-- copied node_modules/leaflet-geosearch/assets/css/leaflet.css -->
     <link rel="stylesheet" href="./assets/css/leaflet.css" />
+
+    <!-- <script type="module" src="https://cdn.ampproject.org/v0/bento-youtube-1.0.mjs" crossorigin="anonymous"></script> -->
+    <!-- <link rel="stylesheet" href="https://cdn.ampproject.org/v0/bento-youtube-1.0.css" crossorigin="anonymous"> -->
+    <style type="text/css">
+        bento-youtube {
+            height: 320px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
 
-    <div id="map-wrapper" style="
-        position: absolute;
-        z-index: 100;
-        width: 520px; height: 340px;
-        top: 0px; left: 0px;">
+    <div id="map-wrapper" style="position: absolute; z-index: 100;
+        width: 520px; height: 320px; top: 0px; left: 0px;">
         <div id="map" style="height: 100%;"></div>
+    </div>
+    <div id="media-wrapper" style="position: absolute; z-index: 100; display: none;
+        width: 520px; height: 320px; top: 320px; left: 0px;">
+        <div id="media" style="height: 100%; background: black;">
+            <!-- 24 hours on Earth -- in one image | Stephen Wilkes https://www.youtube.com/watch?v=0ITuQcoLXeE -->
+            <bento-youtube data-videoid="0ITuQcoLXeE"></bento-youtube>
+        </div>
     </div>
     <div id="msg-wrapper" style="margin: 4px; padding-bottom: 4px; display: none;">
         <div>---- Terrain ----</div>

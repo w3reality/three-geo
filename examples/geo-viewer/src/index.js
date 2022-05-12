@@ -5,6 +5,7 @@ import Env from './env.js';
 import Threelet from '../../deps/threelet.esm.js';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
+import MediaHelper from './media.js';
 import Msg from './msg-helper.js';
 import Loader from './loader.js';
 import Laser from './laser.js';
@@ -91,6 +92,8 @@ class App extends Threelet {
             onMapZoomEnd: () => { this.map.plotCam(this.camera); },
         });
 
+        this.media = new MediaHelper(document.getElementById('media-wrapper'));
+
         this.msg = new Msg({
             msg: document.getElementById('msg'),
             msgTerrain: document.getElementById('msg-terrain'),
@@ -141,21 +144,33 @@ class App extends Threelet {
             onCapture: () => {
                 this.capture();
             },
-            onChangeGrids: value => {
-                this.toggleGrids(value);
+            onChangeGrids: tf => {
+                this.scene.getObjectByName('singleton-walls').visible = tf;
+                this.scene.getObjectByName('singleton-axes').visible = tf;
+                this.render();
             },
             onChangeAutoOrbit: tf => {
-                this.toggleAutoOrbit(tf);
+                this.orbit.active = tf;
+                if (tf && !this.orbit.exists()) {
+                    const pt = new THREE.Vector3(0, 0, 0);
+                    this.orbit.updateAxis(pt);
+                    this.orbit.add(this.camera, pt);
+                    this.map.plotOrbit(this.orbit.data());
+                }
+
                 this.anim.toggle(tf);
             },
             onChangeMode: mode => {
                 this._updateTerrain(mode.toLowerCase());
             },
-            onChangeVrLaser: value => {
-                this.toggleVrLaser(value);
+            onChangeVrLaser: tf => {
+                this.laser.active = tf;
             },
-            onChangeLeaflet: value => {
-                this.toggleMap(value);
+            onChangeLeaflet: tf => {
+                this.map.toggle(tf);
+            },
+            onChangeMedia: tf => {
+                this.media.toggle(tf);
             },
             onChangeLoc: (value, locations) => {
                 if (value === '(none)') { // dummy case
@@ -200,6 +215,7 @@ class App extends Threelet {
             reset: () => {},
             loc: title ? title.replace('_', ' ') : '',
             leaflet: true,
+            media: false,
             sourceCode: () => {},
         };
     }
@@ -356,27 +372,6 @@ class App extends Threelet {
         }
     }
 
-    toggleAutoOrbit(tf) {
-        this.orbit.active = tf;
-
-        if (tf && !this.orbit.exists()) {
-            const pt = new THREE.Vector3(0, 0, 0);
-            this.orbit.updateAxis(pt);
-            this.orbit.add(this.camera, pt);
-            this.map.plotOrbit(this.orbit.data());
-        }
-    }
-
-    toggleVrLaser(tf) {
-        this.laser.active = tf;
-    }
-
-    toggleGrids(tf) {
-        this.scene.getObjectByName('singleton-walls').visible = tf;
-        this.scene.getObjectByName('singleton-axes').visible = tf;
-        this.render();
-    }
-
     updateMeasure(mx, my) {
         const isect = this.raycastInteractives(mx, my);
         if (isect !== null) {
@@ -445,10 +440,6 @@ class App extends Threelet {
         if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
             this.render();
         }
-    }
-
-    toggleMap(tf) {
-        this.map.toggle(tf);
     }
 }
 
