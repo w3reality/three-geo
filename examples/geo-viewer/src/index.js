@@ -6,7 +6,7 @@ import Threelet from '../../deps/threelet.esm.js';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MediaHelper from './media.js';
-import Msg from './msg-helper.js';
+import Monitor from './msg-helper.js';
 import Loader from './loader.js';
 import Laser from './laser.js';
 import Orbit from './orbit.js';
@@ -26,23 +26,24 @@ class App extends Threelet {
         this.initComponents();
 
         this.stats = this.setup('mod-stats', Stats, { panelType: 1 });
+        this.monitor = new Monitor();
         this.render = () => { // override
             this.stats.update();
             this.resizeCanvas();
 
             this._render();
-            this.msg.update(this.camera, this.projection);
+            this.monitor.updateCam(this.camera, this.projection);
             this.map.plotCam(this.camera);
         };
         this.setup('mod-controls', THREE.OrbitControls);
         this.render(); // first time
 
         this.anim = new Anim(this.render, this.onAnimate.bind(this));
-        this.guiHelper = this.initGui(
-            this.stats.dom, document.getElementById('msg-wrapper'));
+        this.guiHelper = this.initGui(this.stats.dom, this.monitor.dom);
 
-        this.msg.update(this.camera, this.projection);
-        this.msg.updateTerrain(this.origin, this.zoom);
+        this.monitor.updateTerrain(this.origin, this.zoom);
+        this.monitor.updateMap(this.map.getZoom());
+        this.monitor.updateCam(this.camera, this.projection);
         this.map.plotCam(this.camera);
 
         this.on('pointer-move', (mx, my) => this.pick(mx, my));
@@ -88,18 +89,15 @@ class App extends Threelet {
             domWrapper: document.getElementById('map-wrapper'),
             origin, radius, projection,
             enableTiles: this.env.enableTilesLeaflet === true,
-            onBuildTerrain: ll => { this.reloadPageWithLocation(ll, App.parseQuery().title); },
-            onMapZoomEnd: () => { this.map.plotCam(this.camera); },
+            onBuildTerrain: ll => {
+                this.reloadPageWithLocation(ll, App.parseQuery().title);
+            },
+            onMapZoomEnd: zoom => {
+                this.monitor.updateMap(zoom);
+                this.map.plotCam(this.camera);
+            },
         });
-
         this.media = new MediaHelper(document.getElementById('media-wrapper'));
-
-        this.msg = new Msg({
-            msg: document.getElementById('msg'),
-            msgTerrain: document.getElementById('msg-terrain'),
-            msgMeasure: document.getElementById('msg-measure'),
-        });
-
         this.laser = new Laser(this.scene, this.camera);
         this.orbit = new Orbit(this.scene);
         this.marker = new Marker(new THREE.Scene());
@@ -294,7 +292,7 @@ class App extends Threelet {
             const proj = this.loader.projection(ll, this.radius);
             this.map.update(ll, proj);
             this.map.plotCam(this.camera);
-            this.msg.updateTerrain(ll, this.zoom);
+            this.monitor.updateTerrain(ll, this.zoom);
 
             this.origin = ll;
             this.projection = proj;
@@ -384,7 +382,7 @@ class App extends Threelet {
             this.render();
         }
 
-        this.msg.updateMeasure(this.marker.pair, this.projection);
+        this.monitor.updateMeasure(this.marker.pair, this.projection);
     }
 
     updateOrbit(mx, my) {

@@ -1,38 +1,60 @@
-class Msg {
-    constructor(params) {
-        this.msg = params.msg;
-        this.msgTerrain = params.msgTerrain;
-        this.msgMeasure = params.msgMeasure;
-    }
+class Mon {
+    constructor() {
+        const dom = document.createElement('div');
+        Object.assign(dom.style, {
+            margin: '4px',
+            'padding-bottom': '4px',
+        });
+        this.dom = dom;
 
-    update(cam, projection) {
-        const el = this.msg;
-
-        Msg.clear(el);
-        Msg.appendText(el, `pos [km]: ${Msg.toCoords(Msg.m2km(cam.position, projection.unitsPerMeter))}`);
-        Msg.appendText(el, `rot [rad]: ${Msg.toCoords(cam.rotation)}`);
+        Mon.appendText(dom, '---- Terrain ----');
+        this._divTerrain = dom.appendChild(document.createElement('div'));
+        Mon.appendText(dom, '[left-click]: pick a point for measurement');
+        Mon.appendText(dom, '[right-click]: set an orbital axis');
+        Mon.appendText(dom, '---- Map ----');
+        this._divMap = dom.appendChild(document.createElement('div'));
+        Mon.appendText(dom, '[left-click]: build a new terrain');
+        Mon.appendText(dom, '---- Camera ----');
+        this._divCam = dom.appendChild(document.createElement('div'));
+        Mon.appendText(dom, '---- Measurement [km] ----');
+        this._divMeasure = dom.appendChild(document.createElement('div'));
     }
 
     updateTerrain(origin, zoom) {
-        const el = this.msgTerrain;
+        const el = this._divTerrain;
 
-        Msg.clear(el);
-        Msg.appendText(el, `lat lng: (${origin[0].toFixed(4)}, ${origin[1].toFixed(4)})`);
-        Msg.appendText(el, `satellite zoom resolution [11-17]: ${zoom}`);
+        Mon.clear(el);
+        Mon.appendText(el, `lat lng: (${origin[0].toFixed(4)}, ${origin[1].toFixed(4)})`);
+        Mon.appendText(el, `satellite zoom resolution [11-17]: ${zoom}`);
+    }
+
+    updateMap(zoom) {
+        const el = this._divMap;
+
+        Mon.clear(el);
+        Mon.appendText(el, `zoom: ${zoom}`);
+    }
+
+    updateCam(cam, projection) {
+        const el = this._divCam;
+
+        Mon.clear(el);
+        Mon.appendText(el, `pos [km]: ${Mon.toCoords(Mon.m2km(cam.position, projection.unitsPerMeter))}`);
+        Mon.appendText(el, `rot [rad]: ${Mon.toCoords(cam.rotation)}`);
     }
 
     updateMeasure(pair, projection) {
-        const el = this.msgMeasure;
+        const el = this._divMeasure;
         const { unitsPerMeter } = projection;
 
-        Msg.clear(el);
+        Mon.clear(el);
         if (pair.length === 1) {
-            Msg.appendText(el, `points: ${Msg.toCoords(Msg.m2km(pair[0], unitsPerMeter))} ->`);
+            Mon.appendText(el, `points: ${Mon.toCoords(Mon.m2km(pair[0], unitsPerMeter))} ->`);
         } else if (pair.length === 2) {
-            const p0km = Msg.m2km(pair[0], unitsPerMeter);
-            const p1km = Msg.m2km(pair[1], unitsPerMeter);
-            Msg.appendText(el, `points: ${Msg.toCoords(p0km)} -> ${Msg.toCoords(p1km)}`);
-            Msg.appendText(el, `euclidean dist: ${p0km.distanceTo(p1km).toFixed(3)}`);
+            const p0km = Mon.m2km(pair[0], unitsPerMeter);
+            const p1km = Mon.m2km(pair[1], unitsPerMeter);
+            Mon.appendText(el, `points: ${Mon.toCoords(p0km)} -> ${Mon.toCoords(p1km)}`);
+            Mon.appendText(el, `euclidean dist: ${p0km.distanceTo(p1km).toFixed(3)}`);
         }
     }
 
@@ -61,4 +83,4 @@ class Msg {
     }
 }
 
-export default Msg;
+export default Mon;

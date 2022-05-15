@@ -73,7 +73,7 @@ class MapHelper {
 
         this.map.on('zoomend', e => {
             if (this.onMapZoomEnd) {
-                this.onMapZoomEnd();
+                this.onMapZoomEnd(this.getZoom());
             }
         });
 
@@ -204,9 +204,11 @@ class MapHelper {
     static swap(ll) {
         return [ll[1], ll[0]];
     }
+
     static llToString(ll) {
         return `${ll[0].toFixed(4)} ${ll[1].toFixed(4)}`;
     }
+
     static mkBuildMarker(ll, onBuild, onCancel) {
         const container = document.createElement('div');
 
@@ -235,6 +237,7 @@ class MapHelper {
         return L.marker(ll).bindPopup(
             L.popup({closeButton: false}).setContent(container));
     }
+
     static mkGeoJsonPoint(ll) {
         return {
             "type": "Feature",
@@ -245,6 +248,7 @@ class MapHelper {
             },
         };
     }
+
     static mkOpts(color) {
         return {
             style: feature => {
@@ -255,6 +259,7 @@ class MapHelper {
             },
         };
     }
+
     static mkBboxLayers(origin, ftBbox) {
         let ttStr = `lat lng: ${MapHelper.llToString(origin)}`;
         let llOrig = [origin[1], origin[0]];
@@ -294,6 +299,7 @@ class MapHelper {
             }),
         ];
     }
+
     static mkLineCam(cam, origin, unitsPerMeter, zoomMap) {
         // resolve cam's z-rotation w.r.t. the world
         // https://stackoverflow.com/questions/21557341/three-js-get-world-rotation-from-matrixworld
@@ -329,10 +335,15 @@ class MapHelper {
     toggle(tf) {
         this.domWrapper.style['display'] = tf ? '' : 'none';
     }
+
+    getZoom() {
+        return this.map.getZoom();
+    }
+
     plotCam(cam) {
         // console.log('cam:', cam);
         let lineCam = MapHelper.mkLineCam(
-            cam, this.origin, this.projection.unitsPerMeter, this.map.getZoom());
+            cam, this.origin, this.projection.unitsPerMeter, this.getZoom());
         // console.log('lineCam:', lineCam);
 
         let camLatLngs = lineCam.geometry.coordinates.map(ll => MapHelper.swap(ll));
@@ -345,6 +356,7 @@ class MapHelper {
             console.log('this.camMarker:', this.camMarker);
         }
     }
+
     plotOrbit(orbitData) {
         if (this.orbitMarker) {
             this.map.removeLayer(this.orbitMarker);
@@ -388,11 +400,15 @@ class MapHelper {
             }).addTo(this.map);
     }
 
-    // update stuff --------
+    //
+    // update stuff
+    //
+
     clearBboxLayers() {
         this._bboxLayers.forEach(layer => { this.map.removeLayer(layer); });
         this._bboxLayers.length = 0;
     }
+
     updateBboxLayers(origin, ftBbox) {
         this.clearBboxLayers();
         this._bboxLayers = MapHelper.mkBboxLayers(origin, ftBbox);
@@ -412,6 +428,7 @@ class MapHelper {
         if (this.markerTmp) this.map.removeLayer(this.markerTmp);
         if (this.bbTmp) this.map.removeLayer(this.bbTmp);
     }
+
     buildTerrain(ll) {
         this.clearTmpLayers();
         this.updateBboxLayers(ll, ThreeGeo.getBbox(ll, this.radius).feature);
@@ -420,6 +437,7 @@ class MapHelper {
             this.onBuildTerrain(ll);
         }
     }
+
     showDialog(ll) {
         console.log('ll:', ll);
         this.map.panTo(ll);
