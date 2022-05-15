@@ -6,7 +6,7 @@ import Threelet from '../../deps/threelet.esm.js';
 import GuiHelper from './gui-helper.js';
 import MapHelper from './map-helper.js';
 import MediaHelper from './media.js';
-import Monitor from './msg-helper.js';
+import Monitor from './monitor.js';
 import Loader from './loader.js';
 import Laser from './laser.js';
 import Orbit from './orbit.js';
