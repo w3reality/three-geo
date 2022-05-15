@@ -97,7 +97,7 @@ class GuiHelper extends OoGui {
                 data.leaflet = tf;
             });
 
-        gui.add(params, 'media')
+        this.env.isDev && gui.add(params, 'media')
             .name('Media')
             .onChange(tf => {
                 this.onChangeMedia(tf);

@@ -97,7 +97,9 @@ class App extends Threelet {
                 this.map.plotCam(this.camera);
             },
         });
-        this.media = new MediaHelper(document.getElementById('media-wrapper'));
+        this.media = new MediaHelper(
+            document.getElementById('media'), document.getElementById('media-wrapper'));
+
         this.laser = new Laser(this.scene, this.camera);
         this.orbit = new Orbit(this.scene);
         this.marker = new Marker(new THREE.Scene());
@@ -137,7 +139,7 @@ class App extends Threelet {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    initGui(statsDom, msgWrapper) {
+    initGui(statsDom, monitorDom) {
         const cbs = {
             onCapture: () => {
                 this.capture();
@@ -194,8 +196,8 @@ class App extends Threelet {
         statsDom.style.position = ''; // clear the default
         gh.appendToFooter(statsDom);
 
-        msgWrapper.style.display = '';
-        gh.appendToFooter(msgWrapper);
+        monitorDom.style.display = '';
+        gh.appendToFooter(monitorDom);
 
         return gh;
     }
