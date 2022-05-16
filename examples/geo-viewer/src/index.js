@@ -196,7 +196,6 @@ class App extends Threelet {
         statsDom.style.position = ''; // clear the default
         gh.appendToFooter(statsDom);
 
-        monitorDom.style.display = '';
         gh.appendToFooter(monitorDom);
 
         return gh;

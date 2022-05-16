@@ -18,7 +18,7 @@ class GuiHelper extends OoGui {
 
         this.env = env;
         this._autoOrbitController = null;
-        this.footer = document.createElement('div');
+        this.footer = GuiHelper.createFooter();
     }
 
     // impl
@@ -126,12 +126,21 @@ class GuiHelper extends OoGui {
         this._autoOrbitController.setValue(tf);
     }
 
+    close() {
+        this.gui.close();
+    }
+
     appendToFooter(el) {
         this.footer.appendChild(el);
     }
 
-    close() {
-        this.gui.close();
+    static createFooter() {
+        const ft = document.createElement('div');
+        Object.assign(ft.style, {
+            margin: '4px',
+        });
+
+        return ft;
     }
 }
 

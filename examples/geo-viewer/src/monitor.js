@@ -1,10 +1,6 @@
 class Mon {
     constructor() {
         const dom = document.createElement('div');
-        Object.assign(dom.style, {
-            margin: '4px',
-            'padding-bottom': '4px',
-        });
         this.dom = dom;
 
         Mon.appendText(dom, '---- Terrain ----');
