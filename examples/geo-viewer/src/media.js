@@ -1,3 +1,5 @@
+// WIP
+
 class MediaHelper {
     constructor(dom, domWrapper) {
         this.dom = dom;
@@ -14,7 +16,7 @@ Blocked opening '<URL>' in a new window because the request was made
 in a sandboxed frame whose 'allow-popups' permission is not set.
     */
 
-    /* FIXME - call `toggle(false)` while playing a video
+    /* NOTE - call `toggle(false)` while playing a video
 Uncaught TypeError: e.pause is not a function
 at Object.Ff (pause-helper.js:59:15)
 at u (index.js:86:21)
