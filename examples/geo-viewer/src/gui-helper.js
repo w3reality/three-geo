@@ -1,24 +1,29 @@
 import OoGui from 'oo-gui/src';
 
 class GuiHelper extends OoGui {
-    constructor(data, cbs, env={}) {
-        super(data, {
+    constructor(data, env={}) {
+            super(data, {
             title: 'geo-viewer',
             width: 240,
         });
 
-        this.onChangeGrids = cbs.onChangeGrids;
-        this.onCapture = cbs.onCapture;
-        this.onChangeAutoOrbit = cbs.onChangeAutoOrbit;
-        this.onChangeMode = cbs.onChangeMode;
-        this.onChangeVrLaser = cbs.onChangeVrLaser;
-        this.onChangeLeaflet = cbs.onChangeLeaflet;
-        this.onChangeMedia = cbs.onChangeMedia;
-        this.onChangeLoc = cbs.onChangeLoc;
+        this.onChangeMode = null;
+        this.onCapture = null;
+        this.onChangeGrids = null;
+        this.onChangeAutoOrbit = null;
+        this.onChangeVrLaser = null;
+        this.onChangeLeaflet = null;
+        this.onChangeMedia = null;
+        this.onChangeLoc = null;
 
         this.env = env;
         this._autoOrbitController = null;
         this.footer = GuiHelper.createFooter();
+    }
+
+    setCallbacks(cbs) {
+        Object.assign(this, cbs);
+        return this;
     }
 
     // impl

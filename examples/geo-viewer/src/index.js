@@ -26,7 +26,6 @@ class App extends Threelet {
 
         this.initComponents();
 
-        this.monitor = new Monitor();
         this.render = () => { // override
             this._render();
             this.monitor.updateStats();
@@ -83,6 +82,7 @@ class App extends Threelet {
 
         this.updateTerrain(title);
 
+        this.monitor = new Monitor();
         this.map = new MapHelper({
             dom: document.getElementById('map'),
             domWrapper: document.getElementById('map-wrapper'),
@@ -97,7 +97,8 @@ class App extends Threelet {
             },
         });
         this.media = new MediaHelper(
-            document.getElementById('media'), document.getElementById('media-wrapper'));
+            document.getElementById('media'),
+            document.getElementById('media-wrapper'));
 
         this.laser = new Laser(this.scene, this.camera);
         this.orbit = new Orbit(this.scene);
@@ -139,7 +140,25 @@ class App extends Threelet {
     }
 
     initGui(monitorDom) {
-        const cbs = {
+        const defaults = App.guiDefaults();
+        const data = Object.assign({}, defaults);
+        const gh = new GuiHelper(data, this.env)
+            .setDefaults(defaults)
+            .setCallbacks(this.guiCallbacks())
+            .appendToFooter(monitorDom);
+
+        if (this.env.isGuiClosed) {
+            gh.close();
+        }
+
+        return gh;
+    }
+
+    guiCallbacks() {
+        return {
+            onChangeMode: mode => {
+                this._updateTerrain(mode.toLowerCase());
+            },
             onCapture: () => {
                 this.capture();
             },
@@ -158,9 +177,6 @@ class App extends Threelet {
                 }
 
                 this.anim.toggle(tf);
-            },
-            onChangeMode: mode => {
-                this._updateTerrain(mode.toLowerCase());
             },
             onChangeVrLaser: tf => {
                 this.laser.active = tf;
@@ -182,18 +198,6 @@ class App extends Threelet {
                 }
             },
         };
-
-        const defaults = App.guiDefaults();
-        const data = Object.assign({}, defaults);
-        const gh = new GuiHelper(data, cbs, this.env)
-            .setDefaults(defaults)
-            .appendToFooter(monitorDom);
-
-        if (this.env.isGuiClosed) {
-            gh.close();
-        }
-
-        return gh;
     }
 
     static guiDefaults() {
