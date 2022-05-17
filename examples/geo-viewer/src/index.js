@@ -36,7 +36,7 @@ class App extends Threelet {
         this.render(); // first time
 
         this.anim = new Anim(this.render, this.onAnimate.bind(this));
-        this.guiHelper = this.initGui(this.monitor.dom);
+        this.gui = App.createGui(this.guiCallbacks(), this.env, this.monitor.dom);
 
         this.monitor.updateTerrain(this.origin, this.zoom);
         this.monitor.updateMap(this.map.getZoom());
@@ -139,15 +139,28 @@ class App extends Threelet {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    initGui(monitorDom) {
-        const defaults = App.guiDefaults();
-        const data = Object.assign({}, defaults);
-        const gh = new GuiHelper(data, this.env)
+    static createGui(cbs, env, monitorDom) {
+        const { mode, title } = this.parseQuery();
+        const defaults = {
+            isDev: () => {},
+            mode,
+            capture: () => {},
+            grids: true,
+            autoOrbit: false,
+            vrLaser: false,
+            reset: () => {},
+            loc: title ? title.replace('_', ' ') : '',
+            leaflet: true,
+            media: false,
+            sourceCode: () => {},
+        };
+
+        const gh = new GuiHelper(env)
             .setDefaults(defaults)
-            .setCallbacks(this.guiCallbacks())
+            .setCallbacks(cbs)
             .appendToFooter(monitorDom);
 
-        if (this.env.isGuiClosed) {
+        if (env.isGuiClosed) {
             gh.close();
         }
 
@@ -200,24 +213,6 @@ class App extends Threelet {
         };
     }
 
-    static guiDefaults() {
-        const { mode, title } = this.parseQuery();
-
-        return {
-            isDev: () => {},
-            mode,
-            capture: () => {},
-            grids: true,
-            autoOrbit: false,
-            vrLaser: false,
-            reset: () => {},
-            loc: title ? title.replace('_', ' ') : '',
-            leaflet: true,
-            media: false,
-            sourceCode: () => {},
-        };
-    }
-
     clearTerrainObjects() {
         this.renderer.dispose();
 
@@ -249,8 +244,8 @@ class App extends Threelet {
         this.orbit.updateAxis(null);
         this.orbit.remove();
         this.map.plotOrbit(null);
-        if (this.guiHelper) {
-            this.guiHelper.setAutoOrbit(false);
+        if (this.gui) {
+            this.gui.setAutoOrbit(false);
         }
 
         // this.marker.scene.children
@@ -378,7 +373,7 @@ class App extends Threelet {
             this.marker.updateTmp(null);
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
+        if (this.gui && !this.gui.data.autoOrbit) {
             this.render();
         }
 
@@ -402,12 +397,12 @@ class App extends Threelet {
             this.orbit.remove();
             this.map.plotOrbit(null);
 
-            if (this.guiHelper) {
-                this.guiHelper.setAutoOrbit(false);
+            if (this.gui) {
+                this.gui.setAutoOrbit(false);
             }
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
+        if (this.gui && !this.gui.data.autoOrbit) {
             this.render();
         }
     }
@@ -435,7 +430,7 @@ class App extends Threelet {
             this.laser.clear();
         }
 
-        if (this.guiHelper && !this.guiHelper.data.autoOrbit) {
+        if (this.gui && !this.gui.data.autoOrbit) {
             this.render();
         }
     }

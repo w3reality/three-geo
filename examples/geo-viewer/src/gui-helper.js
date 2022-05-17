@@ -1,8 +1,8 @@
 import OoGui from 'oo-gui/src';
 
 class GuiHelper extends OoGui {
-    constructor(data, env={}) {
-            super(data, {
+    constructor(env) {
+        super(new Object() /* data */, {
             title: 'geo-viewer',
             width: 240,
         });
@@ -28,6 +28,8 @@ class GuiHelper extends OoGui {
 
     // impl
     init(gui, data, params) {
+        Object.assign(data, this.defaults);
+
         this.locations = { // key: [lat, lng],
             '(none)': [0, 0], // dummy
             'Table Mountain': [-33.9625, 18.4107],
