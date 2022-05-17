@@ -1,7 +1,19 @@
+const { Stats } = window;
+
 class Mon {
     constructor() {
         const dom = document.createElement('div');
         this.dom = dom;
+
+        //
+
+        const stats = new Stats();
+        stats.showPanel(1);            // 0: fps, 1: ms, 2: mb, 3+: custom
+        stats.dom.style.position = ''; // clear the default
+        dom.appendChild(stats.dom);
+        this._stats = stats;
+
+        //
 
         Mon.appendText(dom, '---- Terrain ----');
         this._divTerrain = dom.appendChild(document.createElement('div'));
@@ -14,6 +26,10 @@ class Mon {
         this._divCam = dom.appendChild(document.createElement('div'));
         Mon.appendText(dom, '---- Measurement [km] ----');
         this._divMeasure = dom.appendChild(document.createElement('div'));
+    }
+
+    updateStats() {
+        this._stats.update();
     }
 
     updateTerrain(origin, zoom) {

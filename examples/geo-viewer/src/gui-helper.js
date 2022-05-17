@@ -132,6 +132,8 @@ class GuiHelper extends OoGui {
 
     appendToFooter(el) {
         this.footer.appendChild(el);
+
+        return this;
     }
 
     static createFooter() {
