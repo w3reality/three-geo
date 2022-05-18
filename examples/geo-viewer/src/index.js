@@ -65,8 +65,14 @@ class App extends Threelet {
     initComponents() {
         if (this.env.isDev) { Anim._addTestObjects(this, Threelet); } // dev
 
-        this.scene.getObjectByName('walls').name = 'singleton-walls';
-        this.scene.getObjectByName('axes').name = 'singleton-axes';
+        const grids = new THREE.Group();
+        grids.add(this.scene.getObjectByName('walls'));
+        grids.add(this.scene.getObjectByName('axes'));
+        grids.name = 'singleton-grids';
+        this.scene.add(grids);
+        this.grids = grids;
+
+        //
 
         const loader = new Loader(this.scene, this.env);
         const { origin, radius, zoom, vis, title } = App.resolveParams(this.env);
@@ -81,6 +87,8 @@ class App extends Threelet {
         this.wireframeMat = new THREE.MeshBasicMaterial({ wireframe: true, color: 0x999999 });
 
         this.updateTerrain(title);
+
+        //
 
         this.monitor = new Monitor();
         this.map = new MapHelper({
@@ -99,6 +107,8 @@ class App extends Threelet {
         this.media = new MediaHelper(
             document.getElementById('media'),
             document.getElementById('media-wrapper'));
+
+        //
 
         this.laser = new Laser(this.scene, this.camera);
         this.orbit = new Orbit(this.scene);
@@ -176,8 +186,7 @@ class App extends Threelet {
                 this.capture();
             },
             onChangeGrids: tf => {
-                this.scene.getObjectByName('singleton-walls').visible = tf;
-                this.scene.getObjectByName('singleton-axes').visible = tf;
+                this.grids.visible = tf;
                 this.render();
             },
             onChangeAutoOrbit: tf => {
@@ -216,31 +225,17 @@ class App extends Threelet {
     clearTerrainObjects() {
         this.renderer.dispose();
 
-        // this.wireframeMat             intact
-        //   dem-rgb-...                 to be cleared
-        //   dem-rgb-...                 to be cleared
-        //   ...                         to be cleared
-        //====
         this.loader.doneVec = false;
         this.loader.doneRgb = false;
         this.loader.clearRgbMaterials();
         this.loader.clearInteractives();
-
-        // this.scene.children
-        //   ::LineSegments  singleton-walls       intact
-        //   ::AxesHelper    singleton-axes        intact
-        //   ::Laser         singleton-laser-vr    intact
-        //   ::Mesh          dem-rgb-...           to be cleared
-        //   ::Group         dem-vec               to be cleared
-        //   ::Laser         singleton-orbit-axis  this.orbit.updateAxis(null)
-        //   ::LineLoop      orbit                 this.orbit.remove()
-        //====
         this.scene.children
             .filter(obj => obj.name.startsWith('dem-'))
             .forEach(dem => {
                 dem.parent.remove(dem);
                 Loader.disposeObject(dem);
             });
+
         this.orbit.updateAxis(null);
         this.orbit.remove();
         this.map.plotOrbit(null);
@@ -248,12 +243,6 @@ class App extends Threelet {
             this.gui.setAutoOrbit(false);
         }
 
-        // this.marker.scene.children
-        //   ::Laser ""     singleton-mark-tmp   this.marker.updateTmp(null)
-        //   ::Laser ""     mark-<date>          to be cleared
-        //                  mark-<date>          to be cleared
-        //                  ...
-        //====
         this.marker.updateTmp(null);
         this.marker.marks().forEach(mark => {
             mark.parent.remove(mark);
