@@ -4,7 +4,7 @@ First, set your valid Mapbox API token in src/env.js:
 
 ```js
 export default {
-    zoom: 13, // 12 fair; 13 good; 14 high resolution
+    zoom: 13, // satellite zoom resolution [11-17]
     enableTilesLeaflet: true,
     tokenMapbox: '********', // <---- set your Mapbox API token here
 };

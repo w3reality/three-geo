@@ -37,7 +37,8 @@ class Mon {
 
         Mon.clear(el);
         Mon.appendText(el, `lat lng: (${origin[0].toFixed(4)}, ${origin[1].toFixed(4)})`);
-        Mon.appendText(el, `satellite zoom resolution [11-17]: ${zoom}`);
+        Mon.appendText(el, `satellite zoom resolution: ${zoom}`);
+        Mon.appendText(el, `DEM resolution: ${zoom - 2}`);
     }
 
     updateMap(zoom) {
