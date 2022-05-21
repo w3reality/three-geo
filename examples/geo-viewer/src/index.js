@@ -17,6 +17,10 @@ const { THREE  } = window;
 const { OrbitControls } = THREE;
 
 class App extends Threelet {
+    constructor() {
+        super({ canvas: document.getElementById('viewer') });
+    }
+
     onCreate(_params) { // override
         this.env = Env;
 
