@@ -1,19 +1,17 @@
-const { Stats } = window;
+import { StatsWidget, ClockWidget } from './widgets.js';
 
 class Mon {
-    constructor() {
+    constructor(env) {
         const dom = document.createElement('div');
         this.dom = dom;
 
-        //
+        if (env.isDev) {
+            this._cw = new ClockWidget();
+            dom.appendChild(this._cw.dom);
+        }
 
-        const stats = new Stats();
-        stats.showPanel(1);            // 0: fps, 1: ms, 2: mb, 3+: custom
-        stats.dom.style.position = ''; // clear the default
-        dom.appendChild(stats.dom);
-        this._stats = stats;
-
-        //
+        this._sw = new StatsWidget();
+        dom.appendChild(this._sw.dom);
 
         Mon.appendText(dom, '---- Terrain ----');
         this._divTerrain = dom.appendChild(document.createElement('div'));
@@ -29,7 +27,7 @@ class Mon {
     }
 
     updateStats() {
-        this._stats.update();
+        this._sw.update();
     }
 
     updateTerrain(origin, zoom) {

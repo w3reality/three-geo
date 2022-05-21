@@ -57,7 +57,7 @@ class App extends Threelet {
     }
 
     onAnimate(t, dt) {
-        this.orbit.move(this.camera);
+        this.orbit.move(this.camera, t, dt);
 
         if (this.env.isDev) { Anim._updateTestObjects(this, t, dt); } // dev
     }
@@ -90,7 +90,7 @@ class App extends Threelet {
 
         //
 
-        this.monitor = new Monitor();
+        this.monitor = new Monitor(this.env);
         this.map = new MapHelper({
             dom: document.getElementById('map'),
             domWrapper: document.getElementById('map-wrapper'),
