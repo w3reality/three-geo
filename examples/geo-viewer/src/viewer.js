@@ -6,7 +6,6 @@ import MapHelper from "./map-helper.js";
 import queryString from "query-string"; // in prod, need webpack-4 to minify this
 
 class Viewer {
-<<<<<<< HEAD
   constructor(env, threelet) {
     this.env = env;
 
@@ -279,64 +278,6 @@ class Viewer {
         console.log("update to satellite");
         this.loadRgbDem(() => {
           this._render();
-=======
-    constructor(env, threelet) {
-        this.env = env;
-
-        const { camera, renderer } = threelet;
-        this.threelet = threelet;
-        this.camera = camera;
-        this.renderer = renderer;
-
-        this.guiHelper = null;
-
-        this.scene = new THREE.Scene();
-        this.sceneMeasure = new THREE.Scene();
-
-        //======== add light
-        if (0) {
-            // https://github.com/mrdoob/three.js/blob/master/examples/webvr_cubes.html
-            this.scene.add(new THREE.HemisphereLight(0x606060, 0x404040));
-            const light = new THREE.DirectionalLight(0xffffff);
-            light.position.set(0, 0, 1).normalize();
-            this.scene.add(light);
-        }
-
-        //======== add sub-camera
-        if (0) {
-            const cam = new THREE.PerspectiveCamera(60, 1, 0.01, 0.5);
-            this.scene.add(new THREE.CameraHelper(cam));
-            cam.position.set(0, 0, 2);
-            cam.rotation.x = Math.PI / 4;
-            cam.updateMatrixWorld();  // reflect pose change to CameraHelper
-        }
-
-        //======== add walls and axes
-        const walls = new THREE.LineSegments(
-            new THREE.EdgesGeometry(new THREE.BoxBufferGeometry(1, 1, 1)),
-            new THREE.LineBasicMaterial({color: 0xcccccc}));
-        walls.position.set(0, 0, 0);
-        walls.name = "singleton-walls";
-        this.scene.add(walls);
-
-        const axes = new THREE.AxesHelper(1);
-        axes.name = "singleton-axes";
-        this.scene.add(axes);
-
-        //======== add laser
-        this._laser = new ThreeGeo.Laser({
-            color: 0xffffff,
-        });
-        this._laser.name = 'singleton-laser-vr';
-        this.scene.add(this._laser);
-
-        // ======== adding geo tiles
-        this.renderer.autoClear = false;
-
-        this.wireframeMat = new THREE.MeshLambertMaterial({
-            wireframe: true,
-            color: 0x999999,
->>>>>>> 54a2a0614b2fcac0c41e50749bae0b3415d39e79
         });
         break;
       case "wireframe":

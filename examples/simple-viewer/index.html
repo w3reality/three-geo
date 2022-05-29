@@ -3,7 +3,6 @@
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <title>simple-viewer</title>
-<<<<<<< HEAD
   </head>
   <body>
     <canvas id="canvas" width="1000px" height="1000px"></canvas>
@@ -11,16 +10,6 @@
     <script type="module">
       import Stats from "../deps/three/examples/jsm/libs/stats.module.js";
       import { OrbitControls } from "../deps/three/examples/jsm/controls/OrbitControls.js";
-=======
-</head>
-<body>
-    <canvas id="canvas" width="1000px" height="1000px"></canvas>
-
-    <script type="module">
-    import Stats from '../deps/three/examples/jsm/libs/stats.module.js';
-    import { OrbitControls } from '../deps/three/examples/jsm/controls/OrbitControls.js';
-    
->>>>>>> 54a2a0614b2fcac0c41e50749bae0b3415d39e79
 
       (async () => {
         window.THREE = await import("../deps/three/build/three.module.js");
@@ -33,7 +22,6 @@
         THREE.Object3D.DefaultUp = new THREE.Vector3(0, 0, 1);
 
         const canvas = document.getElementById("canvas");
-<<<<<<< HEAD
         const camera = new THREE.PerspectiveCamera(
           75,
           canvas.width / canvas.height,
@@ -41,10 +29,6 @@
           1000
         );
         camera.position.set(50, 100, 100);
-=======
-        const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 1000);
-        camera.position.set(10, 10, 10);
->>>>>>> 54a2a0614b2fcac0c41e50749bae0b3415d39e79
 
     
         const renderer = new THREE.WebGLRenderer({ canvas });
@@ -130,7 +114,6 @@
         // tgeo.setApiSatellite("mapbox-custom-mapbox/satellite-v9");
 
         const terrain = await tgeo.getTerrainRgb(
-<<<<<<< HEAD
           [37.935319, -119.34418], // [lat, lng]
           0.025, // radius of bounding circle (km)
           12 // zoom resolution
@@ -138,17 +121,6 @@
         );
 
         console.log(terrain.position);
-=======
-            [-109.258844,42.794645,-109.174861,42.921595],
-            2.5,               // radius of bounding circle (km)
-            17,                // zoom resolution
-            // bbox = 0           // bbox to get terrain within
-            );               
-
-        console.log(terrain.position)
-        terrain.castShadow = true;
-        terrain.receiveShadow = true;
->>>>>>> 54a2a0614b2fcac0c41e50749bae0b3415d39e79
         scene.add(terrain);
 
         scene.traverse( function( child ) { 
