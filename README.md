@@ -182,7 +182,13 @@ In this section, we list `three-geo`'s public API methods, where `origin`, `radi
 
 ## Build
 
+After `git clone` and `cd` to the repository,
+
 ```
 $ npm i
 $ npm run build
 ```
+
+### Building on Windows
+
+While `npm run build` on Windows is confirmed to work (via GitHub's [workflow with some tweaks](https://github.com/w3reality/three-geo/blob/b8775e3a3e2d6b815fd550a96f7f45e441ff54a2/.github/workflows/nodejs.yml#L30-L32)), for better results, it is recommended to use WSL2 instead (thanks [@sonicviz](https://github.com/sonicviz) for [reporting this](https://github.com/w3reality/three-geo/issues/44#issuecomment-1482906468)).
