@@ -130,7 +130,15 @@
 
         //
 
-        const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
+        const _zoom = (new URLSearchParams(document.location.search)).get('zoom');
+        const zoom = _zoom ? Number(_zoom) : 12;
+        if (zoom !== 11 && zoom !== 12 && zoom !== 13) {
+            const warning = 'Sorry, `zoom` is limited to 11, 12, or 13 in this example.';
+            alert(warning);
+            throw warning;
+        }
+
+        const terrain = await tgeo.getTerrainRgb(origin, radius, zoom);
         group.add(terrain);
 
         terrain.children.forEach(mesh => {
