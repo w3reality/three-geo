@@ -23,6 +23,8 @@
         static clipTerrainRgb(mesh, proj, bbox) [ To be added in v1.4.6 ]
     */
 
+// !!!! warning - WIP FIXME texture mismach
+
 //-------- ****
     function clipTerrainRgb(terrain, proj, bbox) {
         terrain.children
@@ -123,7 +125,7 @@
 
         //---- !!!! how to use `clipTerrainRgb()`
         const { proj, bbox } = tgeo.getProjection(origin, radius);
-        clipTerrainRgb(terrain, proj, bbox);
+        clipTerrainRgb(terrain, proj, bbox); // !!!! warning - WIP FIXME texture mismach
         //----
         console.log('terrain:', terrain);
 
