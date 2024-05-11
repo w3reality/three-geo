@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <title>Clip terrain demo</title>
+</head>
+<body>
+    <div>
+        Clip terrain demo <a href="https://github.com/w3reality/three-geo/tree/master/examples/clip/index.html">Source Code</a>
+    </div>
+    <canvas id="canvas" style="width: 100%; height: 100%;"></canvas>
+
+    <script src="../deps/three/build/three.min.js"></script>
+    <script src="../deps/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="../deps/three/examples/js/libs/stats.min.js"></script>
+    <script src="../deps/threelet.min.js"></script>
+
+    <script src="../../dist/three-geo.min.js"></script>
+
+    <script type="module">
+    /*
+        ThreeGeo
+        static clipTerrainRgb(mesh, proj, bbox) [ To be added in v1.4.6 ]
+    */
+
+//-------- ****
+    function clipTerrainRgb(terrain, proj, bbox) {
+        terrain.children
+            .filter(obj => obj.name.startsWith('dem-rgb-'))
+            .forEach(mesh => _clipMeshRgb(
+                mesh, ...proj([bbox[1], bbox[0]]), ...proj([bbox[3], bbox[2]])));
+    }
+
+    function _clipMeshRgb(mesh, xMin, yMin, xMax, yMax) {
+        const geom = mesh.geometry;
+        //console.log('!! geom.parameters:', geom.parameters);
+        const { heightSegments, widthSegments } = geom.parameters;
+        const position = geom.attributes.position;
+        const arr = position.array;
+
+        //
+
+        const [ xMeshMin, yMeshMin, xMeshMax, yMeshMax ] =
+             [ arr[0], arr[arr.length-2], arr[arr.length-3], arr[1] ];
+        //console.log('!! xMeshMin, yMeshMin, xMeshMax, yMeshMax:', xMeshMin, yMeshMin, xMeshMax, yMeshMax);
+        //console.log('!! xMin, yMin, xMax, yMax:', xMin, yMin, xMax, yMax);
+        if (xMin < xMeshMin && xMeshMax < xMax && yMin < yMeshMin && yMeshMax < yMax) {
+            console.log('_clipMeshRgb(): all verts inside the bbox, skipping mesh:', mesh.name);
+            return;
+        }
+
+        //
+
+        const hVerts = heightSegments + 1;
+        const wVerts = widthSegments + 1;
+
+        const rowsBbox = [];
+        for (let j = 0; j < hVerts; j++) {
+            const row = [];
+
+            let x, y, z;
+            for (let i = 0; i < wVerts; i++) {
+                x = arr[3 * (j * wVerts + i)];
+                y = arr[3 * (j * wVerts + i) + 1];
+                z = arr[3 * (j * wVerts + i) + 2];
+                if (xMin < x && x < xMax && yMin < y && y < yMax) { // inside bbox
+                    row.push(x, y, z);
+                }
+            }
+
+            if (row.length > 0) {
+                rowsBbox.push(row);
+            }
+        }
+
+        const hVertsBbox = rowsBbox.length;
+        const wVertsBbox = rowsBbox[1].length / 3;
+
+        //
+
+        const arrBbox = [];
+        rowsBbox.forEach(row => arrBbox.push(...row));
+        if (hVertsBbox * wVertsBbox * 3 !== arrBbox.length) {
+            throw new Error(`oops while processing ${mesh.name}`);
+        }
+
+        const geomBbox = new THREE.PlaneBufferGeometry(1, 1, wVertsBbox - 1, hVertsBbox - 1);
+        geomBbox.attributes.position.array = new Float32Array(arrBbox);
+
+        mesh.geometry = geomBbox;
+        position.needsUpdate = true;
+    }
+//-------- ****
+
+    (async () => {
+        const threelet = new Threelet({
+            canvas: document.getElementById("canvas"),
+            // optAxes: false,
+        });
+        threelet.setup('mod-controls', THREE.OrbitControls);
+        // threelet.setup('mod-stats', Stats);
+
+        const { scene, render } = threelet;
+        render(); // first time
+
+        const ioToken = 'pk.eyJ1IjoiamRldmVsIiwiYSI6ImNqemFwaGJoZjAyc3MzbXA1OGNuODBxa2EifQ.7M__SgfWZGJuEiSqbBXdoQ';
+        const tgeo = new ThreeGeo({
+            tokenMapbox: ioToken, // <---- set your Mapbox API token here
+        });
+
+        if (!window.location.origin.startsWith('https://w3reality.github.io') && tgeo.tokenMapbox === ioToken) {
+            const warning = 'Please set your Mapbox API token in ThreeGeo constructor.';
+            alert(warning);
+            throw warning;
+        }
+
+        //
+
+        const origin = [46.5763, 7.9904];
+        const radius = 5.0;
+        const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
+        terrain.rotation.x = - Math.PI/2;
+
+        //---- !!!! how to use `clipTerrainRgb()`
+        const { proj, bbox } = tgeo.getProjection(origin, radius);
+        clipTerrainRgb(terrain, proj, bbox);
+        //----
+        console.log('terrain:', terrain);
+
+        scene.add(terrain);
+
+        render();
+    })();
+    </script>
+</body>
+</html>
