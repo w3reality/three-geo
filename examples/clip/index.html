@@ -59,11 +59,12 @@
         for (let j = 0; j < hVerts; j++) {
             const row = [];
 
-            let x, y, z;
+            let idx, x, y, z;
             for (let i = 0; i < wVerts; i++) {
-                x = arr[3 * (j * wVerts + i)];
-                y = arr[3 * (j * wVerts + i) + 1];
-                z = arr[3 * (j * wVerts + i) + 2];
+                idx = 3 * (j * wVerts + i);
+                x = arr[idx];
+                y = arr[idx + 1];
+                z = arr[idx + 2];
                 if (xMin < x && x < xMax && yMin < y && y < yMax) { // inside bbox
                     row.push(x, y, z);
                 }
@@ -124,7 +125,7 @@
 
         //---- how to use `clipTerrainRgb()`
         const { proj, bbox } = tgeo.getProjection(origin, radius);
-        clipTerrainRgb(terrain, proj, bbox); // TODO adjust texture
+        clipTerrainRgb(terrain, proj, bbox); // incomplete, TODO adjust texture
         //----
         console.log('terrain:', terrain);
 
