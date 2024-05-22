@@ -23,14 +23,13 @@
         static clipTerrainRgb(mesh, proj, bbox) [ To be added in v1.4.6 ]
     */
 
-// !!!! warning - WIP FIXME texture mismach
-
 //-------- ****
     function clipTerrainRgb(terrain, proj, bbox) {
+        const bboxInner = [...proj([bbox[1], bbox[0]]), ...proj([bbox[3], bbox[2]])];
+
         terrain.children
             .filter(obj => obj.name.startsWith('dem-rgb-'))
-            .forEach(mesh => _clipMeshRgb(
-                mesh, ...proj([bbox[1], bbox[0]]), ...proj([bbox[3], bbox[2]])));
+            .forEach(mesh => _clipMeshRgb(mesh, ...bboxInner));
     }
 
     function _clipMeshRgb(mesh, xMin, yMin, xMax, yMax) {
@@ -123,9 +122,9 @@
         const terrain = await tgeo.getTerrainRgb(origin, radius, 12);
         terrain.rotation.x = - Math.PI/2;
 
-        //---- !!!! how to use `clipTerrainRgb()`
+        //---- how to use `clipTerrainRgb()`
         const { proj, bbox } = tgeo.getProjection(origin, radius);
-        clipTerrainRgb(terrain, proj, bbox); // !!!! warning - WIP FIXME texture mismach
+        clipTerrainRgb(terrain, proj, bbox); // TODO adjust texture
         //----
         console.log('terrain:', terrain);
 
