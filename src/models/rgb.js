@@ -336,10 +336,9 @@ class RgbModel {
                 arr, this.getNeighborsInfo(dataEle, dataEleIds, zoompos));
             console.log('cSegments:', cSegments);
             // w and h don't matter since position.array is being overwritten
-
-            let geom = new THREE.PlaneBufferGeometry(
-                1, 1, cSegments[0], cSegments[1]);
-            geom.attributes.position.array = new Float32Array(arr);
+            
+            let geom = new THREE.PlaneGeometry(1, 1, cSegments[0], cSegments[1]);
+            geom.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
 
             // test identifying a 127x1 "belt"
             // let geom = new THREE.PlaneBufferGeometry(1, 1, 127, 1);
@@ -371,6 +370,7 @@ class RgbModel {
                         // side: THREE.DoubleSide,
                         map: tex,
                     });
+                    tex.encoding = THREE.sRGBEncoding;
                 }
 
                 if (onSatelliteMatWrapper) {
