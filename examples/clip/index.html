@@ -34,63 +34,62 @@
 
     function _clipMeshRgb(mesh, xMin, yMin, xMax, yMax) {
         const geom = mesh.geometry;
-        //console.log('!! geom.parameters:', geom.parameters);
         const { heightSegments, widthSegments } = geom.parameters;
         const position = geom.attributes.position;
+        const uv = geom.attributes.uv;
         const arr = position.array;
-
-        //
+        const uvArr = uv.array;
 
         const [ xMeshMin, yMeshMin, xMeshMax, yMeshMax ] =
-             [ arr[0], arr[arr.length-2], arr[arr.length-3], arr[1] ];
-        //console.log('!! xMeshMin, yMeshMin, xMeshMax, yMeshMax:', xMeshMin, yMeshMin, xMeshMax, yMeshMax);
-        //console.log('!! xMin, yMin, xMax, yMax:', xMin, yMin, xMax, yMax);
+            [ arr[0], arr[arr.length-2], arr[arr.length-3], arr[1] ];
         if (xMin < xMeshMin && xMeshMax < xMax && yMin < yMeshMin && yMeshMax < yMax) {
             console.log('_clipMeshRgb(): all verts inside the bbox, skipping mesh:', mesh.name);
             return;
         }
 
-        //
-
         const hVerts = heightSegments + 1;
         const wVerts = widthSegments + 1;
 
         const rowsBbox = [];
+        const uvRowsBbox = [];
         for (let j = 0; j < hVerts; j++) {
             const row = [];
+            const uvRow = [];
 
-            let idx, x, y, z;
             for (let i = 0; i < wVerts; i++) {
-                idx = 3 * (j * wVerts + i);
-                x = arr[idx];
-                y = arr[idx + 1];
-                z = arr[idx + 2];
-                if (xMin < x && x < xMax && yMin < y && y < yMax) { // inside bbox
+                const idx = 3 * (j * wVerts + i);
+                const uvIdx = 2 * (j * wVerts + i);
+                const x = arr[idx];
+                const y = arr[idx + 1];
+                const z = arr[idx + 2];
+                if (xMin <= x && x <= xMax && yMin <= y && y <= yMax) { // inside or on bbox
                     row.push(x, y, z);
+                    uvRow.push(uvArr[uvIdx], uvArr[uvIdx + 1]);
                 }
             }
 
             if (row.length > 0) {
                 rowsBbox.push(row);
+                uvRowsBbox.push(uvRow);
             }
         }
 
         const hVertsBbox = rowsBbox.length;
-        const wVertsBbox = rowsBbox[1].length / 3;
+        const wVertsBbox = rowsBbox[0].length / 3;
 
-        //
+        const arrBbox = rowsBbox.flat();
+        const uvArrBbox = uvRowsBbox.flat();
 
-        const arrBbox = [];
-        rowsBbox.forEach(row => arrBbox.push(...row));
         if (hVertsBbox * wVertsBbox * 3 !== arrBbox.length) {
-            throw new Error(`oops while processing ${mesh.name}`);
+            throw new Error(`Unexpected array length while processing ${mesh.name}`);
         }
 
-        const geomBbox = new THREE.PlaneBufferGeometry(1, 1, wVertsBbox - 1, hVertsBbox - 1);
-        geomBbox.attributes.position.array = new Float32Array(arrBbox);
+        const geomBbox = new THREE.PlaneGeometry(1, 1, wVertsBbox - 1, hVertsBbox - 1);
+        geomBbox.setAttribute('position', new THREE.Float32BufferAttribute(arrBbox, 3));
+        geomBbox.setAttribute('uv', new THREE.Float32BufferAttribute(uvArrBbox, 2));
 
+        mesh.geometry.dispose();
         mesh.geometry = geomBbox;
-        position.needsUpdate = true;
     }
 //-------- ****
 
