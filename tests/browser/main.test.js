@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs-extra');
-const { Server } = require('es-pack-js');
+const { Server, getBrowser } = require('es-pack-js');
 
 const libName = 'three-geo';
 const outDir = path.join(__dirname, '../../target');
@@ -11,6 +11,7 @@ const modPath = `${outDir}/${libName}.min.js`;
 const tmpModPath = `${__dirname}/__tmp.min.js`;
 
 let output;
+let browser = null;
 let server = null;
 beforeAll(async () => {
     const serveDir = __dirname;
@@ -21,6 +22,7 @@ beforeAll(async () => {
         tmpThreePath);
     fs.copySync(modPath, tmpModPath);
 
+    browser = await getBrowser();
     const page = await browser.newPage();
     await page.goto(`http://localhost:${server.port}/index.html`);
 
@@ -34,6 +36,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+    await browser.close();
     server.close();
     server = null;
 });
