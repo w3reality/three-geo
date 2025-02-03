@@ -7,8 +7,9 @@ const outDir = path.join(__dirname, '../../target');
 const __modPath = `${outDir}/${libName}.min.js`;
 //const __modPath = `${outDir}/${libName}.js`; // dev
 
-
 const ThreeGeo = require(__modPath);
+
+describe(`Test Suite: using ${__modPath}`, () => {
 
 test('constructor', () => {
     expect(typeof ThreeGeo).toBe('function');
@@ -38,7 +39,6 @@ test('rgb-table', async () => {
     await units['rgb-table'](ThreeGeo, dataDir);
 });
 
-if (process.version > 'v12.') { // !! FIXME - issues with Node.js 10.x
 test('vec-table', async () => {
     await units['vec-table'](ThreeGeo, dataDir);
 });
@@ -46,4 +46,5 @@ test('vec-table', async () => {
 test('vec-pbf', async () => {
     await units['vec-pbf'](ThreeGeo, dataDir);
 });
-} // !!
+
+}); // end of `describe()`

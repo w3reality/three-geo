@@ -13,6 +13,9 @@ const tmpModPath = `${__dirname}/__tmp.min.js`;
 let output;
 let browser = null;
 let server = null;
+
+describe(`Test Suite: using ${modPath}`, () => {
+
 beforeAll(async () => {
     const serveDir = __dirname;
     server = await (new Server(serveDir)).listen();
@@ -96,3 +99,5 @@ test('vec-pbf', () => {
     expect(waterLen).toBe(2);
     expect(waterwayLen).toBe(7);
 });
+
+}); // end of `describe()`
