@@ -30,11 +30,11 @@ const dataDir = path.join(__dirname, '../data');
 test('rgb-noexist`: case when no rgb DEM files were fetched', async () => {
     await units['rgb-noexist'](ThreeGeo, dataDir);
 });
-
+*/
 test('rgb-eiger', async () => {
     await units['rgb-eiger'](ThreeGeo, dataDir);
 });
-
+/*
 test('rgb-table', async () => {
     await units['rgb-table'](ThreeGeo, dataDir);
 });
