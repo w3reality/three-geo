@@ -39,6 +39,7 @@ class ThreeGeo {
 
         if (this.isDebug) {
             //console.warn('`isDebug` is true; terrains support `.userData.debug()`.');
+            console.info('`isDebug` is true; terrains support `.userData.debug()`.');  // ??
         }
     }
 
