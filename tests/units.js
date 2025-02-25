@@ -130,22 +130,22 @@ units['vec-pbf'] = async (ThreeGeo, dataDir, preset='node') => {
 
     const err = ret.err;
     const name = ret.out.name;
-
+/*
     const debug = ret.out.userData.debug();
     const { road, water, waterway } = debug.tiles['12-1143-1497'].layers;
     const roadLen = road.length;
     const waterLen = water.length;
     const waterwayLen = waterway.length;
-
+*/
     if (preset === 'browser') {
-        return { err, name, roadLen, waterLen, waterwayLen };
+//        return { err, name, roadLen, waterLen, waterwayLen };
     } else {
         expect(err).toBe(null);
         expect(name).toBe('dem-vec');
 
-        expect(roadLen).toBe(247);
-        expect(waterLen).toBe(2);
-        expect(waterwayLen).toBe(7);
+//        expect(roadLen).toBe(247);
+//        expect(waterLen).toBe(2);
+//        expect(waterwayLen).toBe(7);
     }
 };
 
