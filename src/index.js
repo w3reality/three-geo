@@ -38,7 +38,7 @@ class ThreeGeo {
         this.apiSatellite = actual.apiSatellite;
 
         if (this.isDebug) {
-            console.warn('`isDebug` is true; terrains support `.userData.debug()`.');
+            console.info('`isDebug` is true; terrains support `.userData.debug()`.');
         }
     }
 
@@ -235,7 +235,7 @@ class ThreeGeo {
         const group = new THREE.Group();
         group.name = name;
         group.userData['debug'] = () => {
-            if (!debug) console.warn('Use the `isDebug` option to enable `.userData.debug()`.');
+            if (!debug) console.info('Use the `isDebug` option to enable `.userData.debug()`.');
 
             return debug;
         };
