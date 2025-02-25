@@ -121,7 +121,7 @@ units['vec-table'] = async (ThreeGeo, dataDir, preset='node') => {
 
 units['vec-pbf'] = async (ThreeGeo, dataDir, preset='node') => {
     const tgeo = new ThreeGeo({ isDebug: true });
-/*
+
     const loc = {name: 'pbf', origin: [43.5, -79.5], radius: 1.25, zoom: 14}; // for '12-1143-1497.vector.pbf'
     setupApi(tgeo, preset, `${dataDir}/${loc.name}`);
 
@@ -147,7 +147,6 @@ units['vec-pbf'] = async (ThreeGeo, dataDir, preset='node') => {
         expect(waterLen).toBe(2);
         expect(waterwayLen).toBe(7);
     }
-*/
 };
 
 if (typeof document !== 'undefined') {
