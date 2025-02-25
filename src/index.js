@@ -38,7 +38,7 @@ class ThreeGeo {
         this.apiSatellite = actual.apiSatellite;
 
         if (this.isDebug) {
-            console.warn('`isDebug` is true; terrains support `.userData.debug()`.');
+            //console.warn('`isDebug` is true; terrains support `.userData.debug()`.');
         }
     }
 
